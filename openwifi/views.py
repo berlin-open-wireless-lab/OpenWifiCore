@@ -11,8 +11,10 @@ from .models import (
 def home(request):
     return {}
 
-@view_config(route_name='accesspoint', renderer='templates/accesspoints.jinja2', layout='base')
-def accesspoints(request):
-    
+@view_config(route_name='accesspoint_list', renderer='templates/accesspoints.jinja2', layout='base')
+def accesspoints_list(request):
+    return {}
 
+@view_config(route_name='accesspoint_item', renderer='templates/accesspoints_item.jinja2', layout='base')
+def accesspoints_item(request):
     return {}
