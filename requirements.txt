@@ -1,0 +1,24 @@
+Chameleon==2.11
+Mako==0.8.1
+MarkupSafe==0.18
+PasteDeploy==1.5.0
+Pygments==1.6
+SQLAlchemy==0.8.2
+WebOb==1.2.3
+colander==1.0a5
+deform==0.9.7
+deform-bootstrap==0.2.8
+distribute==0.6.34
+-e git+lynxis@lunarius:/srv/gitree/openwifi/@b1f578b118bd85f66164bde69f69cfd9b69da4ef#egg=openwifi-dev
+peppercorn==0.4
+pyramid==1.4.3
+pyramid-debugtoolbar==1.0.6
+pyramid-tm==0.7
+repoze.lru==0.6
+transaction==1.4.1
+translationstring==1.1
+venusian==1.0a8
+waitress==0.8.5
+zope.deprecation==4.0.2
+zope.interface==4.0.5
+zope.sqlalchemy==0.7.2
