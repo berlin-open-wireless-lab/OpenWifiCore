@@ -20,7 +20,7 @@ def home(request):
 @view_config(route_name='accesspoint_list', renderer='templates/accesspoints.jinja2', layout='base')
 def accesspoints_list(request):
     accesspoints = DBSession.query(AccessPoint)
-    return { 'items': accesspoints, 'table_fields': ['id', 'name', 'address'] }
+    return { 'items': accesspoints, 'table_fields': ['id', 'name', 'hardware', 'radio', 'address'] }
 
 @view_config(route_name='accesspoint_item', renderer='templates/accesspoints_item.jinja2', layout='base')
 def accesspoints_item(request):

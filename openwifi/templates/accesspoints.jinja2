@@ -15,8 +15,20 @@
     {% endif %}
         <tr>
         {% set rowloop = loop %}
-        {%- for field in table_fields %}
-          <td>{{ item[field] }}</td>
+        {% for field in table_fields %}
+          {% if field == "radio" %}
+            <td>
+            {% for radio in item[field] %}
+              {% if loop.first %}
+                {{ radio.band }}
+              {% else %}
+              | {{ radio.band }}
+              {% endif %}
+            {% endfor %}
+            </td>
+          {% else %}
+            <td>{{ item[field] }}</td>
+          {% endif %}
         {% endfor %}
         </tr>
     {% if loop.last %}
