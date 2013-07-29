@@ -1,5 +1,6 @@
 from pyramid.response import Response
 from pyramid.view import view_config
+from pyramid.httpexceptions import HTTPFound
 
 from sqlalchemy.exc import DBAPIError
 
@@ -19,7 +20,7 @@ def home(request):
 @view_config(route_name='accesspoint_list', renderer='templates/accesspoints.jinja2', layout='base')
 def accesspoints_list(request):
     accesspoints = DBSession.query(AccessPoint)
-    return { 'items': accesspoints, 'table_fields': ['id', 'name', 'host'] }
+    return { 'items': accesspoints, 'table_fields': ['id', 'name', 'address'] }
 
 @view_config(route_name='accesspoint_item', renderer='templates/accesspoints_item.jinja2', layout='base')
 def accesspoints_item(request):
@@ -29,15 +30,15 @@ def accesspoints_item(request):
 def accesspoints_add(request):
     form = AccessPointAddForm(request.POST)
     if request.method == 'POST' and form.validate():
-        name = request.params['name']
-        hardware = request.params['hardware']
-        radio_amount_2ghz = request.params['2ghz']
-        radio_amount_5ghz = request.params['5ghz']
-        #page = Page(pagename, body)
-        ap = AccessPoint(name, hardware, radio_amount_2ghz, radio_amount_5ghz)
-        #DBSession.add(page)
-        return HTTPFound(location = request.route_url('view_page',
-                name=name))
+        name = form.name.data
+        hardware = form.hardware.data
+        radio_amount_2g = form.radios_2g.data
+        radio_amount_5g = form.radios_5g.data
+        address = form.address.data
 
-    save_url = request.route_url()
-    return {}
+        ap = AccessPoint(name, address, hardware, radio_amount_2g, radio_amount_5g)
+        DBSession.add(ap)
+        return HTTPFound(location = request.route_url('accesspoint_list'))
+
+    save_url = request.route_url('accesspoint_add')
+    return { 'save_url':save_url, 'form':form }
