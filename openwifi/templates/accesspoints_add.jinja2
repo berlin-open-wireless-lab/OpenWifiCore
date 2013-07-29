@@ -1,4 +1,19 @@
 {% extends main_template %}
 
 {% block content %}
+<form action="{{% save_url  %}}" method="POST">
+  <fieldset>
+    <div class="row">
+      <div class="input-group">
+        <input type="text" class="form-control" name="name" placeholder="name" />
+      </div>
+      <div class="input-group">
+        <input type="text" class="form-control" name="hardware" placeholder="hardware" />
+      </div>
+      <div class="input-group">
+        <input type="submit" class="form-control" name="form.submitted" value="Add" />
+      </div>
+    </div>
+  </fieldset>
+</form>
 {% endblock %}

@@ -18,5 +18,6 @@ def main(global_config, **settings):
     config.add_route('home', '/')
     config.add_route('accesspoint_list', '/accesspoint')
     config.add_route('accesspoint_item', '/accesspoint/{name}')
+    config.add_route('accesspoint_add', '/accesspoint_add')
     config.scan()
     return config.make_wsgi_app()
