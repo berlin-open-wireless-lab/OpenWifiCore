@@ -28,15 +28,22 @@ class AccessPoint(Base):
     __tablename__ = 'accesspoint'
     id = Column(Integer, primary_key=True)
     name = Column(Text, unique=True)
-    host = Column(Text) # ip or host
+    address = Column(Text) # ip or host
     sshkey = Column(Text) # private key to access this ap
     sshhostkey = Column(Text) # remote host key
     hardware = Column(Text)
     radio = relationship("Radio", backref='accesspoint')
 
-    def __init__(self, name, hardware):
+    def __init__(self, name, address, hardware, radio_amount_2ghz, radio_amount_5ghz):
         self.name = name
         self.hardware = hardware
+        self.address = address
+
+        for i in range(radio_amount_2ghz):
+            self.radio.append(Radio('unspecific', 2))
+
+        for i in range(radio_amount_5ghz):
+            self.radio.append(Radio('unspecific', 5))
 
 class Radio(Base):
     __tablename__ = 'radio'
@@ -48,9 +55,15 @@ class Radio(Base):
     essid = relationship("Essid", secondary=essid_association_table)
     txpower = Column(Integer)
 
+    def __init__(self, hardware, band):
+        self.hardware = hardware
+        self.band = band
+
 class Essid(Base):
     __tablename__ = 'essid'
     id = Column(Integer, primary_key=True)
     essid = Column(Text)
     bssid = Column(Text)
 
+    def __init__(self):
+        pass
