@@ -16,6 +16,7 @@ requires = [
     'waitress',
     'pyramid_layout',
     'pyramid_jinja2',
+    'WTForms',
     ]
 
 setup(name='openwifi',
