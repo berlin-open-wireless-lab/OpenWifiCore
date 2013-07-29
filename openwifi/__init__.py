@@ -15,8 +15,7 @@ def main(global_config, **settings):
     Base.metadata.bind = engine
     config = Configurator(settings=settings)
     config.add_static_view('static', 'static', cache_max_age=3600)
-    config.add_static_view('deform_static', 'deform:static', cache_max_age=3600)
-    config.add_static_view('deform_bootstrap_static', 'deform_bootstrap:static', cache_max_age=3600)
     config.add_route('home', '/')
+    config.add_route('accesspoint', '/accesspoint')
     config.scan()
     return config.make_wsgi_app()

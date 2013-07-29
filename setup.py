@@ -14,7 +14,8 @@ requires = [
     'pyramid_debugtoolbar',
     'zope.sqlalchemy',
     'waitress',
-    'deform_bootstrap',
+    'pyramid_layout',
+    'pyramid_jinja2',
     ]
 
 setup(name='openwifi',
