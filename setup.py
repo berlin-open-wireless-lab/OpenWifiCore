@@ -17,6 +17,7 @@ requires = [
     'pyramid_layout',
     'pyramid_jinja2',
     'WTForms',
+    'seat',
     ]
 
 setup(name='openwifi',
