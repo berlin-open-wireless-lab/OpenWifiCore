@@ -29,7 +29,8 @@ class AccessPoint(Base):
     id = Column(Integer, primary_key=True)
     name = Column(Text, unique=True)
     address = Column(Text) # ip or host
-    sshkey = Column(Text) # private key to access this ap
+    sshkey = relationship('SshKey') # private key to access this ap
+    sshkey_id = Column(Integer, ForeignKey('ssh_auth_keys.id'))
     sshhostkey = Column(Text) # remote host key
     hardware = Column(Text)
     radio = relationship("Radio", backref='accesspoint')
@@ -67,3 +68,9 @@ class Essid(Base):
 
     def __init__(self):
         pass
+
+class SshKey(Base):
+    __tablename__ = 'ssh_auth_keys'
+    id = Column(Integer, primary_key=True)
+    comment = Column(Text)
+    key = Column(Text)
