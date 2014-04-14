@@ -22,6 +22,8 @@
     {% if loop.last %}
       </tbody>
     {% endif %}
+  {% else %}
+  <p class="lead">no data</p>
   {%- endfor %}
   </table>
 {% endblock %}
