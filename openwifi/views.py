@@ -22,10 +22,6 @@ def accesspoints_list(request):
     accesspoints = DBSession.query(AccessPoint)
     return { 'items': accesspoints, 'table_fields': ['id', 'name', 'hardware', 'radio', 'address'] }
 
-@view_config(route_name='accesspoint_item', renderer='templates/accesspoints_item.jinja2', layout='base')
-def accesspoints_item(request):
-    return {}
-
 @view_config(route_name='accesspoint_add', renderer='templates/accesspoints_add.jinja2', layout='base')
 def accesspoints_add(request):
     form = AccessPointAddForm(request.POST)
@@ -42,3 +38,19 @@ def accesspoints_add(request):
 
     save_url = request.route_url('accesspoint_add')
     return { 'save_url':save_url, 'form':form }
+
+@view_config(route_name='accesspoint_edit', renderer='templates/accesspoints_edit.jinja2', layout='base')
+def accesspoints_edit(request):
+    form = AccessPointEditForm(request.POST)
+    ap = DBSession.query(AccessPoint).filter_by(id=ap_id).one()
+    if request.method == 'POST' and form.validate():
+        ap.hardware = 'changed hardware'
+        return HTTPFound(locaton = request.route_url('accesspoint_list'))
+    
+    return { 'form': form }
+
+@view_config(route_name='station_list', renderer='templates/simple_list.jinja2', layout='base')
+def station_list(request):
+    stations = []
+    return { 'items': stations, 'table_fields': ['id', 'name', 'hardware', 'band', 'address'] }
+

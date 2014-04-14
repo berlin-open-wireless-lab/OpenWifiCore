@@ -51,6 +51,7 @@ class Radio(Base):
     id = Column(Integer, primary_key=True)
     ap_id = Column(Integer, ForeignKey('accesspoint.id'))
     hardware = Column(Text)
+    # replace band with enum(2, 5, 2+5)
     band = Column(Integer) # 2 => 2ghz, 5 => 5ghz
     channel = Column(Integer)
     essid = relationship("Essid", secondary=essid_association_table)
