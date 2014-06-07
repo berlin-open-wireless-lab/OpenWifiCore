@@ -14,3 +14,11 @@ class AccessPointEditForm(Form):
     address = TextField('address')
     sshkey = TextField('sshkey') # private key to access this ap
     sshhostkey = TextField('sshhostkey') # remote host key
+
+class OpenWrtEditForm(Form):
+    name = TextField('name')
+    address = TextField('address')
+    distribution = TextField('distrubtion')
+    version = TextField('version') # private key to access this ap
+    uuid = TextField('uuid') # remote host key
+    configured = TextField('configured')

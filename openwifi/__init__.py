@@ -17,9 +17,11 @@ def main(global_config, **settings):
     config.add_static_view('static', 'static', cache_max_age=3600)
     config.add_route('home', '/')
     config.add_route('openwrt_list', '/openwrt')
+    config.add_route('openwrt_edit', '/openwrt/{openwrt_id}')
+    config.add_route('openwrt_add', '/openwrt_add')
     config.add_route('accesspoint_list', '/accesspoint')
-    config.add_route('accesspoint_edit', '/accesspoint/{name}')
     config.add_route('accesspoint_add', '/accesspoint_add')
+    config.add_route('accesspoint_edit', '/accesspoint/{name}')
 
     config.add_route('station_list', '/station')
 
