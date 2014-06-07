@@ -21,5 +21,9 @@ def main(global_config, **settings):
     config.add_route('accesspoint_add', '/accesspoint_add')
 
     config.add_route('station_list', '/station')
+
+    config.include('pyramid_rpc.jsonrpc')
+    config.add_jsonrpc_endpoint('api', '/api')
+
     config.scan()
     return config.make_wsgi_app()

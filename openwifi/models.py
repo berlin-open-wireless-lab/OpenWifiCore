@@ -4,6 +4,7 @@ from sqlalchemy import (
     Text,
     ForeignKey,
     Table,
+    Boolean,
     )
 
 from sqlalchemy.ext.declarative import declarative_base
@@ -23,6 +24,24 @@ Base = declarative_base()
 essid_association_table = Table('essid_association', Base.metadata,
         Column('radio_id', Integer, ForeignKey('radio.id')),
         Column('essid_id', Integer, ForeignKey('essid.id')))
+
+class OpenWrt(Base):
+    __tablename__ = 'openwrt'
+    id = Column(Integer, primary_key=True)
+    name = Column(Text, unique=True)
+    address = Column(Text) # ip or host
+    distribution = Column(Text) # lazus / polar / openWrt
+    version = Column(Text) # 1,2, ... 10.04 , ... trunk
+    configured = Column(Boolean)
+    uuid = Column(Text)
+
+    def __init__(self, name, address, distribution, version, uuid, configured=False):
+        self.name = name
+        self.address = address
+        self.distribution = distribution
+        self.version = version
+        self.configured = configured
+        self.uuid = Column(Text)
 
 class AccessPoint(Base):
     __tablename__ = 'accesspoint'

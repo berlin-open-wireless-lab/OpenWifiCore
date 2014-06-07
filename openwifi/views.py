@@ -1,12 +1,14 @@
 from pyramid.response import Response
 from pyramid.view import view_config
 from pyramid.httpexceptions import HTTPFound
+from pyramid_rpc.jsonrpc import jsonrpc_method
 
 from sqlalchemy.exc import DBAPIError
 
 from .models import (
-    DBSession,
     AccessPoint,
+    DBSession,
+    OpenWrt,
     )
 
 from .forms import (
@@ -54,3 +56,9 @@ def station_list(request):
     stations = []
     return { 'items': stations, 'table_fields': ['id', 'name', 'hardware', 'band', 'address'] }
 
+# TODO: jsonrpc call
+@jsonrpc_method(method='device_register', endpoint='api')
+def device_register(request, uuid, name, address, distribution, version, proto):
+    ap = OpenWrt(name, address, distribution, version, False)
+    DBSession.add(ap)
+    DBSession.flush()
