@@ -5,6 +5,7 @@ from sqlalchemy import (
     ForeignKey,
     Table,
     Boolean,
+    Binary,
     )
 
 from sqlalchemy.ext.declarative import declarative_base
@@ -18,6 +19,9 @@ from sqlalchemy.orm import (
 
 from zope.sqlalchemy import ZopeTransactionExtension
 
+from utils import GUID
+
+
 DBSession = scoped_session(sessionmaker(extension=ZopeTransactionExtension()))
 Base = declarative_base()
 
@@ -27,21 +31,23 @@ essid_association_table = Table('essid_association', Base.metadata,
 
 class OpenWrt(Base):
     __tablename__ = 'openwrt'
-    id = Column(Integer, primary_key=True)
+    uuid = Column(GUID, primary_key=True)
     name = Column(Text, unique=True)
     address = Column(Text) # ip or host
     distribution = Column(Text) # lazus / polar / openWrt
     version = Column(Text) # 1,2, ... 10.04 , ... trunk
     configured = Column(Boolean)
-    uuid = Column(Text)
 
-    def __init__(self, name, address, distribution, version, uuid, configured=False):
+    def __init__(self, name, address, distribution, version, device_uuid, configured=False):
         self.name = name
         self.address = address
         self.distribution = distribution
         self.version = version
         self.configured = configured
-        self.uuid = Column(Text)
+        try:
+            self.uuid = device_uuid
+        except ValueError:
+            self.uuid = device_uuid
 
 class AccessPoint(Base):
     __tablename__ = 'accesspoint'

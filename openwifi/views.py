@@ -59,6 +59,12 @@ def station_list(request):
 # TODO: jsonrpc call
 @jsonrpc_method(method='device_register', endpoint='api')
 def device_register(request, uuid, name, address, distribution, version, proto):
-    ap = OpenWrt(name, address, distribution, version, False)
+    ap = OpenWrt(name, address, distribution, version, uuid, False)
     DBSession.add(ap)
     DBSession.flush()
+
+@view_config(route_name='openwrt_list', renderer='templates/openwrt.jinja2', layout='base')
+def openwrt_list(request):
+    openwrt = DBSession.query(OpenWrt)
+
+    return { 'items': openwrt, 'table_fields': ['uuid', 'name', 'hardware', 'radio', 'address'] }
