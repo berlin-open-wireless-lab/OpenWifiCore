@@ -1,0 +1,40 @@
+{% extends main_template %}
+
+{% block content %}
+  <table class="table">
+  {% for item in items -%}
+    {% if loop.first %}
+      <thead>
+        <tr>
+          {%- for field in table_fields %}
+            <th>{{ field }}</th>
+          {% endfor %}
+        </tr>
+      </thead>
+      <tbody>
+    {% endif %}
+        <tr>
+        {% set rowloop = loop %}
+        {% for field in table_fields %}
+          {% if field == "radio" %}
+            <td>
+            {% for radio in item[field] %}
+              {% if loop.first %}
+                {{ radio.band }}
+              {% else %}
+              | {{ radio.band }}
+              {% endif %}
+            {% endfor %}
+            </td>
+          {% else %}
+            <td>{{ item[field] }}</td>
+          {% endif %}
+        {% endfor %}
+        </tr>
+    {% if loop.last %}
+      </tbody>
+    {% endif %}
+  {%- endfor %}
+  </table>
+  <a class="btn btn-primary" href="/openwrt_add">Add</a>
+{% endblock %}
