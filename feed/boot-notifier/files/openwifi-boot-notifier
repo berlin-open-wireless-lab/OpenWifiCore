@@ -1,0 +1,49 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2014 OpenWrt.org
+
+START=99
+USE_PROCD=1
+
+validate_openwifi_section()
+{
+	uci_validate_section openwifi openwifi "${1}" \
+		'address:string:fe80::5'
+
+	return $?
+}
+
+openwifi_config() {
+	local cfg="$1"
+
+	local address localaddress uuid hostname protocol
+
+	validate_openwifi_section "${1}" || {
+		echo "validation failed"
+		return 1
+	}
+
+    . /etc/openwrt_release
+
+    localaddress=$(ip r g "${address}" | awk '{ print $7 }')
+    protocol="0.1"
+
+    wget -q -O/dev/null \
+        --header='Content-Type: applicantion/json' \
+        --post-data="{\"params\": {\"uuid\":\"${uuid}\", \"name\": \"${hostname}\", \"address\": \"${localaddress}\", \"distribution\": \"${DISTRIB_ID}\", \"version\": \"${DISTRIB_RELEASE}\", \"proto\": \"${protocol}\" }, \"method\": \"device_register\", \"jsonrpc\": \"2.0\" }" \
+        "http://${address}/api"
+}
+
+reload_service() {
+	config_load openwifi
+	config_foreach boot_config openwifi
+}
+
+service_triggers()
+{
+	procd_add_reload_trigger "openwifi"
+	procd_add_validation validate_openwifi_section
+}
+
+start_service() {
+	reload_service
+}
