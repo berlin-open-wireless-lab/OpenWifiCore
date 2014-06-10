@@ -46,7 +46,7 @@ def openwrt_add(request):
     if request.method == 'POST' and form.validate():
         ap = OpenWrt(form.name.data, form.address.data, form.distribution.data, form.version.data, form.uuid.data, False)
         DBSession.add(ap)
-        return HTTPFound(location = request.route_url('accesspoint_list'))
+        return HTTPFound(location = request.route_url('openwrt_list'))
 
     save_url = request.route_url('openwrt_add')
     return { 'save_url':save_url, 'form':form }
