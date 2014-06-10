@@ -29,7 +29,7 @@ def device_register(request, uuid, name, address, distribution, version, proto):
 @view_config(route_name='openwrt_list', renderer='templates/openwrt.jinja2', layout='base')
 def openwrt_list(request):
     openwrt = DBSession.query(OpenWrt)
-    return { 'items': openwrt, 'table_fields': ['uuid', 'name', 'hardware', 'radio', 'address'] }
+    return { 'items': openwrt, 'table_fields': ['name', 'distribution', 'version', 'address', 'uuid'] }
 
 @view_config(route_name='openwrt_edit', renderer='templates/openwrt_edit.jinja2', layout='base')
 def openwrt_edit(request):
