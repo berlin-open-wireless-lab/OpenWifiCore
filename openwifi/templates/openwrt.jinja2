@@ -15,25 +15,15 @@
     {% endif %}
         <tr>
         {% set rowloop = loop %}
-        {% for field in table_fields %}
-          {% if field == "radio" %}
-            <td>
-            {% for radio in item[field] %}
-              {% if loop.first %}
-                {{ radio.band }}
-              {% else %}
-              | {{ radio.band }}
-              {% endif %}
-            {% endfor %}
-            </td>
-          {% else %}
-            <td>{{ item[field] }}</td>
-          {% endif %}
+        {%- for field in table_fields %}
+          <th><a href="{{ domain }}/{{ item[idfield] }}" >{{ item[field] }}</a></th>
         {% endfor %}
         </tr>
     {% if loop.last %}
       </tbody>
     {% endif %}
+  {% else %}
+  <p class="lead">no data</p>
   {%- endfor %}
   </table>
   <a class="btn btn-primary" href="/openwrt_add">Add</a>
