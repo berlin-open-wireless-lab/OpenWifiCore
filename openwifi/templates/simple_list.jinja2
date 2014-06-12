@@ -7,7 +7,7 @@
       <thead>
         <tr>
           {%- for field in table_fields %}
-            <th>{{ field }}</th>
+            <th><a href="{{ domain }}/{{ item["id"] }}" >{{ field }}</a></th>
           {% endfor %}
         </tr>
       </thead>

@@ -1,0 +1,17 @@
+{% extends main_template %}
+
+{% block content %}
+    <table class="table">
+        <tbody class="tabletop">
+            {%- for field in fields -%}
+                <tr>
+                    <td class="column1">{{ field }}</td>
+                    <td>{{ device[field]  }}</td>
+                </tr>
+            {%- endfor -%}
+        </tbody>
+    </table>
+    {%- for action in actions -%}
+    <a class="btn btn-primary" href="/openwrt/{{ device['uuid'] }}/{{ action }}">{{ action }}</a>
+    {%- endfor -%}
+{% endblock %}
