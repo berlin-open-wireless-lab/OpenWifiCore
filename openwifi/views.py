@@ -17,6 +17,8 @@ from .forms import (
         OpenWrtEditForm,
         )
 
+import UUID
+
 @view_config(route_name='home', renderer='templates/home.jinja2', layout='base')
 def home(request):
     return {}
@@ -77,3 +79,7 @@ def openwrt_action(request):
         return HTTPFound(location=request.route_url('openwrt_list'))
 
     return HTTPFound(location=request.route_url('openwrt_detail', uuid=request.matchdict['uuid']))
+
+@jsonrpc_method(method='uuid_generate', endpoint='api')
+def uuid_generate(request, unique_identifier):
+    return {'uuid': generate_device_uuid(unique_identifier) }

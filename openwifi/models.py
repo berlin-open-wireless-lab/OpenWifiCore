@@ -32,7 +32,7 @@ essid_association_table = Table('essid_association', Base.metadata,
 class OpenWrt(Base):
     __tablename__ = 'openwrt'
     uuid = Column(GUID, primary_key=True)
-    name = Column(Text, unique=True)
+    name = Column(Text, unique=True, nullable=True)
     address = Column(Text) # ip or host
     distribution = Column(Text) # lazus / polar / openWrt
     version = Column(Text) # 1,2, ... 10.04 , ... trunk
