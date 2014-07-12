@@ -89,7 +89,7 @@ class JSONRPCTest(unittest.TestCase):
         if rpcid is not None:
             self.assertEqual(resp.status_int, 200)
             self.assertEqual(resp.content_type, 'application/json')
-            result = json.loads(resp.body)
+            result = json.loads(resp.body.decode())
             self.assertEqual(result['jsonrpc'], '2.0')
             self.assertEqual(result['id'], rpcid)
         else:
@@ -98,5 +98,4 @@ class JSONRPCTest(unittest.TestCase):
         return result
 
     def test_generate_uuid(self):
-        assert self._callFUT('uuid_generate', ['123']) == "0016262d334b58be85b7a7647d2c63fc"
-
+        assert self._callFUT('uuid_generate', ['123'])['result']['uuid'] == "0016262d334b58be85b7a7647d2c63fc", "Result is %s" % self._callFUT('uuid_generate', ['123']) 

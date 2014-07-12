@@ -17,7 +17,7 @@ from .forms import (
         OpenWrtEditForm,
         )
 
-import UUID
+from .utils import generate_device_uuid
 
 @view_config(route_name='home', renderer='templates/home.jinja2', layout='base')
 def home(request):
