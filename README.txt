@@ -12,3 +12,10 @@ Getting Started
 
 - $venv/bin/pserve development.ini
 
+Dependencies:
+- redis <- for states and gearman jobs
+- influxdb <- for graphs
+
+
+ubus 
+uci
