@@ -29,9 +29,17 @@ endef
 define Build/Compile
 endef
 
+define Package/openwifi-boot-notifier/conffiles
+/etc/config/openwifi
+endef
+
 define Package/openwifi-boot-notifier/install
-	$(INSTALL_DIR) $(1)/init.d/
-	$(INSTALL_BIN) ./files/openwifi-openwifi-boot-notifier $(1)/init.d/
+	$(INSTALL_DIR) $(1)/lib/openwifi/
+	$(INSTALL_DIR) $(1)/etc/init.d/
+	$(INSTALL_DIR) $(1)/etc/config/
+	$(INSTALL_BIN) ./files/openwifi-boot-notifier $(1)/etc/init.d/
+	$(INSTALL_DATA) ./files/openwifi.sh $(1)/lib/openwifi/openwifi.sh
+	$(INSTALL_DATA) ./files/openwifi.config $(1)/config/openwifi
 endef
 
 $(eval $(call BuildPackage,openwifi-boot-notifier))
