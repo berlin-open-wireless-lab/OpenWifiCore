@@ -1,5 +1,5 @@
 #!/bin/sh /etc/rc.common
-# Copyright (C) 2014 OpenWrt.org
+# Copyright (C) 2014 Alexander Couzens <lynxis@fe80.eu>
 
 START=99
 USE_PROCD=1
