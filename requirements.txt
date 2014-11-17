@@ -8,7 +8,6 @@ SQLAlchemy==0.8.2
 WebOb==1.2.3
 colander==1.0a5
 deform==0.9.7
--e git+lynxis@lunarius:/srv/gitree/openwifi/@fe9da0e9f7777219383727910659fa20c713f960#egg=openwifi-dev
 peppercorn==0.4
 pyramid==1.4.3
 pyramid-debugtoolbar==1.0.6
