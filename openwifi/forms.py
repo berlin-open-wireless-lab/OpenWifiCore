@@ -22,3 +22,6 @@ class OpenWrtEditForm(Form):
     version = TextField('version') # private key to access this ap
     uuid = TextField('uuid') # remote host key
     configured = TextField('configured')
+    login = TextField('login')
+    password = TextField('password')
+    configuration = TextField('configuration')

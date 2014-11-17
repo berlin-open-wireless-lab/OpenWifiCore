@@ -35,7 +35,7 @@ def openwrt_list(request):
     return {'idfield': 'uuid',
             'domain': 'openwrt',
             'items': openwrt,
-            'table_fields': ['name', 'distribution', 'version', 'address', 'uuid']}
+            'table_fields': ['name', 'distribution', 'version', 'address', 'uuid', 'login', 'password', 'configuration', 'configured']}
 
 # @view_config(route_name='openwrt_edit', renderer='templates/openwrt_edit.jinja2', layout='base')
 def openwrt_edit(request):
@@ -60,7 +60,7 @@ def openwrt_detail(request):
 def openwrt_add(request):
     form = OpenWrtEditForm(request.POST)
     if request.method == 'POST' and form.validate():
-        ap = OpenWrt(form.name.data, form.address.data, form.distribution.data, form.version.data, form.uuid.data, False)
+        ap = OpenWrt(form.name.data, form.address.data, form.distribution.data, form.version.data, form.uuid.data, form.login.data, form.password.data, False)
         DBSession.add(ap)
         return HTTPFound(location=request.route_url('openwrt_list'))
 

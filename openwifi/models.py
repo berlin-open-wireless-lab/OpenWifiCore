@@ -37,13 +37,18 @@ class OpenWrt(Base):
     distribution = Column(Text) # lazus / polar / openWrt
     version = Column(Text) # 1,2, ... 10.04 , ... trunk
     configured = Column(Boolean)
+    configuration = Column(Text)
+    login = Column(Text)
+    password = Column(Text)
 
-    def __init__(self, name, address, distribution, version, device_uuid, configured=False):
+    def __init__(self, name, address, distribution, version, device_uuid, login, password, configured=False):
         self.name = name
         self.address = address
         self.distribution = distribution
         self.version = version
         self.configured = configured
+        self.login = login
+        self.password = password
         try:
             self.uuid = device_uuid
         except ValueError:
