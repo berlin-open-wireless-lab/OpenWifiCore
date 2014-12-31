@@ -18,10 +18,13 @@ def get_config(uuid):
     device_url = "http://"+device.address+"/ubus"
     js = jsonubus.JsonUbus(url=device_url, user=device.login, password=device.password)
     device_configs = js.call('uci', 'configs')
-    device.configuration="["
+    device.configuration="{"
     for cur_config in device_configs[1]['configs']:
-        device.configuration+=str(js.call("uci","get",config=cur_config)[1])+","
-    device.configuration+="]"
+        device.configuration+='"'+cur_config+'":'+str(js.call("uci","get",config=cur_config)[1])+","
+    device.configuration=device.configuration[:-1]+"}"
+    device.configuration=device.configuration.replace("True", "'true'")
+    device.configuration=device.configuration.replace("False", "'false'")
+    device.configuration=device.configuration.replace("'",'"')
     DBSession.commit()
     DBSession.close()
     return True
