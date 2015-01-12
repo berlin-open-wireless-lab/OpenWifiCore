@@ -3,8 +3,8 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from openwifi.jobserver_config import sqlurl, brokerurl
 from openwifi.netcli import jsonubus
-from openwifi.models import (
-        OpenWrt )
+from openwifi.models import ( OpenWrt )
+from openwifi.jobserver.uci import Uci
 
 app = Celery('tasks', broker=brokerurl)
 
@@ -28,3 +28,25 @@ def get_config(uuid):
     DBSession.commit()
     DBSession.close()
     return True
+@app.task
+def update_config(uuid, config):
+    engine = create_engine(sqlurl)
+    Session = sessionmaker()
+    Session.configure(bind=engine)
+    DBSession=Session()
+    device = DBSession.query(OpenWrt).get(uuid)
+    configuration = Uci()
+    configuration.load_tree(device.configuration)
+    device_url = "http://"+device.address+"/ubus"
+    js = jsonubus.JsonUbus(url=device_url, user=device.login, password=device.password)
+    DBSession.commit()
+    DBSession.close()
+    for package, content in configuration.packages.items():
+        if package == config:
+            for conf in content:
+                confdict=conf.export_dict()
+                confdict['values'].pop(".index")
+                js.call('uci', 'set', config=package, **conf.export_dict())
+                js.call('uci', 'commit', config=package)
+    return True
+

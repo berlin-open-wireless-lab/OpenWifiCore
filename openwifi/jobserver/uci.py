@@ -56,9 +56,9 @@ class Config(object):
         if key in self.keys:
             del self.keys[key]
 
-    def export(self):
+    def export_uci(self):
         export = []
-        if !self.anon:
+        if not self.anon:
             export.append("config '%s' '%s'\n" % (self.uci_type, self.name))
         else:
             export.append("config '%s'\n" % (self.uci_type))
@@ -69,6 +69,13 @@ class Config(object):
                 export.append("\toption '%s' '%s'\n" % (opt_list, self.keys[opt_list]))
         export.append('\n')
         return ''.join(export)
+
+    def export_dict(self):
+        export = {}
+        export['section'] = self.name
+        export['type']    = self.uci_type
+        export['values']  = self.keys
+        return export
 
     def __repr__(self):
         return "Config[%s:%s] %s" % (self.uci_type, self.name, repr(self.keys))
@@ -104,18 +111,26 @@ class Uci(object):
     def del_path(self, path):
         pass
 
-    def export_tree(self):
+    def export_uci_tree(self):
         export = []
         for package, content in self.packages.items():
             export.append("package '%s'\n" % package)
             export.append("\n")
-            export.extend([config.export() for config in content])
+            export.extend([config.export_uci() for config in content])
         return "".join(export)
+
+    def diff(self, old, new):
+        new_packages    = []
+        new_configs     = []
+        old_packages    = []
+        old_configs     = []
+        changed_keys    = {}
+        # to be implemented
 
     def load_tree(self, export_tree_string):
         cur_package = None
         config = None
-        
+
         export_tree = json.loads(export_tree_string)
 
         for package in export_tree.keys():
@@ -126,7 +141,11 @@ class Uci(object):
                 cur_config = Config(config.pop('.type'), config.pop('.name'),anon=='true')
                 cur_package.append(cur_config)
                 for key in config.keys():
-                        cur_config.add_list(key,config[key])
+                    cur_config.set_option(key,config[key])
+                       # if isinstance(config[key], list):
+                       #     cur_config.add_list(key,config[key])
+                       # else:
+                       #     cur_config.set_option(key,config[key])
 
 
 class UciConfig(object):
