@@ -70,11 +70,19 @@ class Config(object):
         export.append('\n')
         return ''.join(export)
 
-    def export_dict(self):
+    def export_dict(self, forjson = False):
         export = {}
-        export['section'] = self.name
-        export['type']    = self.uci_type
-        export['values']  = self.keys
+        if forjson:
+            export['.name']  = self.name
+            export['.type']  = self.uci_type
+            export['.anonymous'] = self.anon
+            for i,j in self.keys.items():
+                export[i] = j
+            pass
+        else:
+            export['section'] = self.name
+            export['type']    = self.uci_type
+            export['values']  = self.keys
         return export
 
     def __repr__(self):
@@ -146,6 +154,15 @@ class Uci(object):
                        #     cur_config.add_list(key,config[key])
                        # else:
                        #     cur_config.set_option(key,config[key])
+    def export_json(self):
+        export={}
+        for packagename, package in self.packages.items():
+            export[packagename] = {}
+            export[packagename]['values'] = {}
+            for config in package:
+                export[packagename]['values'][config.name] =\
+                    config.export_dict(forjson=True)
+        return json.dumps(export)
 
 
 class UciConfig(object):
