@@ -88,13 +88,13 @@ class Config(object):
     def __repr__(self):
         return "Config[%s:%s] %s" % (self.uci_type, self.name, repr(self.keys))
 
-class Package(list):
+class Package(dict):
     def __init__(self, name):
         super().__init__()
         self.name = name
 
     def add_config(self, config):
-        self.append(config)
+        self[config.name] = config
 
 class Uci(object):
     logger = logging.getLogger('uci')
@@ -111,7 +111,7 @@ class Uci(object):
             return RuntimeError()
         if package_name not in self.packages:
             self.packages[package_name] = Package()
-        self.packages[package_name].append(config)
+        self.packages[package_name].add_config(config)
 
     def del_config(self, config):
         pass
@@ -124,7 +124,7 @@ class Uci(object):
         for package, content in self.packages.items():
             export.append("package '%s'\n" % package)
             export.append("\n")
-            export.extend([config.export_uci() for config in content])
+            export.extend([config.export_uci() for configname, config in content.items()])
         return "".join(export)
 
     def diff(self, old, new):
@@ -147,7 +147,7 @@ class Uci(object):
                 config = export_tree[package]['values'][config]
                 anon = config.pop(".anonymous")
                 cur_config = Config(config.pop('.type'), config.pop('.name'),anon=='true')
-                cur_package.append(cur_config)
+                cur_package.add_config(cur_config)
                 for key in config.keys():
                     cur_config.set_option(key,config[key])
                        # if isinstance(config[key], list):
@@ -159,7 +159,7 @@ class Uci(object):
         for packagename, package in self.packages.items():
             export[packagename] = {}
             export[packagename]['values'] = {}
-            for config in package:
+            for configname, config in package.items():
                 export[packagename]['values'][config.name] =\
                     config.export_dict(forjson=True)
         return json.dumps(export)

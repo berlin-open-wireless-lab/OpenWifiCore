@@ -43,7 +43,7 @@ def update_config(uuid, config):
     DBSession.close()
     for package, content in configuration.packages.items():
         if package == config:
-            for conf in content:
+            for confname, conf in content.items():
                 confdict=conf.export_dict()
                 confdict['values'].pop(".index")
                 js.call('uci', 'set', config=package, **conf.export_dict())
