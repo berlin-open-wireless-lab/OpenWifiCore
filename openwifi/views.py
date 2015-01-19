@@ -3,11 +3,6 @@ from pyramid.view import view_config
 from pyramid.httpexceptions import HTTPFound
 from pyramid_rpc.jsonrpc import jsonrpc_method
 from pyramid import httpexceptions as exc
-import transaction
-
-import json
-from openwifi.jobserver.uci import Uci
-import openwifi.jobserver.tasks as jobtask
 
 from sqlalchemy.exc import DBAPIError
 
@@ -60,41 +55,6 @@ def openwrt_detail(request):
     return {'device': device,
             'fields': ['name', 'distribution', 'version', 'address', 'uuid'],
             'actions': ['delete']}
-
-@view_config(route_name='openwrt_edit_config', renderer='templates/openwrt_edit_config.jinja2', layout='base')
-def openwrt_edit_config(request):
-    device = DBSession.query(OpenWrt).get(request.matchdict['uuid'])
-    if not device:
-        return exc.HTTPNotFound()
-    conf = Uci()
-    conf.load_tree(device.configuration);
-    if request.POST:
-        configsToBeUpdated=[]
-        for key, val in request.POST.dict_of_lists().items():
-            if key != "submitted":
-                packagename, configname, optionname = key.split()
-                print(val[0])
-                if str(conf.packages[packagename][configname].keys[optionname]) != \
-                        val[0]:
-                    print("Value " + key + " changed from " +
-                            str(conf.packages[packagename][configname].keys[optionname])
-                        + " to " + val[0])
-                    try:
-                        savevalue = json.loads(val[0])
-                    except ValueError:
-                        savevalue = val[0]
-                    conf.packages[packagename][configname].keys[optionname] = \
-                        savevalue
-                    configsToBeUpdated.append(packagename)
-        if configsToBeUpdated:
-            device.configuration=conf.export_json()
-            transaction.commit()
-            for config in configsToBeUpdated:
-                jobtask.update_config.delay(request.matchdict['uuid'],config)
-            #DBSession.commit()
-        return HTTPFound(location=request.route_url('openwrt_list'))
-    return{'config' : conf}
-
 
 @view_config(route_name='openwrt_add', renderer='templates/openwrt_add.jinja2', layout='base')
 def openwrt_add(request):
