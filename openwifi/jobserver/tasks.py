@@ -25,6 +25,7 @@ def get_config(uuid):
     device.configuration=device.configuration.replace("True", "'true'")
     device.configuration=device.configuration.replace("False", "'false'")
     device.configuration=device.configuration.replace("'",'"')
+    device.configured = True
     DBSession.commit()
     DBSession.close()
     return True
