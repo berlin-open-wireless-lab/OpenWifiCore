@@ -12,7 +12,7 @@ Getting Started
     . venv/bin/activate
     pip install -r requirements.txt
     python setup.py develop
-    initialize\_openwifi\_db development.ini
+    initialize_openwifi_db development.ini
     echo development is ready now
   
     pserve --monitor-restart --daemon development.ini
