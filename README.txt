@@ -10,6 +10,8 @@ Getting Started
 
 - $venv/bin/initialize_openwifi_db development.ini
 
+- $venv/bin/celery -A openwifi.jobserver.tasks worker
+
 - $venv/bin/pserve development.ini
 
 Dependencies:

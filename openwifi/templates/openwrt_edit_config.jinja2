@@ -1,0 +1,21 @@
+{% extends main_template %}
+
+{% block content %}
+<form class="openwifi form-inline" method="POST">
+{% for name, configs in config.packages.items() %}
+	<h1> {{name}} </h1>
+	{% for confname, conf in configs.items() %}
+		{% if conf.anon %} <i>  {% endif %}
+		<h4> {{conf.uci_type}} "{{ confname  }}"</h4>
+		{% if conf.anon %} </i>  {% endif %}
+		<table>
+		{% for option, value in conf.keys.items() %}
+		<tr><td>	{{option}}:</td> <td><input class="form-control" type="text" name="{{name}} {{conf.name}} {{option}}" value="{{value}}" /> </td> </tr>
+		{% endfor %}
+		</table>
+	{% endfor %}
+{% endfor %}
+    <button type="submit" name="submitted" class="btn btn-default">Submit</button>
+</form>
+
+{% endblock %}
