@@ -20,6 +20,7 @@ def main(global_config, **settings):
     config.add_route('openwrt_detail', '/openwrt/{uuid}')
     config.add_route('openwrt_action', '/openwrt/{uuid}/{action}')
     config.add_route('openwrt_add', '/openwrt_add')
+    config.add_route('openwrt_edit_config', '/openwrt_edit_config/{uuid}')
 
     config.include('pyramid_rpc.jsonrpc')
     config.add_jsonrpc_endpoint('api', '/api')

@@ -16,7 +16,11 @@
         <tr>
         {% set rowloop = loop %}
         {%- for field in table_fields %}
-          <th><a href="{{ domain }}/{{ item[idfield] }}" >{{ item[field] }}</a></th>
+		{% if field == "configuration" %}
+		  <th><a href="openwrt_edit_config/{{ item[idfield] }}" > config </a></th>
+		{% else %}
+		  <th><a href="{{ domain }}/{{ item[idfield] }}" >{{ item[field] }}</a></th>
+		{% endif %}
         {% endfor %}
         </tr>
     {% if loop.last %}
