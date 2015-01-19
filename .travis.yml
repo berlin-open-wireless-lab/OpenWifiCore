@@ -3,5 +3,5 @@ python:
   - "3.4"
 install:
   - "pip install -r requirements.txt"
-  - "python setup.py develop"
-  - "initialize_openwifi_db development.ini"
+script:
+  - "python setup.py test"
