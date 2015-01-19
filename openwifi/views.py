@@ -59,7 +59,7 @@ def openwrt_detail(request):
 
     return {'device': device,
             'fields': ['name', 'distribution', 'version', 'address', 'uuid'],
-            'actions': ['delete']}
+            'actions': ['delete', 'getConfig']}
 
 @view_config(route_name='openwrt_edit_config', renderer='templates/openwrt_edit_config.jinja2', layout='base')
 def openwrt_edit_config(request):
@@ -116,6 +116,9 @@ def openwrt_action(request):
 
     if action == 'delete':
         DBSession.delete(device)
+        return HTTPFound(location=request.route_url('openwrt_list'))
+    if action == 'getConfig':
+        jobtask.get_config.delay(request.matchdict['uuid'])
         return HTTPFound(location=request.route_url('openwrt_list'))
 
     return HTTPFound(location=request.route_url('openwrt_detail', uuid=request.matchdict['uuid']))
