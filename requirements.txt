@@ -23,6 +23,7 @@ pyramid-debugtoolbar==2.0.2
 pyramid-jinja2==1.10
 pyramid-layout==0.8
 pyramid-mako==1.0a3
+pyramid-rpc==0.5.2
 pyramid-tm==0.7
 pytz==2014.10
 repoze.lru==0.6
