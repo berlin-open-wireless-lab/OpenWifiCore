@@ -4,18 +4,20 @@ openwifi README
 Getting Started
 ---------------
 
-- cd <directory containing this file>
+   sudo apt-get install rabbitmq-server python3-pip git
+   git clone https://github.com/berlin-open-wireless-lab/wrtmgmt.git
+   cd wrtmgmt
+   pip3 install virtualenv
+   virtualenv venv
+   . venv/bin/activate
+   pip install -r requirements.txt
+   python setup.py develop
+   initialize_openwifi_db development.ini
+   echo development is ready now
 
-- $venv/bin/python setup.py develop
-
-- $venv/bin/initialize_openwifi_db development.ini
-
-- $venv/bin/pserve development.ini
+   pserve --monitor-restart --daemon development.ini
+   celery -A tasks worker --loglevel=info
 
 Dependencies:
-- redis <- for states and gearman jobs
-- influxdb <- for graphs
+- rabbitmq <- for states and gearman jobs
 
-
-ubus 
-uci
