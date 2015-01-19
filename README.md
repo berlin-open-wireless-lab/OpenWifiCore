@@ -16,6 +16,7 @@ Getting Started
     echo development is ready now
   
     pserve --monitor-restart --daemon development.ini
+		cd openwifi/jobserver 
     celery -A tasks worker --loglevel=info
 
 Dependencies:
