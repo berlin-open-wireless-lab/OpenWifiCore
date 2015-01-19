@@ -1,5 +1,9 @@
-openwifi README
-==================
+openwifi
+========
+
+A management tool for OpenWrt devices.
+
+[![Build Status](https://travis-ci.org/berlin-open-wireless-lab/wrtmgmt.svg?branch=master)](https://travis-ci.org/berlin-open-wireless-lab/wrtmgmt)
 
 Getting Started
 ---------------
