@@ -26,6 +26,23 @@ openwifi_config() {
 
   localaddress=$(ip r g "${address}" | awk '{ print $7 }')
   protocol="0.1"
+  user=root
+  password="$(dd if=/dev/urandom of=- bs=512 count=1 2>/dev/null | md5sum - | cut -c1-16)"
+
+  [ -n "$IPKG_INSTROOT" ] || lock /var/lock/passwd
+  TMP=$(mktemp /tmp/userdel_XXXXXX)
+  user_add generatepw 1023 65534
+  echo -e "$password\n$password\n" | passwd generatepw
+  cryptpw="$(grep ^generatepw: /etc/shadow | awk -F: '{print $2}')"
+
+  # remove generatepw user
+  cp /etc/shadow $TMP
+  grep -v "^generatepw:" $TMP > /etc/shadow
+  cp /etc/passwd $TMP
+  grep -v "^generatepw:" $TMP > /etc/passwd
+  rm $TMP
+  [ -n "$IPKG_INSTROOT" ] || lock -u /var/lock/passwd
+  uci set rpcd.@login[0].password="$cryptpw"
 
   wget -q -O/dev/null \
       --header='Content-Type: applicantion/json' \
@@ -36,7 +53,10 @@ openwifi_config() {
             \"address\": \"${localaddress}\", \
             \"distribution\": \"${DISTRIB_ID}\", \
             \"version\": \"${DISTRIB_RELEASE}\", \
-            \"proto\": \"${protocol}\" }, \
+            \"proto\": \"${protocol}\", \
+            \"login\": \"${user}\", \
+            \"password\": \"${password}\", \
+            }, \
         \"method\": \"device_register\", \
         \"jsonrpc\": \"2.0\" }" \
         "http://${address}/api"
