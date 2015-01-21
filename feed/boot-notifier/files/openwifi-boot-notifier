@@ -44,7 +44,7 @@ openwifi_config() {
 
 reload_service() {
   config_load openwifi
-  config_foreach boot_config openwifi
+  config_foreach openwifi_config openwifi
 }
 
 service_triggers()
