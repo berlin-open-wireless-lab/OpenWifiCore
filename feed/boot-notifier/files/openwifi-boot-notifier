@@ -22,14 +22,23 @@ openwifi_config() {
     return 1
   }
 
-    . /etc/openwrt_release
+  . /etc/openwrt_release
 
-    localaddress=$(ip r g "${address}" | awk '{ print $7 }')
-    protocol="0.1"
+  localaddress=$(ip r g "${address}" | awk '{ print $7 }')
+  protocol="0.1"
 
-    wget -q -O/dev/null \
-        --header='Content-Type: applicantion/json' \
-        --post-data="{\"params\": {\"uuid\":\"${uuid}\", \"name\": \"${hostname}\", \"address\": \"${localaddress}\", \"distribution\": \"${DISTRIB_ID}\", \"version\": \"${DISTRIB_RELEASE}\", \"proto\": \"${protocol}\" }, \"method\": \"device_register\", \"jsonrpc\": \"2.0\" }" \
+  wget -q -O/dev/null \
+      --header='Content-Type: applicantion/json' \
+      --post-data="\
+        {\"params\": \
+          { \"uuid\":\"${uuid}\", \
+            \"name\": \"${hostname}\", \
+            \"address\": \"${localaddress}\", \
+            \"distribution\": \"${DISTRIB_ID}\", \
+            \"version\": \"${DISTRIB_RELEASE}\", \
+            \"proto\": \"${protocol}\" }, \
+        \"method\": \"device_register\", \
+        \"jsonrpc\": \"2.0\" }" \
         "http://${address}/api"
 }
 
