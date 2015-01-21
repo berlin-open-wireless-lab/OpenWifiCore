@@ -37,8 +37,8 @@ def home(request):
     return {}
 
 @jsonrpc_method(method='device_register', endpoint='api')
-def device_register(request, uuid, name, address, distribution, version, proto):
-    ap = OpenWrt(name, address, distribution, version, uuid, False)
+def device_register(request, uuid, name, address, distribution, version, proto, login, password):
+    ap = OpenWrt(name, address, distribution, version, uuid, login, password, False)
     DBSession.add(ap)
     DBSession.flush()
 
