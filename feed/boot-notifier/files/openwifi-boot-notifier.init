@@ -6,7 +6,7 @@ USE_PROCD=1
 
 validate_openwifi_section()
 {
-  uci_validate_section openwifi openwifi "${1}" \
+  uci_validate_section openwifi server "${1}" \
     'address:string:fe80::5'
 
   return $?
@@ -25,7 +25,7 @@ openwifi_config() {
 
 reload_service() {
   config_load openwifi
-  config_foreach openwifi_config openwifi
+  config_foreach openwifi_config server
 }
 
 service_triggers()
