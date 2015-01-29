@@ -19,7 +19,7 @@ define Package/openwifi-boot-notifier
   SECTION:=utils
   CATEGORY:=OpenWifi
   TITLE:=Boot Notifier
-  DEPENDS:=
+  DEPENDS:=ip
 endef
 
 define Package/openwifi-boot-notifier/description
