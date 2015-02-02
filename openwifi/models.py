@@ -6,6 +6,7 @@ from sqlalchemy import (
     Table,
     Boolean,
     Binary,
+    DateTime
     )
 
 from sqlalchemy.ext.declarative import declarative_base
@@ -53,6 +54,19 @@ class OpenWrt(Base):
             self.uuid = device_uuid
         except ValueError:
             self.uuid = device_uuid
+
+class ConfigArchive(Base):
+    __tablename__ = "configarchive"
+    date = Column(DateTime)
+    configuration = Column(Text)
+    router_uuid = Column(GUID)
+    id = Column(Text, primary_key=True)
+
+    def __init__(self, date, configuration, router_uuid, id):
+        self.configuration = configuration
+        self.date          = date
+        self.router_uuid   = router_uuid
+        self.id            = id
 
 class AccessPoint(Base):
     __tablename__ = 'accesspoint'
