@@ -4,6 +4,9 @@ from pyramid.httpexceptions import HTTPFound
 from pyramid_rpc.jsonrpc import jsonrpc_method
 from pyramid import httpexceptions as exc
 import transaction
+import random
+from datetime import datetime
+import string
 
 import json
 from openwifi.jobserver.uci import Uci
@@ -15,6 +18,7 @@ from .models import (
     AccessPoint,
     DBSession,
     OpenWrt,
+    ConfigArchive
     )
 
 from .forms import (
@@ -39,8 +43,18 @@ def openwrt_list(request):
     openwrt = DBSession.query(OpenWrt)
     return {'idfield': 'uuid',
             'domain': 'openwrt',
+            'confdomain': 'openwrt_edit_config',
             'items': openwrt,
             'table_fields': ['name', 'distribution', 'version', 'address', 'uuid', 'login', 'password', 'configuration', 'configured']}
+
+@view_config(route_name='confarchive', renderer='templates/archive_list.jinja2', layout='base')
+def confarchive(request):
+    configs = DBSession.query(ConfigArchive)
+    return {'idfield': 'id',
+            'domain': 'confarchive',
+            'confdomain': 'openwrt_edit_config',
+            'items': configs,
+            'table_fields': ['date', 'id', 'router_uuid', 'configuration']}
 
 # @view_config(route_name='openwrt_edit', renderer='templates/openwrt_edit.jinja2', layout='base')
 def openwrt_edit(request):
@@ -59,7 +73,7 @@ def openwrt_detail(request):
 
     return {'device': device,
             'fields': ['name', 'distribution', 'version', 'address', 'uuid'],
-            'actions': ['delete', 'getConfig']}
+            'actions': ['delete', 'getConfig', 'saveConfToArchive']}
 
 @view_config(route_name='openwrt_edit_config', renderer='templates/openwrt_edit_config.jinja2', layout='base')
 def openwrt_edit_config(request):
@@ -120,9 +134,16 @@ def openwrt_action(request):
     if action == 'getConfig':
         jobtask.get_config.delay(request.matchdict['uuid'])
         return HTTPFound(location=request.route_url('openwrt_list'))
+    if action == 'saveConfToArchive':
+        confToBeArchived = ConfigArchive(datetime.now(),device.configuration,device.uuid,id_generator())
+        DBSession.add(confToBeArchived)
+        return HTTPFound(location=request.route_url('confarchive'))
 
     return HTTPFound(location=request.route_url('openwrt_detail', uuid=request.matchdict['uuid']))
 
 @jsonrpc_method(method='uuid_generate', endpoint='api')
 def uuid_generate(request, unique_identifier):
     return {'uuid': generate_device_uuid(unique_identifier) }
+
+def id_generator(size=6, chars=string.ascii_uppercase + string.digits):
+    return ''.join(random.choice(chars) for _ in range(size))
