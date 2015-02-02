@@ -72,17 +72,21 @@ class Config(object):
 
     def export_dict(self, forjson = False):
         export = {}
+        export_keys = self.keys
+        export_keys.pop('.name')
+        export_keys.pop('.type')
+        export_keys.pop('.anonymous')
         if forjson:
             export['.name']  = self.name
             export['.type']  = self.uci_type
             export['.anonymous'] = self.anon
-            for i,j in self.keys.items():
+            for i,j in export_keys.items():
                 export[i] = j
             pass
         else:
             export['section'] = self.name
             export['type']    = self.uci_type
-            export['values']  = self.keys
+            export['values']  = export_keys
         return export
 
     def __repr__(self):
@@ -145,8 +149,8 @@ class Uci(object):
             cur_package = self.add_package(package)
             for config in export_tree[package]['values']:
                 config = export_tree[package]['values'][config]
-                anon = config.pop(".anonymous")
-                cur_config = Config(config.pop('.type'), config.pop('.name'),anon=='true')
+                anon = config[".anonymous"]
+                cur_config = Config(config['.type'], config['.name'],anon=='true')
                 cur_package.add_config(cur_config)
                 for key in config.keys():
                     cur_config.set_option(key,config[key])

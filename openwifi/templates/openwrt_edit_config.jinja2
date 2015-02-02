@@ -1,21 +1,108 @@
 {% extends main_template %}
-
 {% block content %}
-<form class="openwifi form-inline" method="POST">
-{% for name, configs in config.packages.items() %}
-	<h1> {{name}} </h1>
-	{% for confname, conf in configs.items() %}
-		{% if conf.anon %} <i>  {% endif %}
-		<h4> {{conf.uci_type}} "{{ confname  }}"</h4>
-		{% if conf.anon %} </i>  {% endif %}
-		<table>
-		{% for option, value in conf.keys.items() %}
-		<tr><td>	{{option}}:</td> <td><input class="form-control" type="text" name="{{name}} {{conf.name}} {{option}}" value="{{value}}" /> </td> </tr>
-		{% endfor %}
-		</table>
-	{% endfor %}
-{% endfor %}
-    <button type="submit" name="submitted" class="btn btn-default">Submit</button>
-</form>
 
+<script>
+function toggleHidden()
+{
+	$(".toHide").toggleClass("hidden");
+}
+function appendOption(name, confname)
+{
+	var optionObject = '#toAppend'+name+confname;
+	var option = $(optionObject).val();
+	var appendString = "<tr><td>" + option + ":</td> <td><input class=\"form-control\" type=\"text\" name=\"" + name +  confname + option +" value=\"\" /> </td> </tr>";
+	$("#table"+name+confname).append(appendString);
+}
+function deleteTr(child)
+{
+	child.parent().parent().parent().parent().remove()
+}
+$(document).ready(function(){
+	var elem = '<button type="button" class="btn btn-danger" onclick="deleteTr($(this))">delete</button>';
+	$(".deletePopup").popover({animation:true, content: elem, html:true});
+})
+</script>
+
+<form class="openwifi form-inline" method="POST">
+<div role="tabpanel">
+<ul class="nav nav-tabs" role="tablist">
+{% for name, configs in config.packages.items() %}
+<li role="presentation"><a href="#{{name}}" aria-controls="{{name}}" role="tab" data-toggle="tab">{{name}}</a></li>
+{% endfor %}
+</ul>
+<!-- Tab panes -->
+<div class="tab-content">
+{% for name, configs in config.packages.items() %}
+
+<div role="tabpanel" class="tab-pane" id="{{name}}">
+  <!--<h1> {{name}} </h1>-->
+
+  <div class="container">
+  <div class="panel-group" id="accordion{{name}}" role="tablist" aria-multiselectable="true">
+
+	{% for confname, conf in configs.items() %}
+
+	  <div class="panel panel-default">
+	    <div class="panel-heading" role="tab" id="heading{{name}}{{confname}}">
+	      <h4 class="panel-title">
+		{% if loop.first %}
+		<a class='collapsed' data-toggle="collapse" data-parent="#accordion{{name}}" href="#collapse{{name}}{{confname}}" aria-expanded="true" aria-controls="collapse{{name}}{{confname}}" {% if conf.anon %} style="font-style:italic!important;" {% endif %} >
+		{% else %}
+		<a class=''  data-toggle="collapse" data-parent="#accordion{{name}}" href="#collapse{{name}}{{confname}}" aria-expanded="false" aria-controls="collapse{{name}}{{confname}}" {% if conf.anon %} style="font-style:italic!important;" {% endif %}>
+		{% endif %}
+			{{conf.uci_type}} "{{ confname  }}"
+		</a>
+	       </h4>
+	     </div>
+
+	    <div id="collapse{{name}}{{confname}}" class="panel-collapse collapse" role="tabpanel" aria-labelledby="heading{{name}}{{confname}}">
+	      <div class="panel-body">
+			<table class="table" id="table{{name}}{{confname}}">
+			{% for option, value in conf.keys.items() %}
+			  {% if option in hiddenOptions %}
+			<tr class='toHide hidden'><td class='deletePopup'>	{{option}}:</td> <td><input class="form-control" type="text" name="{{name}} {{conf.name}} {{option}}" value="{{value}}" /> </td> </tr>
+			  {% else %}
+			<tr><td> <div class="deletePopup"> {{option}}: </div></td> <td><input class="form-control" type="text" name="{{name}} {{conf.name}} {{option}}" value="{{value}}" /> </td> </tr>
+			  {% endif %}
+			{% endfor %}
+			</table>
+
+					<!-- Button trigger modal -->
+					<button type="button" class="btn btn-primary" data-toggle="modal" data-target="#Modal{{name}}{{confname}}">
+					  Add Option
+					</button>
+
+					<!-- Modal -->
+					<div class="modal fade" id="Modal{{name}}{{confname}}" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+					  <div class="modal-dialog">
+					    <div class="modal-content">
+					      <div class="modal-header">
+						<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+						<h4 class="modal-title" id="ModalLabel{{name}}{{confname}}">Add Option to {{name}} - {{confname}}</h4>
+					      </div>
+					      <div class="modal-body">
+						      <form>
+							      Name of New Option: <input type="text" class="form-control" id="toAppend{{name}}{{confname}}" />
+						      </form>
+					      </div>
+					      <div class="modal-footer">
+						<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+						<button onclick="appendOption('{{name}}','{{confname}}')" type="button" class="btn btn-primary">Add</button>
+					      </div>
+					    </div>
+					  </div>
+					</div>
+ 
+		</div>
+	       </div>
+	      </div>
+	{% endfor %}
+   </div>
+   </div>
+</div>
+{% endfor %}
+</div>
+    <button type="submit" name="submitted" class="btn btn-default">Submit</button>
+    <button type="button" onclick="toggleHidden()" class="btn btn-default">Toggle Hidden Values</button>
+</form>
 {% endblock %}

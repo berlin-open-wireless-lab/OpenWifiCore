@@ -107,7 +107,8 @@ def openwrt_edit_config(request):
                 jobtask.update_config.delay(request.matchdict['uuid'],config)
             #DBSession.commit()
         return HTTPFound(location=request.route_url('openwrt_list'))
-    return{'config' : conf}
+    return{ 'hiddenOptions' : ['.index','.type','.name','.anonymous'],
+            'config'        : conf}
 
 
 @view_config(route_name='openwrt_add', renderer='templates/openwrt_add.jinja2', layout='base')
