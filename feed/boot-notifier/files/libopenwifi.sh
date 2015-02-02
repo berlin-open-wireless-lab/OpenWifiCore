@@ -84,3 +84,22 @@ device_check_registered() {
       "http://${address}/api")
 }
 
+# check if server $1 is a openwifi server
+device_discover_server() {
+  local server="$1"
+
+  RESPONSE=$(wget -q -O- \
+      --header='Content-Type: application/json' \
+      --post-data="\
+        {\"params\": \
+          { \
+          }, \
+        \"method\": \"hello\", \
+        \"jsonrpc\": \"2.0\" }" \
+      "http://${address}/api")
+  if [ "$RESPONSE" = "openwifi" ] ; then
+    return 1
+  fi
+
+  return 0
+}
