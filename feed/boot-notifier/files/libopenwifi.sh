@@ -1,5 +1,7 @@
 #!/bin/ash
 
+. /usr/share/libubox/jshn.sh
+
 PROTOCOL=0.1
 
 user_del() {
@@ -87,6 +89,7 @@ device_check_registered() {
 # check if server $1 is a openwifi server
 device_discover_server() {
   local server="$1"
+  local result
 
   RESPONSE=$(wget -q -O- \
       --header='Content-Type: application/json' \
@@ -94,10 +97,13 @@ device_discover_server() {
         {\"params\": \
           { \
           }, \
+        \"id\": \"23\", \
         \"method\": \"hello\", \
         \"jsonrpc\": \"2.0\" }" \
       "http://${address}/api")
-  if [ "$RESPONSE" = "openwifi" ] ; then
+  json_load "$RESPONSE"
+  json_get_var result result
+  if [ "$result" = "openwifi" ] ; then
     return 1
   fi
 
