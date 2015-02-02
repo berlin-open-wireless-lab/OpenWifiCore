@@ -14,15 +14,19 @@
     <!-- Include all compiled plugins (below), or include individual files as needed -->
     <script src="{{request.static_url('openwifi:static/js/bootstrap.min.js')}}"></script>
 
-    <div class="navbar navbar-inverse navbar-fixed-top">
-      <div class="container">
-        <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".nav-collapse">
+    <nav class="navbar navbar-inverse navbar-fixed-top">
+      <div class="container-fluid">
+       <div class="navbar-header">
+        <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#mynav-collapse">
+	  <span class="sr-only">Toggle navigation</span>
           <span class="icon-bar"></span>
           <span class="icon-bar"></span>
           <span class="icon-bar"></span>
         </button>
         <a class="navbar-brand" href="#">OpenWifi</a>
-        <div class="nav-collapse collapse">
+	</div>
+
+        <div class="collapse navbar-collapse" id="mynav-collapse">
           <ul class="nav navbar-nav">
             <li><a href="/">Home</a></li>
             <li><a href="/openwrt">OpenWrt</a></li>
@@ -30,7 +34,7 @@
           </ul>
         </div><!--/.nav-collapse -->
       </div>
-    </div>
+    </nav>
     <div class="container">
       <div id="content">{% block content %}{% endblock %}</div>
     </div>
