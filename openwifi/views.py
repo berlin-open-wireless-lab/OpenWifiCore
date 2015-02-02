@@ -53,6 +53,10 @@ def device_register(request, uuid, name, address, distribution, version, proto, 
     DBSession.add(ap)
     DBSession.flush()
 
+@jsonrpc_method(method='hello', endpoint='api')
+def hello(request):
+    return "openwifi"
+
 @view_config(route_name='openwrt_list', renderer='templates/openwrt.jinja2', layout='base')
 def openwrt_list(request):
     openwrt = DBSession.query(OpenWrt)

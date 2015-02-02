@@ -99,3 +99,6 @@ class JSONRPCTest(unittest.TestCase):
 
     def test_generate_uuid(self):
         assert self._callFUT('uuid_generate', ['123'])['result']['uuid'] == "0016262d334b58be85b7a7647d2c63fc", "Result is %s" % self._callFUT('uuid_generate', ['123']) 
+
+    def test_hello(self):
+        assert self._callFUT('hello', [])['result'] == 'openwifi'
