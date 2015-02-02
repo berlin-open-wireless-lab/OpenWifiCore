@@ -53,8 +53,9 @@ def device_register(request, uuid, name, address, distribution, version, proto, 
     DBSession.add(ap)
     DBSession.flush()
 
-@jsonrpc_method(method='hello', endpoint='api')
+@jsonrpc_method(endpoint='api')
 def hello(request):
+    """ this call is used for discovery to ensure """
     return "openwifi"
 
 @view_config(route_name='openwrt_list', renderer='templates/openwrt.jinja2', layout='base')
