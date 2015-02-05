@@ -109,3 +109,13 @@ device_discover_server() {
 
   return 0
 }
+
+device_discover() {
+  if device_discover_server "openwifi" ; then
+    set_server openwifi
+    return 0
+  fi
+
+
+  return 1
+}
