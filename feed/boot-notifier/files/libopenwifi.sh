@@ -67,7 +67,7 @@ device_register() {
         \"method\": \"device_register\", \
         \"jsonrpc\": \"2.0\" }" \
         "http://${address}/api"
-  RET=$?
+  return $?
 }
 
 # check if device is already registered
