@@ -110,9 +110,10 @@ device_discover_server() {
   return 0
 }
 
+# search for a openwifi controller and set it if found
 device_discover() {
   if device_discover_server "openwifi" ; then
-    set_server openwifi
+    set_controller openwifi
     return 0
   fi
 
@@ -124,11 +125,29 @@ device_discover() {
     eval $(jsonfilter -s "$mdns" -e 'controller=@["_openwifi._tcp"')
     for control in controller ; do
       if device_discover_server "$control" ; then
-        set_server "$control"
+        set_controller "$control"
         return 0
       fi
     done
   fi
 
   return 1
+}
+
+set_controller() {
+  local server
+  server="$1"
+
+  uci delete openwifi.@server[]
+  uci add openwifi server
+  uci set openwifi.@server[0].server="$server"
+
+  if ! device_register "$server" ; then
+    # device register failed!
+    uci revert openwifi
+    return 1
+  fi
+
+  uci commit openwifi
+  return 0
 }
