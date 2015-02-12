@@ -116,6 +116,19 @@ device_discover() {
     return 0
   fi
 
+  # check if mdns is available
+  if ubus list mdns ; then
+    local mdns controller
+    ubus call mdns scan
+    mdns=$(ubus call mdns browse)
+    eval $(jsonfilter -s "$mdns" -e 'controller=@["_openwifi._tcp"')
+    for control in controller ; do
+      if device_discover_server "$control" ; then
+        set_server "$control"
+        return 0
+      fi
+    done
+  fi
 
   return 1
 }
