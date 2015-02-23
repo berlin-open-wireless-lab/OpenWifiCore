@@ -20,8 +20,8 @@ Getting Started
     echo development is ready now
   
     pserve --monitor-restart --daemon development.ini
-    cd openwifi/jobserver 
-    celery -A tasks worker --loglevel=info
+    celery -A openwifi.jobserver.tasks worker --loglevel=info
+    celery -A openwifi.jobserver.tasks beat
 
 Dependencies:
 - rabbitmq <- for states and gearman jobs

@@ -1,12 +1,25 @@
-from celery import Celery
+from celery import Celery, signature
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from openwifi.jobserver_config import sqlurl, brokerurl
 from openwifi.netcli import jsonubus
 from openwifi.models import ( OpenWrt )
 from openwifi.jobserver.uci import Uci
+from datetime import timedelta
 
 app = Celery('tasks', broker=brokerurl)
+
+app.conf.CELERYBEAT_SCHEDULE = {
+    'add-every-30-seconds': {
+        'task': 'openwifi.jobserver.tasks.update_unconfigured_nodes',
+        'schedule': timedelta(seconds=30),
+        'args': ()
+    },
+}
+
+app.conf.CELERY_TIMEZONE = 'UTC'
+
+
 
 @app.task
 def get_config(uuid):
@@ -50,4 +63,17 @@ def update_config(uuid, config):
                 js.call('uci', 'set', config=package, **conf.export_dict())
                 js.call('uci', 'commit', config=package)
     return True
+
+@app.task
+def update_unconfigured_nodes():
+    engine = create_engine(sqlurl)
+    Session = sessionmaker()
+    Session.configure(bind=engine)
+    DBSession=Session()
+    devices = DBSession.query(OpenWrt).filter(OpenWrt.configured==False)
+    for device in devices:
+        arguments=[]
+        arguments.append(device.uuid)
+        update_device_task = signature('openwifi.jobserver.tasks.update_config',args=arguments)
+        update_device_task.delay()
 
