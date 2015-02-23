@@ -10,7 +10,7 @@ function appendOption(name, confname)
 {
 	var optionObject = '#toAppend'+name+confname;
 	var option = $(optionObject).val();
-	var appendString = "<tr><td>" + option + ":</td> <td><input class=\"form-control\" type=\"text\" name=\"" + name +  confname + option +" value=\"\" /> </td> </tr>";
+	var appendString = "<tr><td>" + option + ":</td> <td><input class=\"form-control\" type=\"text\" name=\"" + name + " " +  confname + " " + option +"\" value=\"\" /> </td> </tr>";
 	$("#table"+name+confname).append(appendString);
 }
 function deleteTr(child)
@@ -22,7 +22,7 @@ $(document).ready(function(){
 	$(".deletePopup").popover({animation:true, content: elem, html:true});
 })
 </script>
-
+<h1>Node configuration for <em>{{devicename}}</em></h1> 
 <form class="openwifi form-inline" method="POST">
 <div role="tabpanel">
 <ul class="nav nav-tabs" role="tablist">
@@ -39,9 +39,7 @@ $(document).ready(function(){
 
   <div class="container">
   <div class="panel-group" id="accordion{{name}}" role="tablist" aria-multiselectable="true">
-
 	{% for confname, conf in configs.items() %}
-
 	  <div class="panel panel-default">
 	    <div class="panel-heading" role="tab" id="heading{{name}}{{confname}}">
 	      <h4 class="panel-title">
@@ -65,34 +63,20 @@ $(document).ready(function(){
 			<tr><td> <div class="deletePopup"> {{option}}: </div></td> <td><input class="form-control" type="text" name="{{name}} {{conf.name}} {{option}}" value="{{value}}" /> </td> </tr>
 			  {% endif %}
 			{% endfor %}
-			</table>
-
-					<!-- Button trigger modal -->
-					<button type="button" class="btn btn-primary" data-toggle="modal" data-target="#Modal{{name}}{{confname}}">
+						</table>
+			<table class='table'>
+				<tr><td>
+					<form>
+							      Name of New Option: <input type="text" class="form-control" id="toAppend{{name}}{{confname}}" />
+					</form>
+					</td><td>
+					<button type="button" class="btn btn-primary" onclick="appendOption('{{name}}', '{{confname}}');">
 					  Add Option
 					</button>
+					</td>
+			</tr>
 
-					<!-- Modal -->
-					<div class="modal fade" id="Modal{{name}}{{confname}}" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
-					  <div class="modal-dialog">
-					    <div class="modal-content">
-					      <div class="modal-header">
-						<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-						<h4 class="modal-title" id="ModalLabel{{name}}{{confname}}">Add Option to {{name}} - {{confname}}</h4>
-					      </div>
-					      <div class="modal-body">
-						      <form>
-							      Name of New Option: <input type="text" class="form-control" id="toAppend{{name}}{{confname}}" />
-						      </form>
-					      </div>
-					      <div class="modal-footer">
-						<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-						<button onclick="appendOption('{{name}}','{{confname}}')" type="button" class="btn btn-primary">Add</button>
-					      </div>
-					    </div>
-					  </div>
-					</div>
- 
+			</table>
 		</div>
 	       </div>
 	      </div>
