@@ -73,9 +73,6 @@ class Config(object):
     def export_dict(self, forjson = False):
         export = {}
         export_keys = self.keys
-        export_keys.pop('.name')
-        export_keys.pop('.type')
-        export_keys.pop('.anonymous')
         if forjson:
             export['.name']  = self.name
             export['.type']  = self.uci_type
@@ -131,13 +128,53 @@ class Uci(object):
             export.extend([config.export_uci() for configname, config in content.items()])
         return "".join(export)
 
-    def diff(self, old, new):
+    def diff(self, new):
         new_packages    = []
         new_configs     = []
         old_packages    = []
         old_configs     = []
+        new_keys        = {}
+        old_keys        = {}
         changed_keys    = {}
-        # to be implemented
+
+        # find new package keys
+        for key in new.packages.keys():
+            if not (key in self.packages.keys()):
+                new_packages.append(key)
+            else:
+                for confkey in new.packages[key].keys():
+                    if not (confkey in self.packages[key].keys()):
+                        new_configs.append((key, confkey))
+                    else:
+                        new_options = new.packages[key][confkey].export_dict(forjson=True)
+                        old_options = self.packages[key][confkey].export_dict(forjson=True)
+                        for option_key, option_value in new_options.items():
+                            if not (option_key in old_options.keys()):
+                                new_keys[(key, confkey, option_key)]=option_value
+                            else:
+                                if option_value != old_options[option_key]:
+                                    changed_keys[(key, confkey, option_key)] =\
+                                        (old_options[option_key],option_value)
+                        for option_key, option_value in old_options.items():
+                            if not (option_key in new_options.keys()):
+                                old_keys[(key, confkey, option_key)]=option_value
+
+        # find old package keys
+        for key in self.packages.keys():
+            if not (key in new.packages.keys()):
+                old_packages.append(key)
+            else:
+                for confkey in self.packages[key].keys():
+                    if not (confkey in new.packages[key].keys()):
+                        old_configs.append((key, confkey))
+
+        return {'newpackages':  new_packages,
+                'newconfigs':   new_configs,
+                'oldpackages':  old_packages,
+                'oldconfigs':   old_configs,
+                'newOptions':   new_keys,
+                'oldOptions':   old_keys,
+                'chaOptions':   changed_keys}
 
     def load_tree(self, export_tree_string):
         cur_package = None
@@ -149,8 +186,8 @@ class Uci(object):
             cur_package = self.add_package(package)
             for config in export_tree[package]['values']:
                 config = export_tree[package]['values'][config]
-                anon = config[".anonymous"]
-                cur_config = Config(config['.type'], config['.name'],anon=='true')
+                anon = config.pop(".anonymous")
+                cur_config = Config(config.pop('.type'), config.pop('.name'),anon=='true')
                 cur_package.add_config(cur_config)
                 for key in config.keys():
                     cur_config.set_option(key,config[key])
