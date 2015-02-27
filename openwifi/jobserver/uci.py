@@ -190,6 +190,13 @@ class Uci(object):
                 cur_config = Config(config.pop('.type'), config.pop('.name'),anon=='true')
                 cur_package.add_config(cur_config)
                 for key in config.keys():
+                    if isinstance(config[key],str):
+                        try:
+                            config[key] = config[key].replace("'",'"')
+                            newval = json.loads(config[key])
+                        except ValueError:
+                            newval = config[key]
+                        config[key] = newval
                     cur_config.set_option(key,config[key])
                        # if isinstance(config[key], list):
                        #     cur_config.add_list(key,config[key])

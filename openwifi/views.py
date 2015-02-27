@@ -7,6 +7,7 @@ import transaction
 import random
 from datetime import datetime
 import string
+import pprint
 
 import json
 from openwifi.jobserver.uci import Uci
@@ -84,28 +85,35 @@ def openwrt_edit_config(request):
     conf.load_tree(device.configuration);
     if request.POST:
         configsToBeUpdated=[]
+        newConfig = {}
         for key, val in request.POST.dict_of_lists().items():
             if key != "submitted":
+                val[0] = val[0].replace("'", '"') # for better json recognition
                 packagename, configname, optionname = key.split()
-                print(val[0])
-                if str(conf.packages[packagename][configname].keys[optionname]) != \
-                        val[0]:
-                    print("Value " + key + " changed from " +
-                            str(conf.packages[packagename][configname].keys[optionname])
-                        + " to " + val[0])
-                    try:
-                        savevalue = json.loads(val[0])
-                    except ValueError:
-                        savevalue = val[0]
-                    conf.packages[packagename][configname].keys[optionname] = \
-                        savevalue
-                    configsToBeUpdated.append(packagename)
-        if configsToBeUpdated:
-            device.configuration=conf.export_json()
-            transaction.commit()
-            for config in configsToBeUpdated:
-                jobtask.update_config.delay(request.matchdict['uuid'],config)
-            #DBSession.commit()
+                if not (packagename in newConfig.keys()):
+                    newConfig[packagename] = {}
+                    newConfig[packagename]['values'] = {}
+                if not (configname in newConfig[packagename]['values'].keys()):
+                    newConfig[packagename]['values'][configname] = {}
+                try:
+                    savevalue = json.loads(val[0])
+                except ValueError:
+                    savevalue = val[0]
+                newConfig[packagename]['values'][configname][optionname] = savevalue
+        newUci = Uci()
+        newUci.load_tree(json.dumps(newConfig));
+        pp = pprint.PrettyPrinter(indent=4)
+        pp.pprint(conf.diff(newUci));
+        device.configuration = newUci.export_json()
+        transaction.commit()
+        for package in newUci.packages.keys():
+            jobtask.update_config.delay(request.matchdict['uuid'], package)
+        #if configsToBeUpdated:
+        #    device.configuration=conf.export_json()
+        #    transaction.commit()
+        #    for config in configsToBeUpdated:
+        #        jobtask.update_config.delay(request.matchdict['uuid'],config)
+        #    #DBSession.commit()
         return HTTPFound(location=request.route_url('openwrt_list'))
     return{ 'hiddenOptions' : ['.index','.type','.name','.anonymous'],
             'config'        : conf,

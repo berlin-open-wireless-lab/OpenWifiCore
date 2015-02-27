@@ -56,7 +56,7 @@ $(document).ready(function(){
 	    <div id="collapse{{name}}{{confname}}" class="panel-collapse collapse" role="tabpanel" aria-labelledby="heading{{name}}{{confname}}">
 	      <div class="panel-body">
 			<table class="table" id="table{{name}}{{confname}}">
-			{% for option, value in conf.keys.items() %}
+			{% for option, value in conf.export_dict(forjson=True).items() %}
 			  {% if option in hiddenOptions %}
 			<tr class='toHide hidden'><td class='deletePopup'>	{{option}}:</td> <td><input class="form-control" type="text" name="{{name}} {{conf.name}} {{option}}" value="{{value}}" /> </td> </tr>
 			  {% else %}
