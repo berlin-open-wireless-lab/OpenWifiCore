@@ -12,7 +12,7 @@ import json
 app = Celery('tasks', broker=brokerurl)
 
 app.conf.CELERYBEAT_SCHEDULE = {
-    'add-every-30-seconds': {
+    'look-for-unconfigured-nodes-every-30-seconds': {
         'task': 'openwifi.jobserver.tasks.update_unconfigured_nodes',
         'schedule': timedelta(seconds=30),
         'args': ()
@@ -55,7 +55,7 @@ def update_config(uuid, config):
     engine = create_engine(sqlurl)
     Session = sessionmaker()
     Session.configure(bind=engine)
-    DBSession=Session()
+    DBSession = Session()
     device = DBSession.query(OpenWrt).get(uuid)
     configuration = Uci()
     configuration.load_tree(device.configuration)
@@ -77,12 +77,11 @@ def update_unconfigured_nodes():
     engine = create_engine(sqlurl)
     Session = sessionmaker()
     Session.configure(bind=engine)
-    DBSession=Session()
+    DBSession = Session()
     devices = DBSession.query(OpenWrt).filter(OpenWrt.configured==False)
     for device in devices:
-        arguments=[]
-        arguments.append(device.uuid)
-        update_device_task = signature('openwifi.jobserver.tasks.update_config',args=arguments)
+        arguments = ( device.uuid, )
+        update_device_task = signature('openwifi.jobserver.tasks.get_config',args=arguments)
         update_device_task.delay()
 
 @app.task
