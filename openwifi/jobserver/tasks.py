@@ -1,11 +1,13 @@
 from celery import Celery, signature
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from openwifi.jobserver_config import sqlurl, brokerurl
+from openwifi.jobserver_config import sqlurl, brokerurl, redishost, redisport, redisdb
 from openwifi.netcli import jsonubus
 from openwifi.models import ( OpenWrt )
 from openwifi.jobserver.uci import Uci
 from datetime import timedelta
+import redis
+import json
 
 app = Celery('tasks', broker=brokerurl)
 
@@ -15,6 +17,12 @@ app.conf.CELERYBEAT_SCHEDULE = {
         'schedule': timedelta(seconds=30),
         'args': ()
     },
+    'update-node-status-every-30-seconds': {
+        'task': 'openwifi.jobserver.tasks.update_status',
+        'schedule': timedelta(seconds=30),
+        'args': ()
+    },
+
 }
 
 app.conf.CELERY_TIMEZONE = 'UTC'
@@ -76,4 +84,26 @@ def update_unconfigured_nodes():
         arguments.append(device.uuid)
         update_device_task = signature('openwifi.jobserver.tasks.update_config',args=arguments)
         update_device_task.delay()
+
+@app.task
+def update_status():
+    engine = create_engine(sqlurl)
+    Session = sessionmaker()
+    Session.configure(bind=engine)
+    DBSession = Session()
+    devices = DBSession.query(OpenWrt)
+    redisDB = redis.StrictRedis(host=redishost, port=redisport, db=redisdb)
+    for device in devices:
+        device_url = "http://"+device.address+"/ubus"
+        js = jsonubus.JsonUbus(url=device_url, user=device.login, password=device.password)
+        try:
+            networkstatus = js.callp('network.interface','dump')
+        except OSError as error:
+            redisDB.hset(str(device.uuid), 'status', "{message} ({errorno})".format(message=error.strerror, errorno=error.errno))
+        except:
+            redisDB.hset(str(device.uuid), 'status', "error receiving status...")
+        else:
+            redisDB.hset(str(device.uuid), 'status', "online")
+            redisDB.hset(str(device.uuid), 'networkstatus', json.dumps(networkstatus['interface']))
+
 

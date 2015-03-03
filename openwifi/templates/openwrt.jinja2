@@ -1,6 +1,59 @@
 {% extends main_template %}
 
 {% block content %}
+<script src="{{request.static_url('openwifi:static/js/jquery.jsonrpcclient.js')}}"></script>
+<script>
+var devices;
+var RPCClient;
+function responseRPC(result)
+{
+				var popOverHTML = '';
+	  		   	if(result.status === 'online')
+				{
+					$("#Status_"+result.uuid).html('<button type="button" class="btn btn-default"><span class="glyphicon glyphicon-ok-circle" aria-hidden="true" style=\'color:green;\'></span></button>')
+					for (x in result.interfaces)
+					{
+						var ipaddr;
+						if (result.interfaces[x]['ipv4-address'])
+							ipaddr =  result.interfaces[x]['ipv4-address'][0].address
+						else
+							ipaddr = "none";
+						popOverHTML += "<b>" + result.interfaces[x].device + "</b> :" + ipaddr + "<br>";
+					}
+				} else
+				{
+					$("#Status_"+result.uuid).html('<button type="button" class="btn btn-default"><span class="glyphicon glyphicon-remove-circle" aria-hidden="true" style="color:red;"></span></button>')
+					popOverHTML = result.status;
+				}
+				$("#Status_"+result.uuid+" button").popover("destroy").popover({animation:true, content:popOverHTML, html:true, trigger:'hover click'});
+
+}
+function rpcError(error)
+{
+console.log('There was an error', error);
+}
+
+function rpcBatchDone(all_result_array)
+{
+console.log('BatchDone');
+}
+
+function RPCBatch(batch)
+{
+	for (i in devices)
+		RPCClient.call('get_node_status', { 'uuid': devices[i] },responseRPC, rpcError);
+}
+
+function updateStatus(){
+	RPCClient.batch(RPCBatch,rpcBatchDone,rpcError);
+	setTimeout(updateStatus, 30000);
+}
+
+$(document).ready(function(){
+devices = JSON.parse('{{devices|safe}}');
+RPCClient = new $.JsonRpcClient({ ajaxUrl: '/api', timeout: 1000 });
+updateStatus()});
+</script>
   <table class="table">
   {% for item in items -%}
     {% if loop.first %}
@@ -17,9 +70,13 @@
         {% set rowloop = loop %}
         {%- for field in table_fields %}
 		{% if field == "configuration" %}
-		  <th><a class="btn btn-primary" href="{{ confdomain }}/{{ item[idfield] }}" > show  config </a></th>
+		  <th><a class="btn btn-primary" href="{{ confdomain }}/{{ item[idfield] }}" >show  config</a></th>
 		{% else %}
-		  <th><a href="{{ domain }}/{{ item[idfield] }}" >{{ item[field] }}</a></th>
+		  <th>
+		  {% if loop.first %}
+		  <div id="Status_{{item[idfield]}}" style="display:inline;"></div>
+		  {% endif %}
+		  <a href="{{ domain }}/{{ item[idfield] }}" >{{ item[field] }}</a></th>
 		{% endif %}
         {% endfor %}
         </tr>

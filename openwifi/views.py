@@ -8,6 +8,8 @@ import random
 from datetime import datetime
 import string
 import pprint
+from openwifi.jobserver_config import redishost, redisport, redisdb
+import redis
 
 import json
 from openwifi.jobserver.uci import Uci
@@ -42,8 +44,12 @@ def device_register(request, uuid, name, address, distribution, version, proto):
 @view_config(route_name='openwrt_list', renderer='templates/openwrt.jinja2', layout='base')
 def openwrt_list(request):
     openwrt = DBSession.query(OpenWrt)
+    devices = []
+    for device in openwrt:
+        devices.append(str(device.uuid))
     return {'idfield': 'uuid',
             'domain': 'openwrt',
+            'devices': json.dumps(devices),
             'confdomain': 'openwrt_edit_config',
             'items': openwrt,
             'table_fields': ['name', 'distribution', 'version', 'address', 'uuid', 'login', 'password', 'configuration', 'configured']}
@@ -190,6 +196,16 @@ def openwrt_action(request):
 @jsonrpc_method(method='uuid_generate', endpoint='api')
 def uuid_generate(request, unique_identifier):
     return {'uuid': generate_device_uuid(unique_identifier) }
+
+@jsonrpc_method(method='get_node_status', endpoint='api')
+def get_node_status(request, uuid):
+    r = redis.StrictRedis(host=redishost, port=redisport, db=redisdb)
+    resp = {}
+    resp['status'] = r.hget(str(uuid), 'status').decode()
+    resp['uuid']=uuid
+    if resp['status'] == 'online':
+        resp['interfaces'] = json.loads(r.hget(str(uuid), 'networkstatus').decode())
+    return resp
 
 def id_generator(size=6, chars=string.ascii_uppercase + string.digits):
     return ''.join(random.choice(chars) for _ in range(size))
