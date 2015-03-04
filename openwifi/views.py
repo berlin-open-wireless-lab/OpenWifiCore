@@ -112,8 +112,7 @@ def openwrt_edit_config(request):
         pp.pprint(conf.diff(newUci));
         device.configuration = newUci.export_json()
         transaction.commit()
-        for package in newUci.packages.keys():
-            jobtask.update_config.delay(request.matchdict['uuid'], package)
+        jobtask.update_config.delay(request.matchdict['uuid'])
         #if configsToBeUpdated:
         #    device.configuration=conf.export_json()
         #    transaction.commit()
@@ -154,8 +153,7 @@ def archive_edit_config(request):
         if configsToBeUpdated:
             device.configuration=conf.export_json()
             transaction.commit()
-            for config in configsToBeUpdated:
-                jobtask.update_config.delay(request.matchdict['uuid'],config)
+            jobtask.update_config.delay(request.matchdict['uuid'])
             #DBSession.commit()
         return HTTPFound(location=request.route_url('openwrt_list'))
     return{ 'hiddenOptions' : ['.index','.type','.name','.anonymous'],
