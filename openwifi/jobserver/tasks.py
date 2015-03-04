@@ -27,7 +27,17 @@ app.conf.CELERYBEAT_SCHEDULE = {
 
 app.conf.CELERY_TIMEZONE = 'UTC'
 
-
+def return_config_from_node_as_json(url, user, passwd):
+        js = jsonubus.JsonUbus(url = url, user = user, password = passwd)
+        device_configs = js.call('uci', 'configs')
+        configuration="{"
+        for cur_config in device_configs[1]['configs']:
+            configuration+='"'+cur_config+'":'+str(js.call("uci","get",config=cur_config)[1])+","
+        configuration = configuration[:-1]+"}"
+        configuration = configuration.replace("True", "'true'")
+        configuration = configuration.replace("False", "'false'")
+        configuration = configuration.replace("'",'"')
+        return configuration
 
 @app.task
 def get_config(uuid):
@@ -38,23 +48,18 @@ def get_config(uuid):
         DBSession=Session()
         device = DBSession.query(OpenWrt).get(uuid)
         device_url = "http://"+device.address+"/ubus"
-        js = jsonubus.JsonUbus(url=device_url, user=device.login, password=device.password)
-        device_configs = js.call('uci', 'configs')
-        device.configuration="{"
-        for cur_config in device_configs[1]['configs']:
-            device.configuration+='"'+cur_config+'":'+str(js.call("uci","get",config=cur_config)[1])+","
-        device.configuration=device.configuration[:-1]+"}"
-        device.configuration=device.configuration.replace("True", "'true'")
-        device.configuration=device.configuration.replace("False", "'false'")
-        device.configuration=device.configuration.replace("'",'"')
+        device.configuration = return_config_from_node_as_json(device_url,
+                                                               device.login,
+                                                               device.password)
         device.configured = True
         DBSession.commit()
         DBSession.close()
         return True
     except:
         return False
+
 @app.task
-def update_config(uuid, config):
+def update_config(uuid):
     engine = create_engine(sqlurl)
     Session = sessionmaker()
     Session.configure(bind=engine)
