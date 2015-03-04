@@ -60,26 +60,71 @@ def get_config(uuid):
         return False
 
 @app.task
+def diff_update_config(diff, url, user, passwd):
+    js = jsonubus.JsonUbus(url=url,
+                           user=user,
+                           password=passwd)
+    # add new packages via file-interface and insert corresponding configs
+    for packname, pack in diff['newpackages'].items():
+        js.call('file', 'write', path='/etc/config/'+packname, data='')
+        for confname, conf in pack.items():
+            js.call('uci','add',config=packname, **conf.export_dict(foradd=True))
+            js.call('uci','commit',config=packname)
+
+    # add new configs
+    for confname, conf in diff['newconfigs']:
+        js.call('uci','add',config=confname[0], **conf.export_dict(foradd=True))
+        js.call('uci','commit', config=confname[0])
+
+    # remove old configs
+    for confname, conf in diff['oldconfigs']:
+        js.call('uci','delete',config=confname[0],section=confname[1])
+        js.call('uci','commit',config=confname[0])
+
+    # remove old packages via file-interface
+    for packname, pack in diff['oldpackages'].items():
+        js.call('file', 'exec', command='/bin/rm',
+                params=['/etc/config/'+packname])
+
+    # add new options
+    for optkey, optval in diff['newOptions'].items():
+        js.call('uci','set',config=optkey[0],section=optkey[1],
+                values={optkey[3]:optval})
+        js.call('uci','commit',config=optkey[0])
+
+    # delete old options
+    for optkey in diff['oldOptions'].keys():
+        js.call('uci','delete',config=optkey[0],section=optkey[1],
+                option=optkey[2])
+        js.call('uci','commit',config=optkey[0])
+
+    # set changed options
+    for optkey, optval in diff['chaOptions'].items():
+        js.call('uci','set',config=optkey[0],section=optkey[1],
+                values={optkey[3]:optval[1]})
+        js.call('uci','commit',config=optkey[0])
+
+@app.task
 def update_config(uuid):
     engine = create_engine(sqlurl)
     Session = sessionmaker()
     Session.configure(bind=engine)
     DBSession = Session()
     device = DBSession.query(OpenWrt).get(uuid)
-    configuration = Uci()
-    configuration.load_tree(device.configuration)
+    new_configuration = Uci()
+    new_configuration.load_tree(device.configuration)
     device_url = "http://"+device.address+"/ubus"
-    js = jsonubus.JsonUbus(url=device_url, user=device.login, password=device.password)
+    cur_configuration = Uci()
+    cur_configuration.load_tree(return_config_from_node_as_json(device_url,
+                                                                device.login,
+                                                                device.password))
+    conf_diff = cur_configuration.diff(new_configuration)
     DBSession.commit()
     DBSession.close()
-    for package, content in configuration.packages.items():
-        if package == config:
-            for confname, conf in content.items():
-                confdict=conf.export_dict()
-                confdict['values'].pop(".index")
-                js.call('uci', 'set', config=package, **conf.export_dict())
-                js.call('uci', 'commit', config=package)
-    return True
+    update_diff_conf = signature('openwifi.jobserver.tasks.diff_update_config',
+                                 args=(conf_diff, device_url,
+                                       device.login, device.password))
+    update_diff_conf.delay()
 
 @app.task
 def update_unconfigured_nodes():
