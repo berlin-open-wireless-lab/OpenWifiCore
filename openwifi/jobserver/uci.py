@@ -70,7 +70,7 @@ class Config(object):
         export.append('\n')
         return ''.join(export)
 
-    def export_dict(self, forjson = False):
+    def export_dict(self, forjson = False, foradd = False):
         export = {}
         export_keys = self.keys
         if forjson:
@@ -79,7 +79,10 @@ class Config(object):
             export['.anonymous'] = self.anon
             for i,j in export_keys.items():
                 export[i] = j
-            pass
+        elif foradd:
+            export['name']    = self.name
+            export['type']    = self.uci_type
+            export['values']  = export_keys
         else:
             export['section'] = self.name
             export['type']    = self.uci_type
