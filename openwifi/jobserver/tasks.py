@@ -56,6 +56,7 @@ def get_config(uuid):
         DBSession.close()
         return True
     except:
+        device.configured = False
         return False
 
 @app.task
