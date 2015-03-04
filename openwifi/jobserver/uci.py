@@ -129,10 +129,10 @@ class Uci(object):
         return "".join(export)
 
     def diff(self, new):
-        new_packages    = []
-        new_configs     = []
-        old_packages    = []
-        old_configs     = []
+        new_packages    = {}
+        new_configs     = {}
+        old_packages    = {}
+        old_configs     = {}
         new_keys        = {}
         old_keys        = {}
         changed_keys    = {}
@@ -140,11 +140,11 @@ class Uci(object):
         # find new package keys
         for key in new.packages.keys():
             if not (key in self.packages.keys()):
-                new_packages.append(key)
+                new_packages[key] = new.packages[key]
             else:
                 for confkey in new.packages[key].keys():
                     if not (confkey in self.packages[key].keys()):
-                        new_configs.append((key, confkey))
+                        new_configs[(key, confkey)] = new.packages[key][confkey]
                     else:
                         new_options = new.packages[key][confkey].export_dict(forjson=True)
                         old_options = self.packages[key][confkey].export_dict(forjson=True)
@@ -162,11 +162,11 @@ class Uci(object):
         # find old package keys
         for key in self.packages.keys():
             if not (key in new.packages.keys()):
-                old_packages.append(key)
+                old_packages[key] = self.packages[key]
             else:
                 for confkey in self.packages[key].keys():
                     if not (confkey in new.packages[key].keys()):
-                        old_configs.append((key, confkey))
+                        old_configs[(key, confkey)] = self.packages[key][confkey]
 
         return {'newpackages':  new_packages,
                 'newconfigs':   new_configs,
