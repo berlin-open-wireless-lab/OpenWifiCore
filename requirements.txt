@@ -36,3 +36,5 @@ waitress==0.8.8
 zope.deprecation==4.1.1
 zope.interface==4.1.1
 zope.sqlalchemy==0.7.4
+-e git+git@github.com:hpfmn/wrtmgmt.git@5cd9532c285b008877400983107c18c22e4a5b01#egg=openwifi-origin/master
+pyuci==0.0

@@ -4,7 +4,7 @@ from sqlalchemy.orm import sessionmaker
 from openwifi.jobserver_config import sqlurl, brokerurl, redishost, redisport, redisdb
 from openwifi.netcli import jsonubus
 from openwifi.models import ( OpenWrt )
-from openwifi.jobserver.uci import Uci
+from pyuci import Uci
 from datetime import timedelta
 import redis
 import json

@@ -12,7 +12,7 @@ from openwifi.jobserver_config import redishost, redisport, redisdb
 import redis
 
 import json
-from openwifi.jobserver.uci import Uci
+from pyuci import Uci
 import openwifi.jobserver.tasks as jobtask
 
 from sqlalchemy.exc import DBAPIError
