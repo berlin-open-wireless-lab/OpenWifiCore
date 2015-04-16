@@ -2,91 +2,122 @@
 {% block content %}
 
 <script>
-function toggleHidden()
-{
-	$(".toHide").toggleClass("hidden");
-}
-function appendOption(name, confname)
-{
-	var optionObject = '#toAppend'+name+confname;
-	var option = $(optionObject).val();
-	var appendString = "<tr><td>" + option + ":</td> <td><input class=\"form-control\" type=\"text\" name=\"" + name + " " +  confname + " " + option +"\" value=\"\" /> </td> </tr>";
-	$("#table"+name+confname).append(appendString);
-}
-function deleteTr(child)
-{
-	child.parent().parent().parent().parent().remove()
-}
-$(document).ready(function(){
-	var elem = '<button type="button" class="btn btn-danger" onclick="deleteTr($(this))">delete</button>';
-	$(".deletePopup").popover({animation:true, content: elem, html:true});
-})
+  function toggleHidden()
+  {
+  	$(".toHide").toggleClass("hidden");
+  }
+
+  function appendOption(name, confname)
+  {
+  	var optionObject = '#toAppend'+name+confname;
+  	var option = $(optionObject).val();
+  	var appendString = "<tr><td>" 
+  	                   + option + 
+  			   ":</td> <td><input class=\"form-control\" " +
+			   +"type=\"text\" name=\"" +
+  			   + name + " " 
+  			   + confname + " " 
+  			   + option 
+  			   +"\" value=\"\" /> </td> </tr>";
+  	$("#table"+name+confname).append(appendString);
+  }
+
+  function deleteTr(child)
+  {
+  	child.parent().parent().parent().parent().remove()
+  }
+
+  $(document).ready(
+   // Set Popups after Pageload for delete Buttons
+   function(){  
+  	var elem = '<button type="button" class="btn btn-danger" '
+  	elem    += 'onclick="deleteTr($(this))">delete</button>';
+  	$(".deletePopup").popover({animation:true, content: elem, html:true});
+   }
+  )
 </script>
+
 <h1>Node configuration for <em>{{devicename}}</em></h1> 
 <form class="openwifi form-inline" method="POST">
-<div role="tabpanel">
-<ul class="nav nav-tabs" role="tablist">
-{% for name, configs in config.packages.items() %}
-<li role="presentation"><a href="#{{name}}" aria-controls="{{name}}" role="tab" data-toggle="tab">{{name}}</a></li>
-{% endfor %}
-</ul>
-<!-- Tab panes -->
-<div class="tab-content">
-{% for name, configs in config.packages.items() %}
-
-<div role="tabpanel" class="tab-pane" id="{{name}}">
-  <!--<h1> {{name}} </h1>-->
-
-  <div class="container">
-  <div class="panel-group" id="accordion{{name}}" role="tablist" aria-multiselectable="true">
-	{% for confname, conf in configs.items() %}
-	  <div class="panel panel-default">
-	    <div class="panel-heading" role="tab" id="heading{{name}}{{confname}}">
-	      <h4 class="panel-title">
-		{% if loop.first %}
-		<a class='collapsed' data-toggle="collapse" data-parent="#accordion{{name}}" href="#collapse{{name}}{{confname}}" aria-expanded="true" aria-controls="collapse{{name}}{{confname}}" {% if conf.anon %} style="font-style:italic!important;" {% endif %} >
-		{% else %}
-		<a class=''  data-toggle="collapse" data-parent="#accordion{{name}}" href="#collapse{{name}}{{confname}}" aria-expanded="false" aria-controls="collapse{{name}}{{confname}}" {% if conf.anon %} style="font-style:italic!important;" {% endif %}>
-		{% endif %}
-			{{conf.uci_type}} "{{ confname  }}"
-		</a>
-	       </h4>
-	     </div>
-
-	    <div id="collapse{{name}}{{confname}}" class="panel-collapse collapse" role="tabpanel" aria-labelledby="heading{{name}}{{confname}}">
-	      <div class="panel-body">
-			<table class="table" id="table{{name}}{{confname}}">
-			{% for option, value in conf.export_dict(forjson=True).items() %}
-			  {% if option in hiddenOptions %}
-			<tr class='toHide hidden'><td class='deletePopup'>	{{option}}:</td> <td><input class="form-control" type="text" name="{{name}} {{conf.name}} {{option}}" value="{{value}}" /> </td> </tr>
-			  {% else %}
-			<tr><td> <div class="deletePopup"> {{option}}: </div></td> <td><input class="form-control" type="text" name="{{name}} {{conf.name}} {{option}}" value="{{value}}" /> </td> </tr>
-			  {% endif %}
-			{% endfor %}
-						</table>
-			<table class='table'>
-				<tr><td>
-					<form>
-							      Name of New Option: <input type="text" class="form-control" id="toAppend{{name}}{{confname}}" />
-					</form>
-					</td><td>
-					<button type="button" class="btn btn-primary" onclick="appendOption('{{name}}', '{{confname}}');">
-					  Add Option
-					</button>
-					</td>
-			</tr>
-
-			</table>
-		</div>
-	       </div>
-	      </div>
-	{% endfor %}
-   </div>
-   </div>
-</div>
-{% endfor %}
-</div>
-    <button type="submit" name="submitted" class="btn btn-default">Submit</button>
-    <button type="button" onclick="toggleHidden()" class="btn btn-default">Toggle Hidden Values</button>
-</form>
+ <div role="tabpanel">
+  <ul class="nav nav-tabs" role="tablist"> <!-- list of tabtitles -->
+   {# iterate thru packages for tabtitles  #}
+   {% for name, configs in config.packages.items() %} 
+   <li role="presentation">
+    <a href="#{{name}}" aria-controls="{{name}}" role="tab" data-toggle="tab">
+     {{name}}
+    </a>
+   </li>
+   {% endfor %}
+  </ul>
+  <!-- Tab panes -->
+  <div class="tab-content">
+  {# iterate thru packages for package content #}
+  {% for name, configs in config.packages.items() %} 
+  <div role="tabpanel" class="tab-pane" id="{{name}}">
+   <div class="container">
+    <div class="panel-group" id="accordion{{name}}" 
+         role="tablist" aria-multiselectable="true">
+     {# iterate thru configs of a package #}
+     {% for confname, conf in configs.items() %} 
+      <div class="panel panel-default">
+       <div class="panel-heading" role="tab" id="heading{{name}}{{confname}}">
+        <h4 class="panel-title">
+          <a class='collapsed' data-toggle="collapse" 
+	     data-parent="#accordion{{name}}" href="#collapse{{name}}{{confname}}" 
+	     aria-expanded="true" aria-controls="collapse{{name}}{{confname}}" 
+	      {% if conf.anon %} style="font-style:italic!important;" {% endif %} >
+           {{conf.uci_type}} "{{ confname  }}"
+  	  </a>
+        </h4>
+       </div> <!-- end panel-title -->
+       <div id="collapse{{name}}{{confname}}" class="panel-collapse collapse" 
+            role="tabpanel" aria-labelledby="heading{{name}}{{confname}}">
+        <div class="panel-body">
+         <table class="table" id="table{{name}}{{confname}}">
+         {% for option, value in conf.export_dict(forjson=True).items() %}
+           {% if option in hiddenOptions %}
+            <tr class='toHide hidden'>
+	     <td class='deletePopup'>{{option}}:</td> 
+	     <td>
+	      <input class="form-control" type="text" 
+	             name="{{name}} {{conf.name}} {{option}}" value="{{value}}" />
+	     </td> 
+	    </tr>
+           {% else %}
+            <tr>
+	     <td>
+	      <div class="deletePopup">{{option}}:</div>
+	     </td> 
+	     <td>
+	      <input class="form-control" type="text" 
+	             name="{{name}} {{conf.name}} {{option}}" value="{{value}}" /> 
+	     </td> 
+	    </tr>
+           {% endif %}
+         {% endfor %}
+         </table> <!-- end of content table of current config -->
+         <table class='table'>
+  	<tr><td>
+  	 Name of New Option: 
+	  <input type="text" class="form-control" id="toAppend{{name}}{{confname}}" />
+  	</td><td>
+  	 <button type="button" class="btn btn-primary" 
+	         onclick="appendOption('{{name}}', '{{confname}}');">
+  	  Add Option
+  	 </button>
+  	</td></tr>
+         </table> <!-- end of gui-table for appending options -->
+        </div> <!-- end panel-body -->
+       </div> <!-- end panel-collapse -->
+      </div> <!-- end panel -->
+     {% endfor %}
+    </div> <!-- end panel group -->
+   </div> <!-- end container -->
+  </div> <!-- end tabpanel tab-content -->
+  {% endfor %}
+ </div> <!-- end tabpanel -->
+  <button type="submit" name="submitted" class="btn btn-default">Submit</button>
+  <button type="button" onclick="toggleHidden()" class="btn btn-default">Toggle Hidden Values</button>
+</form> <!-- end main form -->
 {% endblock %}
