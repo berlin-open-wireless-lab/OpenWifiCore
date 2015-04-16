@@ -32,11 +32,8 @@ def return_config_from_node_as_json(url, user, passwd):
         device_configs = js.call('uci', 'configs')
         configuration="{"
         for cur_config in device_configs[1]['configs']:
-            configuration+='"'+cur_config+'":'+str(js.call("uci","get",config=cur_config)[1])+","
+            configuration+='"'+cur_config+'":'+json.dumps(js.call("uci","get",config=cur_config)[1])+","
         configuration = configuration[:-1]+"}"
-        configuration = configuration.replace("True", "'true'")
-        configuration = configuration.replace("False", "'false'")
-        configuration = configuration.replace("'",'"')
         return configuration
 
 @app.task
