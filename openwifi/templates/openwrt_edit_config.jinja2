@@ -42,24 +42,24 @@
  <div role="tabpanel">
   <ul class="nav nav-tabs" role="tablist"> <!-- list of tabtitles -->
    {# iterate thru packages for tabtitles  #}
-   {% for name, configs in config.packages.items() %} 
+   {%- for name, configs in config.packages.items() -%} 
    <li role="presentation">
     <a href="#{{name}}" aria-controls="{{name}}" role="tab" data-toggle="tab">
      {{name}}
     </a>
    </li>
-   {% endfor %}
+   {%- endfor -%}
   </ul>
   <!-- Tab panes -->
   <div class="tab-content">
   {# iterate thru packages for package content #}
-  {% for name, configs in config.packages.items() %} 
+  {%- for name, configs in config.packages.items() -%} 
   <div role="tabpanel" class="tab-pane" id="{{name}}">
    <div class="container">
     <div class="panel-group" id="accordion{{name}}" 
          role="tablist" aria-multiselectable="true">
      {# iterate thru configs of a package #}
-     {% for confname, conf in configs.items() %} 
+     {%- for confname, conf in configs.items() -%} 
       <div class="panel panel-default">
        <div class="panel-heading" role="tab" id="heading{{name}}{{confname}}">
         <h4 class="panel-title">
@@ -75,8 +75,8 @@
             role="tabpanel" aria-labelledby="heading{{name}}{{confname}}">
         <div class="panel-body">
          <table class="table" id="table{{name}}{{confname}}">
-         {% for option, value in conf.export_dict(forjson=True).items() %}
-           {% if option in hiddenOptions %}
+         {%- for option, value in conf.export_dict(forjson=True).items() -%}
+           {%- if option in hiddenOptions -%}
             <tr class='toHide hidden'>
 	     <td class='deletePopup'>{{option}}:</td> 
 	     <td>
@@ -84,7 +84,7 @@
 	             name="{{name}} {{conf.name}} {{option}}" value="{{value}}" />
 	     </td> 
 	    </tr>
-           {% else %}
+           {%- else -%}
             <tr>
 	     <td>
 	      <div class="deletePopup">{{option}}:</div>
@@ -94,8 +94,8 @@
 	             name="{{name}} {{conf.name}} {{option}}" value="{{value}}" /> 
 	     </td> 
 	    </tr>
-           {% endif %}
-         {% endfor %}
+           {%- endif -%}
+         {%- endfor -%}
          </table> <!-- end of content table of current config -->
          <table class='table'>
   	<tr><td>
@@ -111,11 +111,11 @@
         </div> <!-- end panel-body -->
        </div> <!-- end panel-collapse -->
       </div> <!-- end panel -->
-     {% endfor %}
+     {%- endfor -%}
     </div> <!-- end panel group -->
    </div> <!-- end container -->
   </div> <!-- end tabpanel tab-content -->
-  {% endfor %}
+  {%- endfor -%}
  </div> <!-- end tabpanel -->
   <button type="submit" name="submitted" class="btn btn-default">Submit</button>
   <button type="button" onclick="toggleHidden()" class="btn btn-default">Toggle Hidden Values</button>
