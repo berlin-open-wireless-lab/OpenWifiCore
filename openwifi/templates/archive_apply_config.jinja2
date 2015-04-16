@@ -1,0 +1,62 @@
+{% extends main_template %}
+
+
+{% block content %}
+<script>
+var pressed = false;
+$(document).ready(
+function(){
+$(document).keydown(function(e)
+{
+	console.log(e);
+	if(e.shiftKey){
+		pressed = true;
+	}
+});
+
+$(document).keyup(function(event){
+  	pressed = false;
+	});
+
+$(".check").mouseover(
+   function(){
+    if(pressed) {
+        console.log($(this).prop('checked'));
+        $(this).prop('checked', !$(this).prop('checked'));
+    } else
+    {
+    	console.log(pressed);
+    }
+    }
+   );
+});
+
+</script>
+
+<form class="openwifi form-inline" method="POST">
+<table class='table'>
+ <tr>
+  <th>
+   Device Name
+  </th>
+  <th>
+   Device UUID
+  </th>
+ </tr>
+ {%- for name, uuid in devices.items() -%}
+  <tr>
+   <td>
+    <input class='check' type='checkbox' name='{{uuid}}'>
+     {{ name }}
+   </td>
+   <td>
+    {{ uuid }}
+   </td>
+  </tr>
+ {%- endfor -%}
+</table>
+<button type='submit' name='submitted' class='btn btn-primary'>
+ Apply Config
+ </button>
+</form>
+{% endblock %}

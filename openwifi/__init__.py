@@ -23,6 +23,7 @@ def main(global_config, **settings):
     config.add_route('confarchive', '/confarchive')
     config.add_route('openwrt_edit_config', '/openwrt_edit_config/{uuid}')
     config.add_route('archive_edit_config', '/archive_edit_config/{id}')
+    config.add_route('archive_apply_config', '/archive_apply_config/{id}')
 
     config.include('pyramid_rpc.jsonrpc')
     config.add_jsonrpc_endpoint('api', '/api')

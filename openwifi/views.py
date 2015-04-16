@@ -59,9 +59,30 @@ def confarchive(request):
     configs = DBSession.query(ConfigArchive)
     return {'idfield': 'id',
             'domain': 'confarchive',
-            'confdomain': 'archive_edit_config',
             'items': configs,
-            'table_fields': ['date', 'id', 'router_uuid', 'configuration']}
+            'table_fields': ['date', 'id', 'router_uuid', 'configuration'],
+            'actions' : {'show config':'archive_edit_config',
+                         'apply config':'archive_apply_config'}
+            }
+
+@view_config(route_name='archive_apply_config', renderer='templates/archive_apply_config.jinja2', layout='base')
+def archiveapplyconfig(request):
+    config = DBSession.query(ConfigArchive).get(request.matchdict['id'])
+    if not config:
+        return exc.HTTPNotFound()
+    openwrt = DBSession.query(OpenWrt)
+    devices = {}
+    if request.POST:
+        for name,value in request.POST.dict_of_lists().items():
+            if name!='submitted' and value: # if item is not the submit button and it's checkd
+                deviceToBeUpdated = DBSession.query(openwrt).get(name)
+                deviceToBeUpdated.configuration = config.configuration
+                transaction.commit()
+                jobtask.update_config.delay(str(deviceToBeUpdated.uuid))
+            return HTTPFound(location = request.route_url('confarchive'))
+    for device in openwrt:
+        devices[str(device.name)] = str(device.uuid)
+    return { 'devices' : devices }
 
 # @view_config(route_name='openwrt_edit', renderer='templates/openwrt_edit.jinja2', layout='base')
 def openwrt_edit(request):

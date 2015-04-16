@@ -16,18 +16,22 @@
         <tr>
         {% set rowloop = loop %}
         {%- for field in table_fields %}
-		{% if field == "configuration" %}
-		  <th><a class="btn btn-primary" href="{{ confdomain }}/{{ item[idfield] }}" > show  config </a></th>
-		{% else %}
+		{%- if field == "configuration" -%}
+		  <th>
+		  {%- for action, url in actions.items() -%}
+		   <a class="btn btn-primary" href="{{ url }}/{{ item[idfield] }}" >{{action}}</a>
+		  {%- endfor -%} 
+		  </th>
+		{%- else -%}
 		  <th><a href="{{ domain }}/{{ item[idfield] }}" >{{ item[field] }}</a></th>
-		{% endif %}
-        {% endfor %}
+		{%- endif -%}
+        {%- endfor -%}
         </tr>
-    {% if loop.last %}
+    {%- if loop.last -%}
       </tbody>
-    {% endif %}
-  {% else %}
+    {%- endif -%}
+  {%- else -%}
   <p class="lead">no data</p>
-  {%- endfor %}
+  {%- endfor -%}
   </table>
 {% endblock %}
