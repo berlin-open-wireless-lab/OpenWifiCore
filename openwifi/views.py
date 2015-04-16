@@ -140,39 +140,45 @@ def openwrt_edit_config(request):
            'devicename'     : device.name}
 
 
-@view_config(route_name='archive_edit_config', renderer='templates/openwrt_edit_config.jinja2', layout='base')
+@view_config(route_name='archive_edit_config', renderer='templates/archive_edit_config.jinja2', layout='base')
 def archive_edit_config(request):
-    device = DBSession.query(ConfigArchive).get(request.matchdict['id'])
+    archiveConfig = DBSession.query(ConfigArchive).get(request.matchdict['id'])
+    if not archiveConfig:
+        return exc.HTTPNotFound()
+    device = DBSession.query(OpenWrt).get(archiveConfig.router_uuid)
     if not device:
         return exc.HTTPNotFound()
     conf = Uci()
-    conf.load_tree(device.configuration);
+    conf.load_tree(archiveConfig.configuration);
     if request.POST:
         configsToBeUpdated=[]
+        newConfig = {}
         for key, val in request.POST.dict_of_lists().items():
             if key != "submitted":
+                val[0] = val[0].replace("'", '"') # for better json recognition
                 packagename, configname, optionname = key.split()
-                print(val[0])
-                if str(conf.packages[packagename][configname].keys[optionname]) != \
-                        val[0]:
-                    print("Value " + key + " changed from " +
-                            str(conf.packages[packagename][configname].keys[optionname])
-                        + " to " + val[0])
-                    try:
-                        savevalue = json.loads(val[0])
-                    except ValueError:
-                        savevalue = val[0]
-                    conf.packages[packagename][configname].keys[optionname] = \
-                        savevalue
-                    configsToBeUpdated.append(packagename)
-        if configsToBeUpdated:
-            device.configuration=conf.export_json()
-            transaction.commit()
-            jobtask.update_config.delay(request.matchdict['uuid'])
-            #DBSession.commit()
-        return HTTPFound(location=request.route_url('openwrt_list'))
+                if not (packagename in newConfig.keys()):
+                    newConfig[packagename] = {}
+                    newConfig[packagename]['values'] = {}
+                if not (configname in newConfig[packagename]['values'].keys()):
+                    newConfig[packagename]['values'][configname] = {}
+                try:
+                    savevalue = json.loads(val[0])
+                except ValueError:
+                    savevalue = val[0]
+                newConfig[packagename]['values'][configname][optionname] = savevalue
+        confToBeArchivedNew = ConfigArchive(datetime.now(),
+                                            json.dumps(newConfig),
+                                            archiveConfig.router_uuid,
+                                            id_generator())
+        DBSession.add(confToBeArchivedNew)
+        return HTTPFound(location=request.route_url('confarchive'))
     return{ 'hiddenOptions' : ['.index','.type','.name','.anonymous'],
-            'config'        : conf}
+            'config'        : conf,
+            'routerName'    : device.name,
+            'date'          : archiveConfig.date}
+
+
 
 @view_config(route_name='openwrt_add', renderer='templates/openwrt_add.jinja2', layout='base')
 def openwrt_add(request):
