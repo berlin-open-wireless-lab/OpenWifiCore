@@ -30,6 +30,10 @@ essid_association_table = Table('essid_association', Base.metadata,
         Column('radio_id', Integer, ForeignKey('radio.id')),
         Column('essid_id', Integer, ForeignKey('essid.id')))
 
+template_association_table = Table('template_association', Base.metadata,
+        Column('templates_id', Integer, ForeignKey('templates.id')),
+        Column('openwrt_id', Integer, ForeignKey('openwrt.uuid')))
+
 class OpenWrt(Base):
     __tablename__ = 'openwrt'
     uuid = Column(GUID, primary_key=True)
@@ -41,6 +45,7 @@ class OpenWrt(Base):
     configuration = Column(Text)
     login = Column(Text)
     password = Column(Text)
+    templates = relationship("Templates",secondary=template_association_table,backref="openwrt")
 
     def __init__(self, name, address, distribution, version, device_uuid, login, password, configured=False):
         self.name = name
@@ -67,6 +72,17 @@ class ConfigArchive(Base):
         self.date          = date
         self.router_uuid   = router_uuid
         self.id            = id
+
+class Templates(Base):
+    __tablename__ = "templates"
+    name = Column(Text)
+    id   = Column(Text, primary_key=True)
+    metaconf = Column(Text)
+
+    def __init__(self, name, metaconf, id):
+        self.name = name
+        self.metaconf = metaconf
+        self.id = id
 
 class AccessPoint(Base):
     __tablename__ = 'accesspoint'
