@@ -8,7 +8,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=openwifi-boot-notifier
-PKG_VERSION:=2015-01-19
+PKG_VERSION:=2015-05-04
 PKG_RELEASE=$(PKG_SOURCE_VERSION)
 
 PKG_MAINTAINER:=Alexander Couzens <lynxis@fe80.eu>
@@ -19,7 +19,7 @@ define Package/openwifi-boot-notifier
   SECTION:=utils
   CATEGORY:=OpenWifi
   TITLE:=Boot Notifier
-  DEPENDS:=+ip +rpcd +uhttpd-ubus +mdns
+  DEPENDS:=+ip +rpcd +uhttpd-mod-ubus +mdns
 endef
 
 define Package/openwifi-boot-notifier/description
