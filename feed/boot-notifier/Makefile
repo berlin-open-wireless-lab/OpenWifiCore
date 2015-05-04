@@ -19,7 +19,7 @@ define Package/openwifi-boot-notifier
   SECTION:=utils
   CATEGORY:=OpenWifi
   TITLE:=Boot Notifier
-  DEPENDS:=+ip +rcpd +uhttpd-ubus +mdns
+  DEPENDS:=+ip +rpcd +uhttpd-ubus +mdns
 endef
 
 define Package/openwifi-boot-notifier/description
