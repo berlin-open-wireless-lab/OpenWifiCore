@@ -25,6 +25,7 @@ openwifi_config() {
 
 reload_service() {
   config_load openwifi
+  # we only support one server atm!
   config_foreach openwifi_config server
 }
 
