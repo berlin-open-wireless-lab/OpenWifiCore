@@ -4,7 +4,7 @@ from sqlalchemy.orm import sessionmaker
 from openwifi.jobserver_config import sqlurl, brokerurl, redishost, redisport, redisdb
 from openwifi.netcli import jsonubus
 from openwifi.models import ( OpenWrt )
-from pyuci import Uci
+from pyuci import Uci, Package, Config
 from datetime import timedelta
 import redis
 import json
@@ -55,6 +55,7 @@ def get_config(uuid):
     except:
         device.configured = False
         return False
+
 
 @app.task
 def diff_update_config(diff, url, user, passwd):
@@ -156,4 +157,83 @@ def update_status():
             redisDB.hset(str(device.uuid), 'status', "online")
             redisDB.hset(str(device.uuid), 'networkstatus', json.dumps(networkstatus['interface']))
 
+class MetaconfWrongFormat(Exception):
+    def __init__(self, value):
+        self.value = value
+    def __str__(self):
+        return repr(self.value)
 
+def update_template(openwrtConfJSON, templateJSON):
+    openwrt_config = Uci()
+    openwrt_config.load_tree(openwrtConfJSON)
+    metaconf = json.loads(templateJSON)['metaconf']
+    for package in metaconf['change']['add']: # packages to be added
+        if  package not in openwrt_config.packages.keys():
+            openwrt_config.add_package(package)
+    for package in metaconf['change']['del']: # packages to be deleted
+        if package in openwrt_config.packages.keys():
+            openwrt_config.packages.pop(package)
+    packages = metaconf['packages']
+    for package_match in packages:
+        if not package_match['type']=='package':
+            raise MetaconfWrongFormat('first level should be type: \
+                     package, but found: '+ cur_package_match['type']) 
+        package = package_match['matchvalue']
+        # scan for packages to be added and add
+        for config in package_match['change']['add']:
+            nameMismatch = True
+            typeMismatch = True
+            # match names
+            if config[0] in openwrt_config.packages[package].keys():
+                nameMismatch = False
+            # match types
+            for confname, conf in openwrt_config.packages[package].items():
+                if conf.uci_type == config[1]:
+                    typeMismatch = False
+                    break
+            if (config[2] == 'always') or\
+               (config[2] == 'typeMismatch' and typeMismatch) or\
+               (config[2] == 'nameMismatch' and nameMismatch) or\
+               (config[2] == 'bothMismatch' and typeMismatch and nameMismatch):
+                openwrt_config.packages[package][config] = Config(config[0],config[1],config[0]=='')
+        # scan for packages to be removed and delete
+        for config in package_match['change']['del']:
+            confmatch = config[2]
+            # match names
+            if config[0] in openwrt_config.packages[package].keys():
+                if confmatch == 'always'  or confmatch == 'nameMatch':
+                    openwrt_config.packages[package].pop(config[0])
+            # match types
+            for confname, conf in openwrt_config.packages[package].items():
+                if conf.uci_type == config[1]:
+                    if confmatch == 'always' or confmatch == 'typeMatch':
+                        openwrt_config.packages[package].pop(confname)
+                    if confmatch == 'bothMatch' and confname == conf[0]:
+                        openwrt_config.packages[package].pop(confname)
+        # go into config matches
+        matched_configs = []
+        configs_to_be_matched = list(openwrt_config.packges[package].values())
+        conf_match = package_match['config']
+        while conf_match!='' and configs_to_be_matched:
+            for config in configs_to_be_matched:
+                if conf_match['matchtype']=='name':
+                    if config.name==conf_match['matchvalue']:
+                        configs_to_be_matched.append(config)
+                if conf_match['matchtype']=='type':
+                    if config.uci_type==conf_match['matchvalue']:
+                        configs_to_be_matched.append(config)
+            for mconfig in matched_configs:
+                for option in conf_match['change']['add']:
+                    mconfig.keys[option[0]] = option[1]
+                for option in conf_match['change']['del']:
+                    try:
+                        mconfig.keys.pop(option[0])
+                    except KeyError:
+                        pass
+            configs_to_be_matched=matched_configs
+            conf_match=conf_match['next']
+    return openwrt_config
+        
+@app.task
+def update_template_config(id):
+	pass
