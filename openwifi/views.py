@@ -191,6 +191,15 @@ def openwrt_add(request):
     save_url = request.route_url('openwrt_add')
     return {'save_url':save_url, 'form':form}
 
+@view_config(route_name='templates', renderer='templates/templates.jinja2', layout='base')
+def templates(request):
+    return {}
+
+@view_config(route_name='templates_add', renderer='templates/templates_add.jinja2', layout='base')
+def templates_add(request):
+    if request.POST:
+        print(request.POST)
+    return {}
 
 @view_config(route_name='openwrt_action', renderer='templates/openwrt_add.jinja2', layout='base')
 def openwrt_action(request):

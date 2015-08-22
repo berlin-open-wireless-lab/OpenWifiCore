@@ -21,6 +21,8 @@ def main(global_config, **settings):
     config.add_route('openwrt_action', '/openwrt/{uuid}/{action}')
     config.add_route('openwrt_add', '/openwrt_add')
     config.add_route('confarchive', '/confarchive')
+    config.add_route('templates', '/templates')
+    config.add_route('templates_add', '/templates_add')
     config.add_route('openwrt_edit_config', '/openwrt_edit_config/{uuid}')
     config.add_route('archive_edit_config', '/archive_edit_config/{id}')
     config.add_route('archive_apply_config', '/archive_apply_config/{id}')

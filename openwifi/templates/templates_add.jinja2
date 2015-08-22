@@ -1,0 +1,235 @@
+{% extends main_template %}
+
+{% block content %}
+<script>
+
+var packageId = 0;
+var delPackageId = 0;
+var delConfId = 0;
+var confId = 0;
+var optionId = 0;
+
+function addPackage() 
+{
+	var packIdStr = "pack"+packageId.toString();
+	var packageString = "<p>";
+	packageString += "<div id='panel"+packIdStr+"' class='panel panel-success'>";
+	packageString += "<div class='panel-heading'>";
+	packageString += "Package";
+	packageString += " <input name=\"packageA"+packageId.toString()+".Add\" style='margin-left:5em;' onchange='checkCreate(\""+packIdStr+"\");' type='checkbox' checked id='addCheck"+packIdStr+"'>";
+	packageString += "<label for='addCheck"+packIdStr+"' >create if missing</label>";
+	packageString += "<button class='btn btn-danger btn-sm' style='float:right;' onclick='delPanel(\""+packIdStr+"\");'><span class='glyphicon glyphicon-remove'></span></button>";
+	packageString += "</div>";
+	packageString += "<div class='panel-body'>";
+	packageString += "<div ";
+	packageString += "id='"+packIdStr+"Add' ";
+	packageString += "class='package'>";
+	packageString += "<input  name=\"packageA"+packageId.toString()+".Name\"type='text' class='form-control' placeholder='Package Name'>";
+	packageString += "<button type='button' class='btn btn-success' onclick='addConf(\"#"+packIdStr+"Add\",\"packageA"+packageId.toString()+"\");' >Add Config</button>";
+	packageString += "<button type='button' class='btn btn-danger' onclick='delConf("+packageId+");' >Del Config</button>";
+	packageString += "</div>";
+	packageString += "<div id='"+packIdStr+"Del'>";
+	packageString += "</div>";
+	packageString += "</div>";
+	packageString += "</div>";
+	packageString += "</p>";
+	$('#metaconfAdd').append(packageString);
+	packageId++;
+};
+
+function delPackage() 
+{
+	var packIdStr = "packDel"+delPackageId.toString();
+	var packageString = "<p>";
+	packageString += "<div id='panel"+packIdStr+"' class='panel panel-danger'>";
+	packageString += "<div class='panel-heading'>";
+	packageString += "Package";
+	packageString += "<button class='btn btn-danger btn-sm' style='float:right;' onclick='delPanel(\""+packIdStr+"\");'><span class='glyphicon glyphicon-remove'></span></button>";
+	packageString += "</div>";
+	packageString += "<div class='panel-body'>";
+	packageString += "<div ";
+	packageString += "id='"+packIdStr+"' ";
+	packageString += "class='package'>";
+	packageString += "<input name=\"packageD"+delPackageId.toString()+".Name\" type='text' class='form-control' placeholder='Package Name'>";
+	packageString += "</div>";
+	packageString += "</div>";
+	packageString += "</div>";
+	packageString += "</p>";
+	$('#metaconfDel').append(packageString);
+	delPackageId++;
+};
+
+function delConf(packId) 
+{
+	var confIdStr = "confDel"+delConfId.toString();
+	var confString = "<p>";
+	confString += "<div id='panel"+confIdStr+"' class='panel panel-danger'>";
+	confString += "<div class='panel-heading'>";
+	confString += "Conf";
+	confString += "<select name=\"package"+packId.toString()+".configD"+delConfId.toString()+".DelType"+delConfId.toString()+"\" id='confDelMatchType"+delConfId.toString()+"' class='form-control' name='createtype'>";
+	confString += "<option value='always'>always</option>";
+	confString += "<option value='name'>name</option>";
+	confString += "<option value='type'>type</option>";
+	confString += "<option value='both'>both</option>";
+	confString += "</select>";
+	confString += "<button class='btn btn-danger btn-sm' style='float:right;' onclick='delPanel(\""+confIdStr+"\");'><span class='glyphicon glyphicon-remove'></span></button>";
+	confString += "</div>";
+	confString += "<div class='panel-body'>";
+	confString += "<div ";
+	confString += "id='"+confIdStr+"' ";
+	confString += "class='conf'>";
+	confString += "<label for='confDelType"+delConfId.toString()+"'>Type</label>";
+	confString += "<input name=\"package"+packId.toString()+".configD"+delConfId.toString()+".Name"+delConfId.toString()+"\" id='confDelName"+delConfId.toString()+"' type='text' class='form-control' placeholder='Config Name'>";
+	confString += "<label for='confDelName"+delConfId.toString()+"'>Name</label>";
+	confString += "<input name=\"package"+packId.toString()+".configD"+delConfId.toString()+".Type"+delConfId.toString()+"\" id='confDelType"+delConfId.toString()+"' type='text' class='form-control' placeholder='Config Type'>";
+	confString += "</div>";
+	confString += "</div>";
+	confString += "</div>";
+	confString += "</p>";
+	$("#pack"+packId.toString()+"Del").append(confString);
+	delConfId++;
+};
+
+
+function addConf(packIdS, confPrefix)
+{	
+	var confIdStr = "conf"+confId.toString();
+	var confString = "<p>";
+	var confPrefixName = confPrefix + ".configA"+confId.toString();
+	confString += "<div id='panel"+confIdStr+"' class='panel panel-success'>";
+	confString += "<div class='panel-heading'>";
+	confString += "<div class='form-group form-inline'>";
+	confString += "Configuration";
+	confString += "<div style='margin-left:5em;' class='input-group'>";
+	confString += "<span class='input-group-addon' >";
+	confString += "<input name=\""+confPrefixName+".Add\" type='checkbox' onchange='checkCreate(\""+confIdStr+"\");' checked id='addCheck"+confIdStr+"'>";
+	confString += "</span>";
+	confString += "<span class='input-group-addon' >";
+	confString += "<label for='addCheck"+confIdStr+"' >create if missing</label>";
+	confString += "</span>";
+	confString += "<select name=\""+confPrefixName+".CreateType\" id='confCreateMatchType' class='form-control' name='createtype'>";
+	confString += "<option value='always'>always</option>";
+	confString += "<option value='name'>name</option>";
+	confString += "<option value='type'>type</option>";
+	confString += "<option value='both'>both</option>";
+	confString += "</select>";
+	confString += "</div>";
+	confString += "<button class='btn btn-danger btn-sm' style='float:right;' onclick='delPanel(\""+confIdStr+"\");'><span class='glyphicon glyphicon-remove'></span></button>";
+	confString += "</div>";
+	confString += "</div>";
+	confString += "<div class='panel-body'>";
+	confString += "<div ";
+	confString += "id='"+confIdStr+"' ";
+	confString += "class='package'>";
+	confString += "<div class='form-group form-inline'>";
+	confString += "<label for='confAddName"+confId.toString()+"'>Name</label>";
+	confString += "<input name=\""+confPrefixName+".Name\" id='confAddName"+confId.toString()+"' type='text' class='form-control' placeholder='Config Name'>";
+	confString += "<label for='confaddtype"+confId.toString()+"'>Type</label>";
+	confString += "<input name=\""+confPrefixName+".Type\" id='confaddtype"+confId.toString()+"' type='text' class='form-control' placeholder='Config Type'>";
+	confString += "<label for='confAddType"+confId.toString()+"'>Match</label>";
+	confString += "<select id='confMatchType' class='form-control' name='matchtype'>";
+	confString += "<option value='name'>name</option>";
+	confString += "<option value='type'>type</option>";
+	confString += "</select>";
+	confString += "<label for='confMatchCount'>Count</label>";
+	confString += "<input name=\""+confPrefixName+".Count\" list='mclist' id='confMatchCount' type='text' class='form-control' placeholder='all'>";
+	confString += "</div>";
+	confString += "<div class='form-group'>";
+	confString += "<button type='button' class='btn btn-success' onclick='addOption(\"#"+confIdStr+"Add\",\""+confPrefixName+"\");' >Add Option</button>";
+	confString += "<button type='button' class='btn btn-danger' onclick='addDelOption(\"#"+confIdStr+"Del\",\""+confPrefixName+"\");' >Del Option</button>";
+	confString += "<button type='button' class='btn btn-success' onclick='addConf(\"#"+confIdStr+"Next\",\""+confPrefixName+"\");' >Add Config</button>";
+	confString += "</div>";
+	confString += "<div class='bg-success' id='"+confIdStr+"Add'>";
+	confString += "</div>";
+	confString += "<div class='bg-danger' id='"+confIdStr+"Del'>";
+	confString += "</div>";
+	confString += "<div id='"+confIdStr+"Next'>";
+	confString += "</div>";
+	confString += "</div>";
+	confString += "</div>";
+	confString += "</div>";
+	confString += "</p>";
+	$(packIdS).append(confString);
+	confId++;
+};
+
+function addOption(confIdS, confPrefixS)
+{
+	var optIdStr = "opt"+optionId.toString();
+	var optString = "";
+	var optPrefixName = confPrefixS+".optA";
+	optString += "<div id='"+optIdStr+"'>";
+	optString += "<div class='form-group form-inline'>";
+	optString += "<label for='optName'>Name</label>";
+	optString += "<input name=\""+optPrefixName+".Name\" id='optName' type='text' class='form-control' placeholder='Option Name'>";
+	optString += "<label for='optValue'>Value</label>";
+	optString += "<input name=\""+optPrefixName+".Value\" id='optValue' type='text' class='form-control' placeholder='Option Value'>";
+	optString += "<button class='btn btn-danger btn-sm' style='float:right;' onclick='delOption(\"#"+optIdStr+"\");'><span class='glyphicon glyphicon-remove'></span></button>";
+	optString += "</div>";
+	optString += "</div>";
+	$(confIdS).append(optString);
+	optionId++;
+};
+
+function addDelOption(confIdS, confPrefixS)
+{
+	var optIdStr = "opt"+optionId.toString();
+	var optPrefixName = confPrefixS+".optD";
+	var optString = "";
+	optString += "<div id='"+optIdStr+"'>";
+	optString += "<div class='form-group form-inline'>";
+	optString += "<label for='optName'>Name</label>";
+	optString += "<input name=\""+optPrefixName+".Name\" id='optName' type='text' class='form-control' placeholder='Option Name'>";
+	optString += "<button class='btn btn-danger btn-sm' style='float:right;' onclick='delOption(\"#"+optIdStr+"\");'><span class='glyphicon glyphicon-remove'></span></button>";
+	optString += "</div>";
+	optString += "</div>";
+	$(confIdS).append(optString);
+	optionId++;
+};
+
+
+function checkCreate(id)
+{
+	$("#panel"+id).toggleClass("panel-success");
+	$("#panel"+id).toggleClass("panel-warning");
+};
+
+function delOption(id)
+{
+	$(id).remove();
+};
+
+function delPanel(id)
+{
+	$("#panel"+id).remove();
+};
+
+</script>
+<p>
+<form method="POST">
+<div class="panel panel-default">
+  <div class="panel-heading">
+  	<h4>Template</h4>
+  </div>
+  <div class="panel-body">
+	<button type="button" class="btn btn-success" onclick="addPackage();" >Add Package</button>
+	<button type="button" class="btn btn-danger" onclick="delPackage();" >Del Package</button>
+	<div id="metaconf">
+	<div id="metaconfAdd">
+	</div>
+	<div id="metaconfDel">
+	</div>
+	</div>
+  </div>
+</div>
+  <button type="submit" class="btn btn-default">Submit</button>
+</form>
+<datalist id='mclist'>
+<option value='all'>
+<option value='1'>
+<option value='2'>
+<option value='3'>
+<option value='4'>
+</datalist>
+</p> <!-- end main condainer -->
+{% endblock %}
