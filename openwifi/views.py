@@ -198,7 +198,99 @@ def templates(request):
 @view_config(route_name='templates_add', renderer='templates/templates_add.jinja2', layout='base')
 def templates_add(request):
     if request.POST:
-        print(request.POST)
+        # init metaconf
+        metaconf = {}
+        metaconf['metaconf'] = {}
+        metaconf['metaconf']['change']= {}
+        metaconf['metaconf']['change']['add']= []
+        metaconf['metaconf']['change']['del']= []
+        metaconf['metaconf']['packages']= []
+
+        # dictonary to store data from form
+        formdata = {}
+        # first read all values into formdata
+        for key, val in request.POST.dict_of_lists().items():
+            keysplit = key.split('.')
+            curlevel=formdata
+            i=1
+            for splittedkey in keysplit:
+                if(i<len(keysplit)):
+                    try:
+                        curlevel=curlevel[splittedkey]
+                    except KeyError:
+                        curlevel[splittedkey]={}
+                        curlevel=curlevel[splittedkey]
+                else:
+                    curlevel[splittedkey]=val[0]
+                i+=1
+
+        pp = pprint.PrettyPrinter(indent=4)
+        # go thru configs
+        for key, val in formdata.items():
+            if key[0:7] == "package":
+                # add new package
+                if key[7] == "A":
+                    # init new package
+                    curpack = {}
+                    curpack['type'] = "package"
+                    curpack['matchvalue'] = val['Name']
+                    curpack['config'] = []
+                    curpack['change'] = {}
+                    curpack['change']['add'] = []
+                    curpack['change']['del'] = []
+
+                    if val['Add']=="on":
+                        metaconf['metaconf']['change']['add'].append(val['Name'])
+                    for pkey in val.keys():
+                        if pkey[0:6] == 'config':
+                            if pkey[6] == "A":
+                                mconfig = {}
+                                config = mconfig
+                                curconfig = val[pkey]
+                                while True:
+                                    if curconfig['Add']=='on':
+                                        curpack['change']['add'].append(  \
+                                            [curconfig['Name'], \
+                                             curconfig['Type'], \
+                                             curconfig['CreateType']])
+                                    config['matchvalue']=curconfig['Name']
+                                    config['matchtype']=curconfig['matchtype']
+                                    config['matchcount']=curconfig['Count']
+                                    config['change']={}
+                                    config['change']['add']=[]
+                                    config['change']['del']=[]
+                                    optsToAdd = [value for key, value in curconfig.items() if key.startswith('optA')]
+                                    for opt in optsToAdd:
+                                        config['change']['add'].append(\
+                                                [opt['Name'], \
+                                                 opt['Value']])
+                                    optsToDel = [value for key, value in curconfig.items() if key.startswith('optD')]
+                                    for opt in optsToDel:
+                                        config['change']['del'].append(\
+                                                opt['Name'])
+                                    nextconfigs = [value for key, value in curconfig.items() if key.startswith('configA')]
+                                    if nextconfigs:
+                                        curconfig = nextconfigs[0]
+                                        config['next'] = {}
+                                        config = config['next']
+                                    else:
+                                        config['next'] = ''
+                                        break
+                                curpack['config'].append(mconfig)
+                            if pkey[6] == "D":
+                                curpack['change']['del'].append(  \
+                                        [val[pkey]['Name'], \
+                                         val[pkey]['Type'], \
+                                         val[pkey]['DelType']])
+                    metaconf['metaconf']['packages'].append(curpack)
+                # delete package
+                if key[7] == "D":
+                    metaconf['metaconf']['change']['del'].append(val['Name'])
+            else:
+                print("ERROR: first level should be a package")
+        pp.pprint(request.POST)
+        pp.pprint(formdata)
+        pp.pprint(metaconf)
     return {}
 
 @view_config(route_name='openwrt_action', renderer='templates/openwrt_add.jinja2', layout='base')
