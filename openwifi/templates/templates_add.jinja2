@@ -25,7 +25,7 @@ function addPackage()
 	packageString += "id='"+packIdStr+"Add' ";
 	packageString += "class='package'>";
 	packageString += "<input  name=\"packageA"+packageId.toString()+".Name\"type='text' class='form-control' placeholder='Package Name'>";
-	packageString += "<button type='button' class='btn btn-success' onclick='addConf(\"#"+packIdStr+"Add\",\"packageA"+packageId.toString()+"\");' >Add Config</button>";
+	packageString += "<button type='button' class='btn btn-success' onclick='addConf(\"#"+packIdStr+"Add\",\"packageA"+packageId.toString()+"\",false);' >Add Config</button>";
 	packageString += "<button type='button' class='btn btn-danger' onclick='delConf("+packageId+");' >Del Config</button>";
 	packageString += "</div>";
 	packageString += "<div id='"+packIdStr+"Del'>";
@@ -66,7 +66,7 @@ function delConf(packId)
 	confString += "<div id='panel"+confIdStr+"' class='panel panel-danger'>";
 	confString += "<div class='panel-heading'>";
 	confString += "Conf";
-	confString += "<select name=\"package"+packId.toString()+".configD"+delConfId.toString()+".DelType"+delConfId.toString()+"\" id='confDelMatchType"+delConfId.toString()+"' class='form-control' name='createtype'>";
+	confString += "<select name=\"packageA"+packId.toString()+".configD"+delConfId.toString()+".DelType\" id='confDelMatchType"+delConfId.toString()+"' class='form-control' name='createtype'>";
 	confString += "<option value='always'>always</option>";
 	confString += "<option value='name'>name</option>";
 	confString += "<option value='type'>type</option>";
@@ -79,9 +79,9 @@ function delConf(packId)
 	confString += "id='"+confIdStr+"' ";
 	confString += "class='conf'>";
 	confString += "<label for='confDelType"+delConfId.toString()+"'>Type</label>";
-	confString += "<input name=\"package"+packId.toString()+".configD"+delConfId.toString()+".Name"+delConfId.toString()+"\" id='confDelName"+delConfId.toString()+"' type='text' class='form-control' placeholder='Config Name'>";
+	confString += "<input name=\"packageA"+packId.toString()+".configD"+delConfId.toString()+".Name\" id='confDelName"+delConfId.toString()+"' type='text' class='form-control' placeholder='Config Name'>";
 	confString += "<label for='confDelName"+delConfId.toString()+"'>Name</label>";
-	confString += "<input name=\"package"+packId.toString()+".configD"+delConfId.toString()+".Type"+delConfId.toString()+"\" id='confDelType"+delConfId.toString()+"' type='text' class='form-control' placeholder='Config Type'>";
+	confString += "<input name=\"packageA"+packId.toString()+".configD"+delConfId.toString()+".Type\" id='confDelType"+delConfId.toString()+"' type='text' class='form-control' placeholder='Config Type'>";
 	confString += "</div>";
 	confString += "</div>";
 	confString += "</div>";
@@ -91,11 +91,15 @@ function delConf(packId)
 };
 
 
-function addConf(packIdS, confPrefix)
+function addConf(packIdS, confPrefix, isSubconf)
 {	
 	var confIdStr = "conf"+confId.toString();
 	var confString = "<p>";
 	var confPrefixName = confPrefix + ".configA"+confId.toString();
+	if (isSubconf)
+	{
+		$(packIdS+"Button").prop("disabled",true);
+	}
 	confString += "<div id='panel"+confIdStr+"' class='panel panel-success'>";
 	confString += "<div class='panel-heading'>";
 	confString += "<div class='form-group form-inline'>";
@@ -114,7 +118,16 @@ function addConf(packIdS, confPrefix)
 	confString += "<option value='both'>both</option>";
 	confString += "</select>";
 	confString += "</div>";
-	confString += "<button class='btn btn-danger btn-sm' style='float:right;' onclick='delPanel(\""+confIdStr+"\");'><span class='glyphicon glyphicon-remove'></span></button>";
+	confString += "<button class='btn btn-danger btn-sm' style='float:right;' onclick='"
+	if (isSubconf)
+	{
+		confString += "$(\""+packIdS+"Button\").prop(\"disabled\",false);delPanel(\""+confIdStr+"\");"
+	}
+	else
+	{
+		confString += "delPanel(\""+confIdStr+"\");"
+	}
+	confString += "'><span class='glyphicon glyphicon-remove'></span></button>";
 	confString += "</div>";
 	confString += "</div>";
 	confString += "<div class='panel-body'>";
@@ -127,7 +140,7 @@ function addConf(packIdS, confPrefix)
 	confString += "<label for='confaddtype"+confId.toString()+"'>Type</label>";
 	confString += "<input name=\""+confPrefixName+".Type\" id='confaddtype"+confId.toString()+"' type='text' class='form-control' placeholder='Config Type'>";
 	confString += "<label for='confAddType"+confId.toString()+"'>Match</label>";
-	confString += "<select id='confMatchType' class='form-control' name='matchtype'>";
+	confString += "<select id='confMatchType' class='form-control' name='"+confPrefixName+".matchtype'>";
 	confString += "<option value='name'>name</option>";
 	confString += "<option value='type'>type</option>";
 	confString += "</select>";
@@ -137,7 +150,7 @@ function addConf(packIdS, confPrefix)
 	confString += "<div class='form-group'>";
 	confString += "<button type='button' class='btn btn-success' onclick='addOption(\"#"+confIdStr+"Add\",\""+confPrefixName+"\");' >Add Option</button>";
 	confString += "<button type='button' class='btn btn-danger' onclick='addDelOption(\"#"+confIdStr+"Del\",\""+confPrefixName+"\");' >Del Option</button>";
-	confString += "<button type='button' class='btn btn-success' onclick='addConf(\"#"+confIdStr+"Next\",\""+confPrefixName+"\");' >Add Config</button>";
+	confString += "<button type='button' class='btn btn-success' id=\""+confIdStr+"NextButton\" onclick='addConf(\"#"+confIdStr+"Next\",\""+confPrefixName+"\",true);' >Add Config</button>";
 	confString += "</div>";
 	confString += "<div class='bg-success' id='"+confIdStr+"Add'>";
 	confString += "</div>";
