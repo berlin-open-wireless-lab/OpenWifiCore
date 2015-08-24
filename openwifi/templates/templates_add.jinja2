@@ -170,7 +170,7 @@ function addOption(confIdS, confPrefixS)
 {
 	var optIdStr = "opt"+optionId.toString();
 	var optString = "";
-	var optPrefixName = confPrefixS+".optA";
+	var optPrefixName = confPrefixS+".optA"+optionId.toString();
 	optString += "<div id='"+optIdStr+"'>";
 	optString += "<div class='form-group form-inline'>";
 	optString += "<label for='optName'>Name</label>";
@@ -187,7 +187,7 @@ function addOption(confIdS, confPrefixS)
 function addDelOption(confIdS, confPrefixS)
 {
 	var optIdStr = "opt"+optionId.toString();
-	var optPrefixName = confPrefixS+".optD";
+	var optPrefixName = confPrefixS+".optD"+optionId.toString();
 	var optString = "";
 	optString += "<div id='"+optIdStr+"'>";
 	optString += "<div class='form-group form-inline'>";
