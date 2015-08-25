@@ -194,7 +194,9 @@ def openwrt_add(request):
 
 @view_config(route_name='templates', renderer='templates/templates.jinja2', layout='base')
 def templates(request):
-    return {}
+    templates = DBSession.query(Templates)
+    return {'items': templates,
+            'table_fields': ['name', 'id', 'metaconf']}
 
 @view_config(route_name='templates_add', renderer='templates/templates_add.jinja2', layout='base')
 def templates_add(request):

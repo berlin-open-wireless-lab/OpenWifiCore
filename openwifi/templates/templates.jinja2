@@ -3,6 +3,36 @@
 {% block content %}
 <p>
 <h1> Templates </h1>
+  <table class="table">
+  {% for item in items -%}
+    {% if loop.first %}
+      <thead>
+        <tr>
+          {%- for field in table_fields %}
+            <th>{{ field }}</th>
+          {% endfor %}
+        </tr>
+      </thead>
+      <tbody>
+    {% endif %}
+        <tr>
+        {% set rowloop = loop %}
+        {%- for field in table_fields %}
+                  {%- if field == 'metaconf' -%}
+		  <td><pre id='{{ item['id'] }}'></pre><script>var dump = JSON.stringify(JSON.parse('{{ item[field] | safe }}'),null,4);
+		  				   $('#'+'{{ item['id'] }}').html(dump);</script></td>
+		  {%- else -%}
+		  <td>{{ item[field] }}</td>
+		  {%- endif -%}
+        {% endfor %}
+        </tr>
+    {% if loop.last %}
+      </tbody>
+    {% endif %}
+  {% else %}
+  <p class="lead">no data</p>
+  {%- endfor %}
+  </table>
 <a class="btn btn-primary" href="/templates_add">Add Template</a>
 
 </p>
