@@ -256,6 +256,7 @@ def templates_add(request):
                                     config['matchvalue']=curconfig['Name']
                                     config['matchtype']=curconfig['matchtype']
                                     config['matchcount']=curconfig['Count']
+                                    config['type']='config'
                                     config['change']={}
                                     config['change']['add']=[]
                                     config['change']['del']=[]
