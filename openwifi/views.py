@@ -224,6 +224,7 @@ def templates_add(request):
                     curlevel[splittedkey]=val[0]
                 i+=1
 
+        templateName = formdata.pop('templateName')
         pp = pprint.PrettyPrinter(indent=4)
         # go thru configs
         for key, val in formdata.items():
@@ -292,6 +293,7 @@ def templates_add(request):
         pp.pprint(request.POST)
         pp.pprint(formdata)
         pp.pprint(metaconf)
+        pp.pprint(templateName)
     return {}
 
 @view_config(route_name='openwrt_action', renderer='templates/openwrt_add.jinja2', layout='base')
