@@ -213,25 +213,25 @@ def update_template(openwrtConfJSON, templateJSON):
         # go into config matches
         matched_configs = []
         configs_to_be_matched = list(openwrt_config.packges[package].values())
-        conf_match = package_match['config']
-        while conf_match!='' and configs_to_be_matched:
-            for config in configs_to_be_matched:
-                if conf_match['matchtype']=='name':
-                    if config.name==conf_match['matchvalue']:
-                        configs_to_be_matched.append(config)
-                if conf_match['matchtype']=='type':
-                    if config.uci_type==conf_match['matchvalue']:
-                        configs_to_be_matched.append(config)
-            for mconfig in matched_configs:
-                for option in conf_match['change']['add']:
-                    mconfig.keys[option[0]] = option[1]
-                for option in conf_match['change']['del']:
-                    try:
-                        mconfig.keys.pop(option[0])
-                    except KeyError:
-                        pass
-            configs_to_be_matched=matched_configs
-            conf_match=conf_match['next']
+        for conf_match in  package_match['config']:
+            while conf_match!='' and configs_to_be_matched:
+                for config in configs_to_be_matched:
+                    if conf_match['matchtype']=='name':
+                        if config.name==conf_match['matchvalue']:
+                            configs_to_be_matched.append(config)
+                    if conf_match['matchtype']=='type':
+                        if config.uci_type==conf_match['matchvalue']:
+                            configs_to_be_matched.append(config)
+                for mconfig in matched_configs:
+                    for option in conf_match['change']['add']:
+                        mconfig.keys[option[0]] = option[1]
+                    for option in conf_match['change']['del']:
+                        try:
+                            mconfig.keys.pop(option[0])
+                        except KeyError:
+                            pass
+                configs_to_be_matched=matched_configs
+                conf_match=conf_match['next']
     return openwrt_config
         
 @app.task
