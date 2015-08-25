@@ -21,7 +21,8 @@ from .models import (
     AccessPoint,
     DBSession,
     OpenWrt,
-    ConfigArchive
+    ConfigArchive,
+    Templates
     )
 
 from .forms import (
@@ -294,6 +295,9 @@ def templates_add(request):
         pp.pprint(formdata)
         pp.pprint(metaconf)
         pp.pprint(templateName)
+        metaconf_json = json.dumps(metaconf)
+        newTemplate = Templates(templateName,metaconf_json,id_generator())
+        DBSession.add(newTemplate)
     return {}
 
 @view_config(route_name='openwrt_action', renderer='templates/openwrt_add.jinja2', layout='base')
