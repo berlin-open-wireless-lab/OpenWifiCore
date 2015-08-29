@@ -2,4 +2,14 @@ __pycache__
 *.sqlite
 *.egg-info
 *.swp
+*.pyc
 venv/
+.ropeproject/
+README.txt
+TODO
+openwifi/jobserver/config150118
+openwifi/jobserver/config_export
+openwifi/jobserver/example_config2
+openwifi/jobserver/exconf
+openwifi/jobserver/test.py
+.gitignore
