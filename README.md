@@ -19,10 +19,10 @@ Getting Started
     initialize_openwifi_db development.ini
     echo development is ready now
   
-    pserve --monitor-restart --daemon development.ini
+    pserve  development.ini &
     celery -A openwifi.jobserver.tasks worker --loglevel=info
     celery -A openwifi.jobserver.tasks beat
 
 Dependencies:
 - rabbitmq <- for states and gearman jobs
-
+- redis <- storing real-time information about nodes
