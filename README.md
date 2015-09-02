@@ -8,7 +8,7 @@ A management tool for OpenWrt devices.
 Getting Started
 ---------------
 
-    sudo apt-get install rabbitmq-server python3-pip git
+    sudo apt-get install rabbitmq-server python3-pip git redis-server
     git clone https://github.com/berlin-open-wireless-lab/wrtmgmt.git
     cd wrtmgmt
     pip3 install virtualenv
