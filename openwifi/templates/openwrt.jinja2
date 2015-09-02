@@ -1,7 +1,7 @@
 {% extends main_template %}
 
 {% block content %}
-<script src="{{request.static_url('openwifi:static/js/jquery.jsonrpcclient.js')}}"></script>
+<script src="{{request.static_path('openwifi:static/js/jquery.jsonrpcclient.js')}}"></script>
 <script>
 var devices;
 var RPCClient;
