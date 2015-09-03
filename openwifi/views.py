@@ -251,8 +251,11 @@ def templates_add(request):
                     curpack['change']['add'] = []
                     curpack['change']['del'] = []
 
-                    if val['Add']=="on":
-                        metaconf['metaconf']['change']['add'].append(val['Name'])
+                    try:
+                        if val['Add']=="on":
+                            metaconf['metaconf']['change']['add'].append(val['Name'])
+                    except KeyError: #don't add if no key
+                        pass
                     for pkey in val.keys():
                         if pkey[0:6] == 'config':
                             if pkey[6] == "A":
@@ -260,11 +263,14 @@ def templates_add(request):
                                 config = mconfig
                                 curconfig = val[pkey]
                                 while True:
-                                    if curconfig['Add']=='on':
-                                        curpack['change']['add'].append(  \
-                                            [curconfig['Name'], \
-                                             curconfig['Type'], \
-                                             curconfig['CreateType']])
+                                    try:
+                                        if curconfig['Add']=='on':
+                                            curpack['change']['add'].append(  \
+                                                [curconfig['Name'], \
+                                                 curconfig['Type'], \
+                                                 curconfig['CreateType']])
+                                    except KeyError: # don't add if we have not received to add
+                                        pass
                                     config['matchvalue']=curconfig['Name']
                                     config['matchtype']=curconfig['matchtype']
                                     config['matchcount']=curconfig['Count']
