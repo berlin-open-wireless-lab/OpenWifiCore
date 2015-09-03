@@ -206,6 +206,14 @@ def templates(request):
             'openwrts' : openwrts,
             'table_fields': ['name', 'id', 'metaconf', 'openwrt']}
 
+@view_config(route_name='templates_delete', renderer='templates/templates.jinja2', layout='base')
+def templates_delete(request):
+    template = DBSession.query(Templates).get(request.matchdict['id'])
+    if not template:
+        return exc.HTTPNotFound()
+    DBSession.delete(template)
+    return HTTPFound(location=request.route_url('templates'))
+    
 @view_config(route_name='templates_add', renderer='templates/templates_add.jinja2', layout='base')
 def templates_add(request):
     if request.POST:
