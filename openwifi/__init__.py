@@ -16,14 +16,19 @@ def main(global_config, **settings):
     config = Configurator(settings=settings)
     config.add_static_view('static', 'static', cache_max_age=3600)
     config.add_route('home', '/')
+
     config.add_route('openwrt_list', '/openwrt')
     config.add_route('openwrt_detail', '/openwrt/{uuid}')
     config.add_route('openwrt_action', '/openwrt/{uuid}/{action}')
     config.add_route('openwrt_add', '/openwrt_add')
-    config.add_route('confarchive', '/confarchive')
+    config.add_route('openwrt_edit_config', '/openwrt_edit_config/{uuid}')
+
     config.add_route('templates', '/templates')
     config.add_route('templates_add', '/templates_add')
-    config.add_route('openwrt_edit_config', '/openwrt_edit_config/{uuid}')
+    config.add_route('templates_assign', '/templates_assign/{id}')
+    config.add_route('templates_edit', '/templates_edit/{id}')
+
+    config.add_route('confarchive', '/confarchive')
     config.add_route('archive_edit_config', '/archive_edit_config/{id}')
     config.add_route('archive_apply_config', '/archive_apply_config/{id}')
 

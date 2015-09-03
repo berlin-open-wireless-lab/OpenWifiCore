@@ -46,7 +46,7 @@ $(".check").mouseover(
  {%- for name, uuid in devices.items() -%}
   <tr>
    <td>
-    <input class='check' type='checkbox' name='{{uuid}}'>
+	 <input class='check' type='checkbox' name='{{uuid}}' {%- if uuid in checked -%} checked {%- endif -%}>
      {{ name }}
    </td>
    <td>

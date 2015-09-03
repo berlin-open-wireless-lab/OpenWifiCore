@@ -31,8 +31,8 @@ essid_association_table = Table('essid_association', Base.metadata,
         Column('essid_id', Integer, ForeignKey('essid.id')))
 
 template_association_table = Table('template_association', Base.metadata,
-        Column('templates_id', Integer, ForeignKey('templates.id')),
-        Column('openwrt_id', Integer, ForeignKey('openwrt.uuid')))
+        Column('templates_id', Text, ForeignKey('templates.id')),
+        Column('openwrt_id', GUID, ForeignKey('openwrt.uuid')))
 
 class OpenWrt(Base):
     __tablename__ = 'openwrt'

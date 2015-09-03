@@ -11,6 +11,7 @@
           {%- for field in table_fields %}
             <th>{{ field }}</th>
           {% endfor %}
+	  <th> Actions </th>
         </tr>
       </thead>
       <tbody>
@@ -21,10 +22,20 @@
                   {%- if field == 'metaconf' -%}
 		  <td><pre id='{{ item['id'] }}'></pre><script>var dump = JSON.stringify(JSON.parse('{{ item[field] | safe }}'),null,4);
 		  				   $('#'+'{{ item['id'] }}').html(dump);</script></td>
+		  {%- elif field == 'openwrt' -%}
+		  	<td>
+		  	{%- for openwrt in openwrts[item['id']] -%}
+				<a href='/openwrt/{{ openwrt['uuid'] }}'>{{ openwrt['name'] }} / {{ openwrt['uuid'] }}</a> <br>
+			{%- endfor -%}
+			</td>
 		  {%- else -%}
 		  <td>{{ item[field] }}</td>
 		  {%- endif -%}
         {% endfor %}
+		<td>
+			<a href="/templates_assign/{{ item['id'] }}" class="btn btn-primary">Assign Nodes</a>
+			<a href="/templates_edit/{{ item['id'] }}" class="btn btn-primary">Edit</a>
+		</td>
         </tr>
     {% if loop.last %}
       </tbody>

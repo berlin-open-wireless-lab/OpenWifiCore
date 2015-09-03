@@ -83,7 +83,8 @@ def archiveapplyconfig(request):
             return HTTPFound(location = request.route_url('confarchive'))
     for device in openwrt:
         devices[str(device.name)] = str(device.uuid)
-    return { 'devices' : devices }
+    return { 'devices' : devices,
+             'checked' : [] }
 
 # @view_config(route_name='openwrt_edit', renderer='templates/openwrt_edit.jinja2', layout='base')
 def openwrt_edit(request):
@@ -195,8 +196,15 @@ def openwrt_add(request):
 @view_config(route_name='templates', renderer='templates/templates.jinja2', layout='base')
 def templates(request):
     templates = DBSession.query(Templates)
+    openwrts = {}
+    for template in templates:
+        openwrts[template.id] = []
+        for openwrt in template.openwrt:
+            openwrts[template.id].append({ 'uuid' : openwrt.uuid, \
+                                           'name' : openwrt.name})
     return {'items': templates,
-            'table_fields': ['name', 'id', 'metaconf']}
+            'openwrts' : openwrts,
+            'table_fields': ['name', 'id', 'metaconf', 'openwrt']}
 
 @view_config(route_name='templates_add', renderer='templates/templates_add.jinja2', layout='base')
 def templates_add(request):
@@ -301,6 +309,33 @@ def templates_add(request):
         newTemplate = Templates(templateName,metaconf_json,id_generator())
         DBSession.add(newTemplate)
     return {}
+
+@view_config(route_name='templates_assign', renderer='templates/archive_apply_config.jinja2', layout='base')
+def templates_assign(request):
+    template = DBSession.query(Templates).get(request.matchdict['id'])
+    if not template:
+        return exc.HTTPNotFound()
+    openwrt = DBSession.query(OpenWrt)
+    devices = {}
+    if request.POST:
+        for ow in openwrt:
+            try:
+                ow.templates.remove(template)
+            except ValueError: # if the template is not assoc - do nothing
+                pass
+        for name,value in request.POST.dict_of_lists().items():
+            if name!='submitted':
+                device = DBSession.query(OpenWrt).get(name)
+                if  value: # if item is not the submit button and it's checkd
+                    device.templates.append(template)
+        return HTTPFound(location = request.route_url('templates'))
+    for device in openwrt:
+        devices[str(device.name)] = str(device.uuid)
+    checked = []
+    for device in template.openwrt:
+        checked.append(str(device.uuid))
+    return { 'devices' : devices,
+             'checked' : checked}
 
 @view_config(route_name='openwrt_action', renderer='templates/openwrt_add.jinja2', layout='base')
 def openwrt_action(request):
