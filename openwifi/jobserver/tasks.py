@@ -220,7 +220,7 @@ def update_template(openwrtConfJSON, templateJSON):
                         if config.name==conf_match['matchvalue']:
                             configs_to_be_matched.append(config)
                     if conf_match['matchtype']=='type':
-                        if config.uci_type==conf_match['matchvalue']:
+                        if config.uci_type==conf_match['ucitype']:
                             configs_to_be_matched.append(config)
                 for mconfig in matched_configs:
                     for option in conf_match['change']['add']:

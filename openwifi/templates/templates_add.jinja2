@@ -217,6 +217,95 @@ function delPanel(id)
 	$("#panel"+id).remove();
 };
 
+$(document).ready( function() { 
+			var metaconf = JSON.parse(' {{ metaconf | safe }} ');
+			if(metaconf.metaconf==undefined)
+			{
+				console.log("Add Called");
+				return;
+			}
+			console.log("Edit Called");
+			metaconf = metaconf.metaconf;
+			console.log(metaconf);
+			for(package in metaconf.packages)
+			{
+				curpackage = metaconf.packages[package];
+				var curPackId = packageId;
+				addPackage();
+				$("input[name='packageA"+curPackId.toString()+".Name']").val(curpackage.matchvalue);
+				if($.inArray(curpackage.matchvalue,metaconf.change.add)<0)
+				{
+					$("input[name='packageA"+curPackId.toString()+".Add']").prop('checked', false);
+					$("input[name='packageA"+curPackId.toString()+".Add']").trigger('change');
+				}
+				for(confcount in curpackage.config)
+				{
+					var curconf = curpackage.config[confcount];
+					var curConfId = confId;
+					var confIdStr = "packageA"+curPackId.toString();
+					var curPackIdStr = "#pack"+curPackId.toString()+'Add';
+					do {
+						addConf(curPackIdStr,confIdStr,false);	
+						$("input[name='"+confIdStr+".configA"+curConfId.toString()+".Name']").val(curconf.matchvalue);
+						$("input[name='"+confIdStr+".configA"+curConfId.toString()+".Count']").val(curconf.matchcount);
+						$("input[name='"+confIdStr+".configA"+curConfId.toString()+".Type']").val(curconf.ucitype);
+						$("select[name='"+confIdStr+".configA"+curConfId.toString()+".matchtype']").val(curconf.matchtype);
+						var configAdd = false;
+						for(addconfigcount in curpackage.change.add)
+						{
+							var addconfig = curpackage.change.add[addconfigcount];
+							if(addconfig[0]==curconf.matchvalue && addconfig[1]==curconf.ucitype) 
+							{
+								configAdd = true;
+								$("select[name='"+confIdStr+".configA"+curConfId.toString()+".CreateType']").val(addconfig[2]);
+								break;
+							}
+						}
+						if(!configAdd)
+						{
+							$("input[name='"+confIdStr+".configA"+curConfId.toString()+".Add']").prop('checked', false);
+							$("input[name='"+confIdStr+".configA"+curConfId.toString()+".Add']").trigger('change');
+						}
+						for(optcount in curconf.change.add)
+						{
+							var curOptId = optionId;
+							opt = curconf.change.add[optcount];
+							addOption("#conf"+curConfId.toString()+"Add",confIdStr+".configA"+curConfId.toString());
+							$("input[name='"+confIdStr+".configA"+curConfId.toString()+".optA"+curOptId.toString()+".Name']").val(opt[0]);
+							$("input[name='"+confIdStr+".configA"+curConfId.toString()+".optA"+curOptId.toString()+".Value']").val(opt[1]);
+						}
+						for(optcount in curconf.change.del)
+						{
+							var curOptId = optionId;
+							opt = curconf.change.del[optcount];
+							addDelOption("#conf"+curConfId.toString()+"Del",confIdStr+".configA"+curConfId.toString());
+							$("input[name='"+confIdStr+".configA"+curConfId.toString()+".optD"+curOptId.toString()+".Name']").val(opt);
+						}
+						curPackIdStr = "#conf"+curConfId.toString()+'Next';
+						confIdStr = confIdStr+'.configA'+curConfId.toString();
+						curconf = curconf.next;
+						curConfId = confId;
+					} while(curconf != "")
+				}
+				for(delconfcount in curpackage.change.del)
+				{
+					delconf = curpackage.change.del[delconfcount];
+					var curDelConfId = delConfId;
+					delConf(curPackId);
+					$("input[name='packageA"+curPackId.toString()+".configD"+curDelConfId.toString()+".Name']").val(delconf[0]);
+					$("input[name='packageA"+curPackId.toString()+".configD"+curDelConfId.toString()+".Type']").val(delconf[1]);
+					$("select[name='packageA"+curPackId.toString()+".configD"+curDelConfId.toString()+".DelType']").val(delconf[2]);
+				}
+			}
+			for(delPackCount in metaconf.change.del)
+			{
+				var delPack = metaconf.change.del[delPackCount];
+				var curDelPackId = delPackageId;
+				delPackage();
+				$("input[name='packageD"+curDelPackId.toString()+".Name']").val(delPack);
+			}
+		})
+
 </script>
 <p>
 <form method="POST">
@@ -225,7 +314,7 @@ function delPanel(id)
   	<h4>Template</h4>
   </div>
   <div class="panel-body">
-	<input name='templateName' id='optName' type='text' class='form-control' placeholder='Template Name'>
+	<input name='templateName' id='optName' type='text' class='form-control' placeholder='Template Name' value='{{ templateName }}'>
 	<button type="button" class="btn btn-success" onclick="addPackage();" >Add Package</button>
 	<button type="button" class="btn btn-danger" onclick="delPackage();" >Del Package</button>
 	<div id="metaconf">

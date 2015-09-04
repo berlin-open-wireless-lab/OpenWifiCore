@@ -193,30 +193,7 @@ def openwrt_add(request):
     save_url = request.route_url('openwrt_add')
     return {'save_url':save_url, 'form':form}
 
-@view_config(route_name='templates', renderer='templates/templates.jinja2', layout='base')
-def templates(request):
-    templates = DBSession.query(Templates)
-    openwrts = {}
-    for template in templates:
-        openwrts[template.id] = []
-        for openwrt in template.openwrt:
-            openwrts[template.id].append({ 'uuid' : openwrt.uuid, \
-                                           'name' : openwrt.name})
-    return {'items': templates,
-            'openwrts' : openwrts,
-            'table_fields': ['name', 'id', 'metaconf', 'openwrt']}
-
-@view_config(route_name='templates_delete', renderer='templates/templates.jinja2', layout='base')
-def templates_delete(request):
-    template = DBSession.query(Templates).get(request.matchdict['id'])
-    if not template:
-        return exc.HTTPNotFound()
-    DBSession.delete(template)
-    return HTTPFound(location=request.route_url('templates'))
-    
-@view_config(route_name='templates_add', renderer='templates/templates_add.jinja2', layout='base')
-def templates_add(request):
-    if request.POST:
+def generateMetaconfJson(POST):
         # init metaconf
         metaconf = {}
         metaconf['metaconf'] = {}
@@ -228,7 +205,7 @@ def templates_add(request):
         # dictonary to store data from form
         formdata = {}
         # first read all values into formdata
-        for key, val in request.POST.dict_of_lists().items():
+        for key, val in POST.dict_of_lists().items():
             keysplit = key.split('.')
             curlevel=formdata
             i=1
@@ -281,6 +258,7 @@ def templates_add(request):
                                         pass
                                     config['matchvalue']=curconfig['Name']
                                     config['matchtype']=curconfig['matchtype']
+                                    config['ucitype']=curconfig['Type']
                                     config['matchcount']=curconfig['Count']
                                     config['type']='config'
                                     config['change']={}
@@ -315,14 +293,55 @@ def templates_add(request):
                     metaconf['metaconf']['change']['del'].append(val['Name'])
             else:
                 print("ERROR: first level should be a package")
-        pp.pprint(request.POST)
+        pp.pprint(POST)
         pp.pprint(formdata)
         pp.pprint(metaconf)
         pp.pprint(templateName)
         metaconf_json = json.dumps(metaconf)
+        return metaconf_json, templateName
+
+@view_config(route_name='templates', renderer='templates/templates.jinja2', layout='base')
+def templates(request):
+    templates = DBSession.query(Templates)
+    openwrts = {}
+    for template in templates:
+        openwrts[template.id] = []
+        for openwrt in template.openwrt:
+            openwrts[template.id].append({ 'uuid' : openwrt.uuid, \
+                                           'name' : openwrt.name})
+    return {'items': templates,
+            'openwrts' : openwrts,
+            'table_fields': ['name', 'id', 'metaconf', 'openwrt']}
+
+@view_config(route_name='templates_delete', renderer='templates/templates.jinja2', layout='base')
+def templates_delete(request):
+    template = DBSession.query(Templates).get(request.matchdict['id'])
+    if not template:
+        return exc.HTTPNotFound()
+    DBSession.delete(template)
+    return HTTPFound(location=request.route_url('templates'))
+
+@view_config(route_name='templates_edit', renderer='templates/templates_add.jinja2', layout='base')
+def templates_edit(request):
+    template = DBSession.query(Templates).get(request.matchdict['id'])
+    if not template:
+        return exc.HTTPNotFound()
+    if request.POST:
+        metaconf_json, templateName = generateMetaconfJson(request.POST)
+        template.metaconf = metaconf_json
+        template.name = templateName
+        return HTTPFound(location=request.route_url('templates'))
+    return { 'metaconf' : template.metaconf,
+             'templateName' : template.name}
+    
+@view_config(route_name='templates_add', renderer='templates/templates_add.jinja2', layout='base')
+def templates_add(request):
+    if request.POST:
+        metaconf_json, templateName = generateMetaconfJson(request.POST)
         newTemplate = Templates(templateName,metaconf_json,id_generator())
         DBSession.add(newTemplate)
-    return {}
+    return {'metaconf' : '{}',
+            'templateName':''}
 
 @view_config(route_name='templates_assign', renderer='templates/archive_apply_config.jinja2', layout='base')
 def templates_assign(request):
