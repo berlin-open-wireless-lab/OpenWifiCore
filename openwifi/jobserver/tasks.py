@@ -195,7 +195,7 @@ def update_template(openwrtConfJSON, templateJSON):
                (config[2] == 'typeMismatch' and typeMismatch) or\
                (config[2] == 'nameMismatch' and nameMismatch) or\
                (config[2] == 'bothMismatch' and typeMismatch and nameMismatch):
-                openwrt_config.packages[package][config] = Config(config[0],config[1],config[0]=='')
+                openwrt_config.packages[package][config[0]] = Config(config[1],config[0],config[0]=='') #Config(ucitype, name, anon)
         # scan for packages to be removed and delete
         for config in package_match['change']['del']:
             confmatch = config[2]
@@ -211,17 +211,17 @@ def update_template(openwrtConfJSON, templateJSON):
                     if confmatch == 'bothMatch' and confname == conf[0]:
                         openwrt_config.packages[package].pop(confname)
         # go into config matches
-        matched_configs = []
-        configs_to_be_matched = list(openwrt_config.packges[package].values())
         for conf_match in  package_match['config']:
+            matched_configs = []
+            configs_to_be_matched = list(openwrt_config.packages[package].values())
             while conf_match!='' and configs_to_be_matched:
                 for config in configs_to_be_matched:
                     if conf_match['matchtype']=='name':
                         if config.name==conf_match['matchvalue']:
-                            configs_to_be_matched.append(config)
+                            matched_configs.append(config)
                     if conf_match['matchtype']=='type':
                         if config.uci_type==conf_match['ucitype']:
-                            configs_to_be_matched.append(config)
+                            matched_configs.append(config)
                 for mconfig in matched_configs:
                     for option in conf_match['change']['add']:
                         mconfig.keys[option[0]] = option[1]
