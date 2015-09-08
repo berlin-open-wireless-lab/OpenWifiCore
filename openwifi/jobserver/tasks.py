@@ -227,7 +227,7 @@ def update_template(openwrtConfJSON, templateJSON):
                         mconfig.keys[option[0]] = option[1]
                     for option in conf_match['change']['del']:
                         try:
-                            mconfig.keys.pop(option[0])
+                            mconfig.keys.pop(option)
                         except KeyError:
                             pass
                 configs_to_be_matched=matched_configs
