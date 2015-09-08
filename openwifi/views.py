@@ -311,7 +311,8 @@ def templates(request):
                                            'name' : openwrt.name})
     return {'items': templates,
             'openwrts' : openwrts,
-            'table_fields': ['name', 'id', 'metaconf', 'openwrt']}
+            'table_fields': ['name', 'id', 'metaconf', 'openwrt'],
+            'actions' : ['update']}
 
 @view_config(route_name='templates_delete', renderer='templates/templates.jinja2', layout='base')
 def templates_delete(request):
@@ -370,6 +371,19 @@ def templates_assign(request):
         checked.append(str(device.uuid))
     return { 'devices' : devices,
              'checked' : checked}
+
+@view_config(route_name='templates_action', renderer='templates/templates.jinja2', layout='base')
+def templates_action(request):
+    action = request.matchdict['action']
+    template = DBSession.query(Templates).get(request.matchdict['id'])
+    if not template:
+        return exc.HTTPNotFound()
+
+    if action == 'update':
+        jobtask.update_template_config.delay(template.id)
+        return HTTPFound(location=request.route_url('templates'))
+
+    return exc.HTTPNotFound()
 
 @view_config(route_name='openwrt_action', renderer='templates/openwrt_add.jinja2', layout='base')
 def openwrt_action(request):

@@ -28,6 +28,7 @@ def main(global_config, **settings):
     config.add_route('templates_assign', '/templates_assign/{id}')
     config.add_route('templates_edit', '/templates_edit/{id}')
     config.add_route('templates_delete', '/templates_delete/{id}')
+    config.add_route('templates_action', '/templates/{id}/{action}')
 
     config.add_route('confarchive', '/confarchive')
     config.add_route('archive_edit_config', '/archive_edit_config/{id}')

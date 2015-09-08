@@ -3,7 +3,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from openwifi.jobserver_config import sqlurl, brokerurl, redishost, redisport, redisdb
 from openwifi.netcli import jsonubus
-from openwifi.models import ( OpenWrt )
+from openwifi.models import ( OpenWrt, Templates )
 from pyuci import Uci, Package, Config
 from datetime import timedelta
 import redis
@@ -236,4 +236,13 @@ def update_template(openwrtConfJSON, templateJSON):
         
 @app.task
 def update_template_config(id):
-	pass
+        engine = create_engine(sqlurl)
+        Session = sessionmaker()
+        Session.configure(bind=engine)
+        DBSession=Session()
+        template = DBSession.query(Templates).get(id)
+        for openwrt in template.openwrt:
+            newconf = update_template(openwrt.configuration, template.metaconf)
+            openwrt.configuration = newconf.export_json()
+        DBSession.commit()
+        DBSession.close()

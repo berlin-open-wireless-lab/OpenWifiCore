@@ -36,6 +36,9 @@
 			<a href="/templates_assign/{{ item['id'] }}" class="btn btn-primary">Assign Nodes</a>
 			<a href="/templates_edit/{{ item['id'] }}" class="btn btn-primary">Edit</a>
 			<a href="/templates_delete/{{ item['id'] }}" class="btn btn-danger">Delete</a>
+			{%- for action in actions -%}
+				<a href="/templates/{{ item['id'] }}/{{ action }}" class="btn btn-primary">{{ action }}</a>
+			{%- endfor -%}
 		</td>
         </tr>
     {% if loop.last %}
