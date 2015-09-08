@@ -340,6 +340,7 @@ def templates_add(request):
         metaconf_json, templateName = generateMetaconfJson(request.POST)
         newTemplate = Templates(templateName,metaconf_json,id_generator())
         DBSession.add(newTemplate)
+        return HTTPFound(location=request.route_url('templates'))
     return {'metaconf' : '{}',
             'templateName':''}
 
