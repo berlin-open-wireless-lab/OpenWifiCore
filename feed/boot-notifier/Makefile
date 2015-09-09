@@ -8,7 +8,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=openwifi-boot-notifier
-PKG_VERSION:=2014-06-10
+PKG_VERSION:=2015-05-04
 PKG_RELEASE=$(PKG_SOURCE_VERSION)
 
 PKG_MAINTAINER:=Alexander Couzens <lynxis@fe80.eu>
@@ -19,7 +19,7 @@ define Package/openwifi-boot-notifier
   SECTION:=utils
   CATEGORY:=OpenWifi
   TITLE:=Boot Notifier
-  DEPENDS:=
+  DEPENDS:=+ip +rpcd +uhttpd-mod-ubus +mdns
 endef
 
 define Package/openwifi-boot-notifier/description
@@ -37,9 +37,9 @@ define Package/openwifi-boot-notifier/install
 	$(INSTALL_DIR) $(1)/lib/openwifi/
 	$(INSTALL_DIR) $(1)/etc/init.d/
 	$(INSTALL_DIR) $(1)/etc/config/
-	$(INSTALL_BIN) ./files/openwifi-boot-notifier $(1)/etc/init.d/
-	$(INSTALL_DATA) ./files/openwifi.sh $(1)/lib/openwifi/openwifi.sh
-	$(INSTALL_DATA) ./files/openwifi.config $(1)/config/openwifi
+	$(INSTALL_BIN) ./files/openwifi-boot-notifier.init  $(1)/etc/init.d/openwifi-boot-notifier
+	$(INSTALL_DATA) ./files/libopenwifi.sh $(1)/lib/openwifi/openwifi.sh
+	$(INSTALL_DATA) ./files/openwifi.config $(1)/etc/config/openwifi
 endef
 
 $(eval $(call BuildPackage,openwifi-boot-notifier))

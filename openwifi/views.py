@@ -36,11 +36,27 @@ from .utils import generate_device_uuid
 def home(request):
     return {}
 
+@jsonrpc_method(method='device_check_registered', endpoint='api')
+def device_check_registered(request, uuid, name):
+    """
+    check if a device is already present in database. This call is used by a device to check if it must register again.
+    """
+    device = DBSession.query(OpenWrt).get(uuid)
+    if device:
+        return True
+    else:
+        return False
+
 @jsonrpc_method(method='device_register', endpoint='api')
-def device_register(request, uuid, name, address, distribution, version, proto):
-    ap = OpenWrt(name, address, distribution, version, uuid, False)
+def device_register(request, uuid, name, address, distribution, version, proto, login, password):
+    ap = OpenWrt(name, address, distribution, version, uuid, login, password, False)
     DBSession.add(ap)
     DBSession.flush()
+
+@jsonrpc_method(endpoint='api')
+def hello(request):
+    """ this call is used for discovery to ensure """
+    return "openwifi"
 
 @view_config(route_name='openwrt_list', renderer='templates/openwrt.jinja2', layout='base')
 def openwrt_list(request):
