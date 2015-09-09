@@ -20,7 +20,7 @@ from sqlalchemy.orm import (
 
 from zope.sqlalchemy import ZopeTransactionExtension
 
-from utils import GUID
+from .guid import GUID
 
 
 DBSession = scoped_session(sessionmaker(extension=ZopeTransactionExtension()))
