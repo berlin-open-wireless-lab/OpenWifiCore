@@ -102,15 +102,15 @@ device_is_registered() {
           } \
         \"method\": \"device_is_registered\", \
         \"jsonrpc\": \"2.0\" }" \
-      "http://${address}/api")
+      "http://${server}/api")
 
   json_load "$RESPONSE"
   json_get_var result result
 
   if [ "$result" = "yes" ] ; then
-    return 1;
-  else
     return 0;
+  else
+    return 1;
   fi
 }
 
@@ -128,14 +128,14 @@ device_discover_server() {
         \"id\": \"23\", \
         \"method\": \"hello\", \
         \"jsonrpc\": \"2.0\" }" \
-      "http://${address}/api")
+      "http://${server}/api")
   json_load "$RESPONSE"
   json_get_var result result
   if [ "$result" = "openwifi" ] ; then
-    return 1
+    return 0
   fi
 
-  return 0
+  return 1
 }
 
 # search for a openwifi controller and set it if found
