@@ -80,7 +80,7 @@ device_register() {
             \"version\": \"${DISTRIB_RELEASE}\", \
             \"proto\": \"${PROTOCOL}\", \
             \"login\": \"${user}\", \
-            \"password\": \"${password}\", \
+            \"password\": \"${password}\" \
             }, \
         \"method\": \"device_register\", \
         \"jsonrpc\": \"2.0\" }" \
