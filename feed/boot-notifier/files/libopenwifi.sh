@@ -150,8 +150,8 @@ device_discover() {
     local mdns controller
     ubus call mdns scan
     mdns=$(ubus call mdns browse)
-    eval $(jsonfilter -s "$mdns" -e 'controller=@["_openwifi._tcp"]')
-    for control in controller ; do
+    eval $(jsonfilter -s "$mdns" -e 'controller=$["_openwifi._tcp"][*]["ipv4"]')
+    for control in $controller ; do
       if device_discover_server "$control" ; then
         set_controller "$control"
         return 0
