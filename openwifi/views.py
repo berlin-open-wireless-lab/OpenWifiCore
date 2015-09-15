@@ -49,8 +49,20 @@ def device_check_registered(request, uuid, name):
 
 @jsonrpc_method(method='device_register', endpoint='api')
 def device_register(request, uuid, name, address, distribution, version, proto, login, password):
-    ap = OpenWrt(name, address, distribution, version, uuid, login, password, False)
-    DBSession.add(ap)
+    device = DBSession.query(OpenWrt).get(uuid)
+    # if uuid exists, update information
+    if device:
+    # otherwise add new device
+        device.name = name
+        device.name = address
+        device.name = distribution
+        device.name = version
+        device.name = proto
+        device.name = login
+        device.name = password
+    else:
+        ap = OpenWrt(name, address, distribution, version, uuid, login, password, False)
+        DBSession.add(ap)
     DBSession.flush()
 
 @jsonrpc_method(endpoint='api')
