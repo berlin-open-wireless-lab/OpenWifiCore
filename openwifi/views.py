@@ -54,12 +54,12 @@ def device_register(request, uuid, name, address, distribution, version, proto, 
     if device:
     # otherwise add new device
         device.name = name
-        device.name = address
-        device.name = distribution
-        device.name = version
-        device.name = proto
-        device.name = login
-        device.name = password
+        device.address = address
+        device.distribution = distribution
+        device.version = version
+        device.proto = proto
+        device.login = login
+        device.password = password
     else:
         ap = OpenWrt(name, address, distribution, version, uuid, login, password, False)
         DBSession.add(ap)
