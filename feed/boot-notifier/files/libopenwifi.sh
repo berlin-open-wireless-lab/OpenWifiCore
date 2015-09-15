@@ -14,19 +14,18 @@ user_del() {
   local user="$1"
   local tmp
 
-  if ! user_exists "$user" ; then
+  if ! grep "^$user:" /etc/shadow ; then
     return 0;
   fi
 
   [ -n "$IPKG_INSTROOT" ] || lock /var/lock/passwd
-  tmp=$(mktemp /etc/shadow_XXXXXX)
+  tmp=$(mktemp)
 
   # remove generatepw user
-  cp -a /etc/shadow $tmp
-  grep -v "^generatepw:" $tmp > /etc/shadow
-  cp -a /etc/passwd $tmp
-  grep -v "^generatepw:" $tmp > /etc/passwd
+  cp -a /etc/shadow "$tmp"
+  grep -v "^$user:" "$tmp" > /etc/shadow
   rm $tmp
+
   [ -n "$IPKG_INSTROOT" ] || lock -u /var/lock/passwd
 }
 
@@ -61,7 +60,7 @@ device_register() {
   user=root
   password="$(dd if=/dev/urandom of=- bs=512 count=1 2>/dev/null | md5sum - | cut -c1-16)"
 
-  user_add generatepw 1023 65534
+  useradd generatepw
   echo -e "$password\n$password\n" | passwd generatepw
   cryptpw="$(grep ^generatepw: /etc/shadow | awk -F: '{print $2}')"
   user_del generatepw
