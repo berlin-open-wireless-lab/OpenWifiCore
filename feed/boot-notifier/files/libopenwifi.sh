@@ -58,7 +58,7 @@ device_register() {
 
   localaddress=$(ip r g "${address}" | head -n1 | awk '{ print $5 }')
   user=root
-  password="$(dd if=/dev/urandom of=- bs=512 count=1 2>/dev/null | md5sum - | cut -c1-16)"
+  password="$(dd if=/dev/urandom bs=512 count=1 2>/dev/null | md5sum - | cut -c1-16)"
 
   useradd generatepw
   echo -e "$password\n$password\n" | passwd generatepw
