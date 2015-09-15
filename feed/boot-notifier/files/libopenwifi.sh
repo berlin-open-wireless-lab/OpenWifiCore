@@ -10,37 +10,6 @@ _log() {
   logger -s -t openwifi -p daemon.$level $@
 }
 
-user_del() {
-  local user="$1"
-  local tmp
-
-  if ! grep "^$user:" /etc/shadow ; then
-    return 0;
-  fi
-
-  [ -n "$IPKG_INSTROOT" ] || lock /var/lock/passwd
-  tmp=$(mktemp)
-
-  # remove generatepw user
-  cp -a /etc/shadow "$tmp"
-  grep -v "^$user:" "$tmp" > /etc/shadow
-  rm $tmp
-
-  [ -n "$IPKG_INSTROOT" ] || lock -u /var/lock/passwd
-}
-
-user_set_pass() {
-  local user="$1"
-  if ! user_exist "$user" ; then
-    return 1
-  fi
-
-  passwd "$user" <<EOF
-$password
-$password
-EOF
-  return 0;
-}
 
 # register a device to the controller
 device_register() {
@@ -63,7 +32,7 @@ device_register() {
   useradd generatepw
   echo -e "$password\n$password\n" | passwd generatepw
   cryptpw="$(grep ^generatepw: /etc/shadow | awk -F: '{print $2}')"
-  user_del generatepw
+  userdel generatepw
   uci set rpcd.@login[0].password="$cryptpw"
   uci commit rpcd
   _log info "Registering to server $server"
