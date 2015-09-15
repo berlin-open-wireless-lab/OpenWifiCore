@@ -52,7 +52,8 @@ def get_config(uuid):
         DBSession.commit()
         DBSession.close()
         return True
-    except:
+    except Exception as thrownexpt:
+        print(thrownexpt)
         device.configured = False
         return False
 
@@ -87,7 +88,7 @@ def diff_update_config(diff, url, user, passwd):
     # add new options
     for optkey, optval in diff['newOptions'].items():
         js.call('uci','set',config=optkey[0],section=optkey[1],
-                values={optkey[3]:optval})
+                values={optkey[2]:optval})
         js.call('uci','commit',config=optkey[0])
 
     # delete old options
@@ -99,7 +100,7 @@ def diff_update_config(diff, url, user, passwd):
     # set changed options
     for optkey, optval in diff['chaOptions'].items():
         js.call('uci','set',config=optkey[0],section=optkey[1],
-                values={optkey[3]:optval[1]})
+                values={optkey[2]:optval[1]})
         js.call('uci','commit',config=optkey[0])
 
 @app.task
@@ -117,11 +118,11 @@ def update_config(uuid):
                                                                 device.login,
                                                                 device.password))
     conf_diff = cur_configuration.diff(new_configuration)
-    DBSession.commit()
-    DBSession.close()
     update_diff_conf = signature('openwifi.jobserver.tasks.diff_update_config',
                                  args=(conf_diff, device_url,
                                        device.login, device.password))
+    DBSession.commit()
+    DBSession.close()
     update_diff_conf.delay()
 
 @app.task
