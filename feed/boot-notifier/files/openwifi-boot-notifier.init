@@ -36,5 +36,7 @@ service_triggers()
 }
 
 start_service() {
+  . /lib/openwifi/openwifi.sh
+  openwifi
   reload_service
 }
