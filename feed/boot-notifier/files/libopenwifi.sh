@@ -31,9 +31,8 @@ device_register() {
 
   useradd generatepw
   echo -e "$password\n$password\n" | passwd generatepw
-  cryptpw="$(grep ^generatepw: /etc/shadow | awk -F: '{print $2}')"
-  userdel generatepw
-  uci set rpcd.@login[0].password="$cryptpw"
+
+  uci set rpcd.@login[0].password="\$p\$generatepw"
   uci commit rpcd
   _log info "Registering to server $server"
 
