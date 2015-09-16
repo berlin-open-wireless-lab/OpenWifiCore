@@ -1,7 +1,16 @@
 {% extends main_template %}
 
+{% block additionalheader %} 
+<link href="{{request.static_path('openwifi:static/css/theme.bootstrap.css')}}" type="text/css" rel="stylesheet" />
+{% endblock %}
+
 {% block content %}
-<script src="{{request.static_path('openwifi:static/js/jquery.jsonrpcclient.js')}}"></script>
+<script type="text/javascript" src="{{request.static_path('openwifi:static/js/jquery.tablesorter.js')}}"></script> 
+<script type="text/javascript" src="{{request.static_path('openwifi:static/js/parser-network.js')}}"></script> 
+<script type="text/javascript" src="{{request.static_path('openwifi:static/js/jquery.tablesorter.widgets.js')}}"></script> 
+<link href="{{request.static_path('openwifi:static/css/jquery.tablesorter.pager.css')}}" type="text/css" rel="stylesheet" />
+<script type="text/javascript" src="{{request.static_path('openwifi:static/js/jquery.tablesorter.pager.js')}}"></script> 
+<script type="text/javascript" src="{{request.static_path('openwifi:static/js/jquery.jsonrpcclient.js')}}"></script> 
 <script>
 var devices;
 var RPCClient;
@@ -44,46 +53,129 @@ function RPCBatch(batch)
 		RPCClient.call('get_node_status', { 'uuid': devices[i] },responseRPC, rpcError);
 }
 
-function updateStatus(){
+function updateStatusRouter(){
 	RPCClient.batch(RPCBatch,rpcBatchDone,rpcError);
-	setTimeout(updateStatus, 30000);
+	setTimeout(updateStatusRouter, 30000);
 }
 
+
+$(function() {
+  // NOTE: $.tablesorter.theme.bootstrap is ALREADY INCLUDED in the jquery.tablesorter.widgets.js
+  // file; it is included here to show how you can modify the default classes
+
+  // call the tablesorter plugin and apply the uitheme widget
+  $("#sorttable").tablesorter({
+    // this will apply the bootstrap theme if "uitheme" widget is included
+    // the widgetOptions.uitheme is no longer required to be set
+    theme : "bootstrap",
+
+    widthFixed: true,
+
+    headerTemplate : '{content} {icon}', // new in v2.7. Needed to add the bootstrap icon!
+
+    // widget code contained in the jquery.tablesorter.widgets.js file
+    // use the zebra stripe widget if you plan on hiding any rows (filter widget)
+    widgets : [ "uitheme", "filter", "zebra" ],
+
+    widgetOptions : {
+      // using the default zebra striping class name, so it actually isn't included in the theme variable above
+      // this is ONLY needed for bootstrap theming if you are using the filter widget, because rows are hidden
+      zebra : ["even", "odd"],
+
+      // reset filters button
+      filter_reset : ".reset",
+
+      // extra css class name (string or array) added to the filter element (input or select)
+      filter_cssFilter: "form-control",
+
+      // set the uitheme widget to use the bootstrap theme class names
+      // this is no longer required, if theme is set
+      // ,uitheme : "bootstrap"
+
+    }
+  })
+  .tablesorterPager({
+
+    // target the pager markup - see the HTML block below
+    container: $(".ts-pager"),
+
+    // target the pager page select dropdown - choose a page
+    cssGoto  : ".pagenum",
+
+    // remove rows from the table to speed up the sort of large tables.
+    // setting this to false, only hides the non-visible rows; needed if you plan to add/remove rows with the pager enabled.
+    removeRows: false,
+
+    // output string - default is '{page}/{totalPages}';
+    // possible variables: {page}, {totalPages}, {filteredPages}, {startRow}, {endRow}, {filteredRows} and {totalRows}
+    output: '{startRow} - {endRow} / {filteredRows} ({totalRows})'
+
+  }); 
+
+});
+
 $(document).ready(function(){
-devices = JSON.parse('{{devices|safe}}');
-RPCClient = new $.JsonRpcClient({ ajaxUrl: '/api', timeout: 1000 });
-updateStatus()});
+	devices = JSON.parse('{{devices|safe}}');
+	RPCClient = new $.JsonRpcClient({ ajaxUrl: '/api', timeout: 1000 });
+	updateStatusRouter();
+});
 </script>
-  <table class="table">
+
+<h1> OpenWrt Devices Overview </h1>
+
+  <table id="sorttable" class="table">
   {% for item in items -%}
     {% if loop.first %}
       <thead>
         <tr>
           {%- for field in table_fields %}
             <th>{{ field }}</th>
-          {% endfor %}
+          {%- endfor %}
         </tr>
       </thead>
       <tbody>
-    {% endif %}
+    {%- endif -%}
         <tr>
-        {% set rowloop = loop %}
-        {%- for field in table_fields %}
-		{% if field == "configuration" %}
-		  <th><a class="btn btn-primary" href="{{ confdomain }}/{{ item[idfield] }}" >show  config</a></th>
-		{% else %}
-		  <th>
-		  {% if loop.first %}
+        {%- set rowloop = loop %}
+        {%- for field in table_fields -%}
+		{%- if field == "configuration" -%}
+		  <td><a class="btn btn-primary" href="{{ confdomain }}/{{ item[idfield] }}" >show  config</a></td>
+		{%- else -%}
+		  <td>
+		  <a href="{{ domain }}/{{ item[idfield] }}" >{{ item[field] }}</a>
+		  {%- if loop.first -%}
 		  <div id="Status_{{item[idfield]}}" style="display:inline;"></div>
-		  {% endif %}
-		  <a href="{{ domain }}/{{ item[idfield] }}" >{{ item[field] }}</a></th>
-		{% endif %}
-        {% endfor %}
+		  {%- endif -%}
+		  </td>
+		{%- endif -%}
+        {%- endfor %}
         </tr>
-    {% if loop.last %}
+    {%- if loop.last -%}
       </tbody>
-    {% endif %}
-  {% else %}
+      <tfoot>
+    <tr>
+          {%- for field in table_fields %}
+            <th>{{ field }}</th>
+          {%- endfor %}
+	  </tr><tr>
+      <th colspan="{{ table_fields|length }}" class="ts-pager form-horizontal">
+        <button type="button" class="btn first"><i class="icon-step-backward glyphicon glyphicon-step-backward"></i></button>
+        <button type="button" class="btn prev"><i class="icon-arrow-left glyphicon glyphicon-backward"></i></button>
+        <span class="pagedisplay"></span> <!-- this can be any element, including an input -->
+        <button type="button" class="btn next"><i class="icon-arrow-right glyphicon glyphicon-forward"></i></button>
+        <button type="button" class="btn last"><i class="icon-step-forward glyphicon glyphicon-step-forward"></i></button>
+        <select class="pagesize input-mini" title="Select page size">
+          <option selected="selected" value="10">10</option>
+          <option value="20">20</option>
+          <option value="30">30</option>
+          <option value="40">40</option>
+        </select>
+        <select class="pagenum input-mini" title="Select page number"></select>
+      </th>
+    </tr>
+  </tfoot>
+    {%- endif -%}
+  {%- else -%}
   <p class="lead">no data</p>
   {%- endfor %}
   </table>
