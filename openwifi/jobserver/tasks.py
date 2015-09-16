@@ -246,4 +246,8 @@ def update_template_config(id):
             newconf = update_template(openwrt.configuration, template.metaconf)
             openwrt.configuration = newconf.export_json()
         DBSession.commit()
+        for openwrt in template.openwrt:
+            updateconf = signature('openwifi.jobserver.tasks.update_config',
+                                 args=(openwrt.uuid,))
+            updateconf.delay()
         DBSession.close()
