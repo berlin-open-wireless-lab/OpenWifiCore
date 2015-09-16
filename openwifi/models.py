@@ -37,7 +37,7 @@ template_association_table = Table('template_association', Base.metadata,
 class OpenWrt(Base):
     __tablename__ = 'openwrt'
     uuid = Column(GUID, primary_key=True)
-    name = Column(Text, unique=True, nullable=True)
+    name = Column(Text, nullable=True)
     address = Column(Text) # ip or host
     distribution = Column(Text) # lazus / polar / openWrt
     version = Column(Text) # 1,2, ... 10.04 , ... trunk

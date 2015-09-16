@@ -110,7 +110,10 @@ def archiveapplyconfig(request):
                 jobtask.update_config.delay(str(deviceToBeUpdated.uuid))
             return HTTPFound(location = request.route_url('confarchive'))
     for device in openwrt:
-        devices[str(device.name)] = str(device.uuid)
+        name = str(device.name)
+        while name in devices.keys():
+            name += '_'
+        devices[name] = str(device.uuid)
     return { 'devices' : devices,
              'checked' : [] }
 
@@ -393,7 +396,10 @@ def templates_assign(request):
                     device.templates.append(template)
         return HTTPFound(location = request.route_url('templates'))
     for device in openwrt:
-        devices[str(device.name)] = str(device.uuid)
+        name = str(device.name)
+        while name in devices.keys():
+            name += '_'
+        devices[name] = str(device.uuid)
     checked = []
     for device in template.openwrt:
         checked.append(str(device.uuid))
