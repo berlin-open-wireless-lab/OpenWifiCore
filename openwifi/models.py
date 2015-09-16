@@ -34,6 +34,10 @@ template_association_table = Table('template_association', Base.metadata,
         Column('templates_id', Text, ForeignKey('templates.id')),
         Column('openwrt_id', GUID, ForeignKey('openwrt.uuid')))
 
+ssh_key_association_table = Table('sshkey_association', Base.metadata,
+        Column('sshkey_id', Integer, ForeignKey('ssh_auth_keys.id')),
+        Column('openwrt_id', GUID, ForeignKey('openwrt.uuid')))
+
 class OpenWrt(Base):
     __tablename__ = 'openwrt'
     uuid = Column(GUID, primary_key=True)
@@ -46,6 +50,7 @@ class OpenWrt(Base):
     login = Column(Text)
     password = Column(Text)
     templates = relationship("Templates",secondary=template_association_table,backref="openwrt")
+    ssh_keys = relationship("SshKey",secondary=ssh_key_association_table,backref="openwrt")
 
     def __init__(self, name, address, distribution, version, device_uuid, login, password, configured=False):
         self.name = name
@@ -135,3 +140,8 @@ class SshKey(Base):
     id = Column(Integer, primary_key=True)
     comment = Column(Text)
     key = Column(Text)
+
+    def __init__(self,key,comment,id):
+	    self.id = id
+	    self.comment = comment
+	    self.key = key

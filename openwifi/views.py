@@ -16,18 +16,21 @@ from pyuci import Uci
 import openwifi.jobserver.tasks as jobtask
 
 from sqlalchemy.exc import DBAPIError
+from sqlalchemy.sql.expression import func as sql_func
 
 from .models import (
     AccessPoint,
     DBSession,
     OpenWrt,
     ConfigArchive,
-    Templates
+    Templates,
+    SshKey
     )
 
 from .forms import (
         AccessPointAddForm,
         OpenWrtEditForm,
+        SshKeyForm
         )
 
 from .utils import generate_device_uuid
@@ -438,6 +441,40 @@ def openwrt_action(request):
         return HTTPFound(location=request.route_url('confarchive'))
 
     return HTTPFound(location=request.route_url('openwrt_detail', uuid=request.matchdict['uuid']))
+
+@view_config(route_name='sshkeys', renderer='templates/sshkeys.jinja2', layout='base')
+def sshkeys(request):
+    sshkeys = DBSession.query(SshKey)
+    return { 'items' : sshkeys,
+             'table_fields' : ['id', 'key', 'comment','actions'],
+             'actions' : ['delete']}
+
+@view_config(route_name='sshkeys_add', renderer='templates/sshkeys_add.jinja2', layout='base')
+def sshkeys_add(request):
+    form = SshKeyForm(request.POST)
+    if request.method == 'POST' and form.validate():
+        query = DBSession.query(sql_func.max(SshKey.id)) 
+        try: 
+            max = int(query[0][0])
+        except:
+            max = 0
+        sshkey = SshKey(form.key.data, form.comment.data, max+1)
+        DBSession.add(sshkey)
+        return HTTPFound(location=request.route_url('sshkeys'))
+    save_url = request.route_url('sshkeys_add')
+    return {'save_url':save_url, 'form':form}
+
+@view_config(route_name='sshkeys_action', renderer='templates/sshkeys.jinja2', layout='base')
+def sshkeys_action(request):
+    action = request.matchdict['action']
+    id = request.matchdict['id']
+    sshkey = DBSession.query(SshKey).get(id)
+    if not sshkey:
+        return exc.HTTPNotFound()
+    if action == 'delete':
+        DBSession.delete(sshkey)
+        return HTTPFound(location=request.route_url('sshkeys'))
+    return { 'keys' : sshkeys }
 
 @jsonrpc_method(method='uuid_generate', endpoint='api')
 def uuid_generate(request, unique_identifier):

@@ -34,6 +34,10 @@ def main(global_config, **settings):
     config.add_route('archive_edit_config', '/archive_edit_config/{id}')
     config.add_route('archive_apply_config', '/archive_apply_config/{id}')
 
+    config.add_route('sshkeys', '/sshkeys')
+    config.add_route('sshkeys_add', '/sshkeys_add')
+    config.add_route('sshkeys_action', '/sshkeys/{id}/{action}')
+
     config.include('pyramid_rpc.jsonrpc')
     config.add_jsonrpc_endpoint('api', '/api')
 
