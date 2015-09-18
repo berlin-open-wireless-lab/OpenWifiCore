@@ -36,6 +36,7 @@ def main(global_config, **settings):
 
     config.add_route('sshkeys', '/sshkeys')
     config.add_route('sshkeys_add', '/sshkeys_add')
+    config.add_route('sshkeys_assign', '/sshkeys_assign/{id}')
     config.add_route('sshkeys_action', '/sshkeys/{id}/{action}')
 
     config.include('pyramid_rpc.jsonrpc')

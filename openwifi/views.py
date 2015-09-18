@@ -445,8 +445,15 @@ def openwrt_action(request):
 @view_config(route_name='sshkeys', renderer='templates/sshkeys.jinja2', layout='base')
 def sshkeys(request):
     sshkeys = DBSession.query(SshKey)
+    openwrts = {}
+    for sshkey in sshkeys:
+        openwrts[sshkey.id] = []
+        for openwrt in sshkey.openwrt:
+            openwrts[sshkey.id].append({ 'uuid' : openwrt.uuid, \
+                                           'name' : openwrt.name})
     return { 'items' : sshkeys,
-             'table_fields' : ['id', 'key', 'comment','actions'],
+	     'openwrts' : openwrts,
+             'table_fields' : ['id', 'key', 'comment', 'openwrt' ,'actions'],
              'actions' : ['delete']}
 
 @view_config(route_name='sshkeys_add', renderer='templates/sshkeys_add.jinja2', layout='base')
@@ -463,6 +470,37 @@ def sshkeys_add(request):
         return HTTPFound(location=request.route_url('sshkeys'))
     save_url = request.route_url('sshkeys_add')
     return {'save_url':save_url, 'form':form}
+
+
+@view_config(route_name='sshkeys_assign', renderer='templates/archive_apply_config.jinja2', layout='base')
+def sshkeys_assign(request):
+    sshkey = DBSession.query(SshKey).get(request.matchdict['id'])
+    if not sshkey:
+        return exc.HTTPNotFound()
+    openwrt = DBSession.query(OpenWrt)
+    devices = {}
+    if request.POST:
+        for ow in openwrt:
+            try:
+                ow.ssh_keys.remove(sshkey)
+            except ValueError: # if the template is not assoc - do nothing
+                pass
+        for name,value in request.POST.dict_of_lists().items():
+            if name!='submitted':
+                device = DBSession.query(OpenWrt).get(name)
+                if  value: # if item is not the submit button and it's checkd
+                    device.ssh_keys.append(sshkey)
+        return HTTPFound(location = request.route_url('ssh_keys'))
+    for device in openwrt:
+        name = str(device.name)
+        while name in devices.keys():
+            name += '_'
+        devices[name] = str(device.uuid)
+    checked = []
+    for device in sshkey.openwrt:
+        checked.append(str(device.uuid))
+    return { 'devices' : devices,
+             'checked' : checked}
 
 @view_config(route_name='sshkeys_action', renderer='templates/sshkeys.jinja2', layout='base')
 def sshkeys_action(request):

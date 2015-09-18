@@ -21,9 +21,14 @@
         {%- for field in table_fields -%}
 		  <td>
 		{%- if field == 'actions' -%}
+			<a class="btn btn-primary" href="sshkeys_assign/{{ item['id'] }}">Assign Nodes</a>
 			{%- for action in actions -%}
 				<a class="btn btn-primary" href="sshkeys/{{ item['id'] }}/{{ action }}">{{ action }}</a>
 			{%- endfor -%}
+		{%- elif field == 'openwrt' -%}
+			{%- for openwrt in openwrts[item['id']] -%}
+		      	<a href='/openwrt/{{ openwrt['uuid'] }}'>{{ openwrt['name'] }} / {{ openwrt['uuid'] }}</a> <br>
+		      {%- endfor -%}
 		{%- else -%}
 			  {{ item[field] }}
 		{%- endif -%}
