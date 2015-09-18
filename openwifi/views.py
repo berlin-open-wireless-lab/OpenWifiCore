@@ -490,7 +490,7 @@ def sshkeys_assign(request):
                 device = DBSession.query(OpenWrt).get(name)
                 if  value: # if item is not the submit button and it's checkd
                     device.ssh_keys.append(sshkey)
-        return HTTPFound(location = request.route_url('ssh_keys'))
+        return HTTPFound(location = request.route_url('sshkeys'))
     for device in openwrt:
         name = str(device.name)
         while name in devices.keys():
