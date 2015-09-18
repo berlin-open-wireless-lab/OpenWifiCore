@@ -243,3 +243,18 @@ def update_template_config(id):
                                  args=(openwrt.uuid,))
             updateconf.delay()
         DBSession.close()
+
+@app.task
+def update_openwrt_sshkeys(uuid):
+    DBSession = get_sql_session()
+    openwrt = DBSession.query(OpenWrt).get(uuid)
+    keys = ""
+    for sshkey in openwrt.ssh_keys:
+        keys = keys+'#'+sshkey.comment+'\n'
+        keys = keys+sshkey.key+'\n'
+    url = "http://"+openwrt.address+"/ubus"
+    js = jsonubus.JsonUbus(url=url,
+                           user=openwrt.login,
+                           password=openwrt.password)
+    js.call('file', 'write', path='/etc/dropbear/authorized_keys', data=keys)
+    DBSession.close()
