@@ -480,9 +480,11 @@ def sshkeys_assign(request):
     openwrt = DBSession.query(OpenWrt)
     devices = {}
     if request.POST:
+        devices_to_be_updated = []
         for ow in openwrt:
             try:
                 ow.ssh_keys.remove(sshkey)
+                devices_to_be_updated.append(ow.uuid)
             except ValueError: # if the template is not assoc - do nothing
                 pass
         for name,value in request.POST.dict_of_lists().items():
@@ -490,6 +492,10 @@ def sshkeys_assign(request):
                 device = DBSession.query(OpenWrt).get(name)
                 if  value: # if item is not the submit button and it's checkd
                     device.ssh_keys.append(sshkey)
+                    devices_to_be_updated.append(device.uuid)
+        transaction.commit()
+        for update_device in set(devices_to_be_updated):
+            jobtask.update_openwrt_sshkeys.delay(update_device)
         return HTTPFound(location = request.route_url('sshkeys'))
     for device in openwrt:
         name = str(device.name)
