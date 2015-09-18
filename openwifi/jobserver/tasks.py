@@ -27,6 +27,13 @@ app.conf.CELERYBEAT_SCHEDULE = {
 
 app.conf.CELERY_TIMEZONE = 'UTC'
 
+def get_sql_session():
+    engine = create_engine(sqlurl)
+    Session = sessionmaker()
+    Session.configure(bind=engine)
+    DBSession=Session()
+    return DBSession
+
 def return_config_from_node_as_json(url, user, passwd):
         js = jsonubus.JsonUbus(url = url, user = user, password = passwd)
         device_configs = js.call('uci', 'configs')
@@ -39,10 +46,7 @@ def return_config_from_node_as_json(url, user, passwd):
 @app.task
 def get_config(uuid):
     try:
-        engine = create_engine(sqlurl)
-        Session = sessionmaker()
-        Session.configure(bind=engine)
-        DBSession=Session()
+        DBSession=get_sql_session()
         device = DBSession.query(OpenWrt).get(uuid)
         device_url = "http://"+device.address+"/ubus"
         device.configuration = return_config_from_node_as_json(device_url,
@@ -105,10 +109,7 @@ def diff_update_config(diff, url, user, passwd):
 
 @app.task
 def update_config(uuid):
-    engine = create_engine(sqlurl)
-    Session = sessionmaker()
-    Session.configure(bind=engine)
-    DBSession = Session()
+    DBSession = get_sql_session()
     device = DBSession.query(OpenWrt).get(uuid)
     new_configuration = Uci()
     new_configuration.load_tree(device.configuration)
@@ -127,10 +128,7 @@ def update_config(uuid):
 
 @app.task
 def update_unconfigured_nodes():
-    engine = create_engine(sqlurl)
-    Session = sessionmaker()
-    Session.configure(bind=engine)
-    DBSession = Session()
+    DBSession = get_sql_session()
     devices = DBSession.query(OpenWrt).filter(OpenWrt.configured==False)
     for device in devices:
         arguments = ( device.uuid, )
@@ -139,10 +137,7 @@ def update_unconfigured_nodes():
 
 @app.task
 def update_status():
-    engine = create_engine(sqlurl)
-    Session = sessionmaker()
-    Session.configure(bind=engine)
-    DBSession = Session()
+    DBSession = get_sql_session()
     devices = DBSession.query(OpenWrt)
     redisDB = redis.StrictRedis(host=redishost, port=redisport, db=redisdb)
     for device in devices:
@@ -237,10 +232,7 @@ def update_template(openwrtConfJSON, templateJSON):
         
 @app.task
 def update_template_config(id):
-        engine = create_engine(sqlurl)
-        Session = sessionmaker()
-        Session.configure(bind=engine)
-        DBSession=Session()
+        DBSession = get_sql_session()
         template = DBSession.query(Templates).get(id)
         for openwrt in template.openwrt:
             newconf = update_template(openwrt.configuration, template.metaconf)
