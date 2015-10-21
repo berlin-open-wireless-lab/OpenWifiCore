@@ -10,6 +10,7 @@ import string
 import pprint
 from openwifi.jobserver_config import redishost, redisport, redisdb
 import redis
+from wsgiproxy import Proxy
 
 import json
 from pyuci import Uci
@@ -507,6 +508,23 @@ def sshkeys_assign(request):
         checked.append(str(device.uuid))
     return { 'devices' : devices,
              'checked' : checked}
+
+@view_config(route_name='luci', renderer='templates/luci.jinja2', layout='base')
+def luci2(request):
+    print(request)
+    return {}
+
+@view_config(route_name='ubus',renderer="json")
+def ubus(request):
+    command = request.matchdict['command']
+    proxy = Proxy()
+    request.environ["SERVER_NAME"]='192.168.122.201'
+    request.environ["SERVER_PORT"]=80
+    res=request.get_response(proxy)
+    print(res.app_iter)
+    #print(res)
+    #print(str(res))
+    return json.loads(res.app_iter[0].decode('utf8'))
 
 @view_config(route_name='sshkeys_action', renderer='templates/sshkeys.jinja2', layout='base')
 def sshkeys_action(request):
