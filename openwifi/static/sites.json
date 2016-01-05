@@ -1,0 +1,4 @@
+{
+	"OpenWifi" : "http://localhost:6543",
+	"Icinga" : "http://localhost:3080/icingaweb2"
+}

@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html style="height:100%!important;">
+  <head>
+  <title>OpenWifi Mainpage</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Bootstrap -->
+    <link href="css/bootstrap.min.css" rel="stylesheet" media="screen">
+    <link href="css/base_layout.css}" rel="stylesheet">
+    <!-- JavaScript plugins (requires jQuery) -->
+    <script src="js/jquery.js"></script>
+    <!-- Include all compiled plugins (below), or include individual files as needed -->
+    <script src="js/bootstrap.min.js"></script>
+    <script type="text/javascript">
+	$(function() {$.getJSON("sites.json", function(json)
+			{
+			 for(sitename in json)
+			 {
+				 $("#navList").append("<li><a href='"+json[sitename]+"' target='mainframe'>"+sitename+"</a></li>");
+			 }
+			}
+			);
+	});
+    </script>
+  </head>
+  <body style="height:100%!important;">
+
+
+    <nav class="navbar navbar-inverse navbar-fixed-top">
+      <div class="container-fluid">
+       <div class="navbar-header">
+        <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#mynav-collapse">
+	  <span class="sr-only">Toggle navigation</span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+        </button>
+	</div>
+</div>
+
+        <div class="collapse navbar-collapse" id="mynav-collapse">
+          <ul class="nav navbar-nav" id="navList">
+          </ul>
+        </div><!--/.nav-collapse -->
+    </nav>
+    <div class="container-fluid" style="height:100%!important;padding-top:50px;">
+      <div class="row" style="height:99%;">
+	      <iframe name="mainframe" width="100%" height="100%">
+	      </iframe>
+      </div>
+    </div>
+  </body>
+</html>
+
