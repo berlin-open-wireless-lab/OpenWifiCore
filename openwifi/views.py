@@ -1,5 +1,5 @@
 from pyramid.response import Response
-from pyramid.view import view_config
+from pyramid.view import view_config, forbidden_view_config
 from pyramid.httpexceptions import HTTPFound
 from pyramid_rpc.jsonrpc import jsonrpc_method
 from pyramid import httpexceptions as exc
@@ -31,12 +31,55 @@ from .models import (
 from .forms import (
         AccessPointAddForm,
         OpenWrtEditForm,
+        LoginForm,
         SshKeyForm
         )
 
 from .utils import generate_device_uuid
 
-@view_config(route_name='home', renderer='templates/home.jinja2', layout='base')
+from pyramid.security import (
+   Allow,
+   Authenticated,
+   remember,
+   forget)
+
+from pyramid_ldap3 import (
+    get_ldap_connector,
+    groupfinder)
+
+@view_config(route_name='login',
+             renderer='templates/login.jinja2',
+	     layout='base')
+@forbidden_view_config(renderer='templates/login.jinja2', layout='base')
+def login(request):
+    form = LoginForm(request.POST)
+    save_url = request.route_url('login')
+
+    if request.method == 'POST' and form.validate():
+        login = form.login.data
+        password = form.password.data
+        print("login " + login + " password " + password); 
+        connector = get_ldap_connector(request)
+        data = connector.authenticate(login, password)
+        if data is not None:
+            print("data found!!")
+            dn = data[0]
+            headers = remember(request, dn)
+            return HTTPFound('/', headers=headers)
+        else:
+            print("wrong credentials")
+            error = 'Invalid credentials'
+
+    return {'save_url':save_url, 'form':form}
+
+@view_config(route_name='logout')
+def logout(request):
+    headers = forget(request)
+    return Response('Logged out', headers=headers)
+
+
+
+@view_config(route_name='home', renderer='templates/home.jinja2', layout='base', permission='view')
 def home(request):
     return {}
 
@@ -74,7 +117,7 @@ def hello(request):
     """ this call is used for discovery to ensure """
     return "openwifi"
 
-@view_config(route_name='openwrt_list', renderer='templates/openwrt.jinja2', layout='base')
+@view_config(route_name='openwrt_list', renderer='templates/openwrt.jinja2', layout='base', permission='view')
 def openwrt_list(request):
     openwrt = DBSession.query(OpenWrt)
     devices = []
@@ -87,7 +130,7 @@ def openwrt_list(request):
             'items': openwrt,
             'table_fields': ['name', 'distribution', 'version', 'address', 'uuid', 'login', 'password', 'configuration', 'configured']}
 
-@view_config(route_name='confarchive', renderer='templates/archive_list.jinja2', layout='base')
+@view_config(route_name='confarchive', renderer='templates/archive_list.jinja2', layout='base', permission='view')
 def confarchive(request):
     configs = DBSession.query(ConfigArchive)
     return {'idfield': 'id',
@@ -98,7 +141,7 @@ def confarchive(request):
                          'apply config':'archive_apply_config'}
             }
 
-@view_config(route_name='archive_apply_config', renderer='templates/archive_apply_config.jinja2', layout='base')
+@view_config(route_name='archive_apply_config', renderer='templates/archive_apply_config.jinja2', layout='base', permission='view')
 def archiveapplyconfig(request):
     config = DBSession.query(ConfigArchive).get(request.matchdict['id'])
     if not config:
@@ -130,7 +173,7 @@ def openwrt_edit(request):
 
     return {'form': form}
 
-@view_config(route_name='openwrt_detail', renderer='templates/openwrt_detail.jinja2', layout='base')
+@view_config(route_name='openwrt_detail', renderer='templates/openwrt_detail.jinja2', layout='base', permission='view')
 def openwrt_detail(request):
     device = DBSession.query(OpenWrt).get(request.matchdict['uuid'])
     if not device:
@@ -140,7 +183,7 @@ def openwrt_detail(request):
             'fields': ['name', 'distribution', 'version', 'address', 'uuid'],
             'actions': ['delete', 'getConfig', 'saveConfToArchive']}
 
-@view_config(route_name='openwrt_edit_config', renderer='templates/openwrt_edit_config.jinja2', layout='base')
+@view_config(route_name='openwrt_edit_config', renderer='templates/openwrt_edit_config.jinja2', layout='base', permission='view')
 def openwrt_edit_config(request):
     device = DBSession.query(OpenWrt).get(request.matchdict['uuid'])
     if not device:
@@ -177,7 +220,7 @@ def openwrt_edit_config(request):
            'devicename'     : device.name}
 
 
-@view_config(route_name='archive_edit_config', renderer='templates/archive_edit_config.jinja2', layout='base')
+@view_config(route_name='archive_edit_config', renderer='templates/archive_edit_config.jinja2', layout='base', permission='view')
 def archive_edit_config(request):
     archiveConfig = DBSession.query(ConfigArchive).get(request.matchdict['id'])
     if not archiveConfig:
@@ -217,7 +260,7 @@ def archive_edit_config(request):
 
 
 
-@view_config(route_name='openwrt_add', renderer='templates/openwrt_add.jinja2', layout='base')
+@view_config(route_name='openwrt_add', renderer='templates/openwrt_add.jinja2', layout='base', permission='view')
 def openwrt_add(request):
     form = OpenWrtEditForm(request.POST)
     if request.method == 'POST' and form.validate():
@@ -335,7 +378,7 @@ def generateMetaconfJson(POST):
         metaconf_json = json.dumps(metaconf)
         return metaconf_json, templateName
 
-@view_config(route_name='templates', renderer='templates/templates.jinja2', layout='base')
+@view_config(route_name='templates', renderer='templates/templates.jinja2', layout='base', permission='view')
 def templates(request):
     templates = DBSession.query(Templates)
     openwrts = {}
@@ -349,7 +392,7 @@ def templates(request):
             'table_fields': ['name', 'id', 'metaconf', 'openwrt'],
             'actions' : ['update']}
 
-@view_config(route_name='templates_delete', renderer='templates/templates.jinja2', layout='base')
+@view_config(route_name='templates_delete', renderer='templates/templates.jinja2', layout='base', permission='view')
 def templates_delete(request):
     template = DBSession.query(Templates).get(request.matchdict['id'])
     if not template:
@@ -357,7 +400,7 @@ def templates_delete(request):
     DBSession.delete(template)
     return HTTPFound(location=request.route_url('templates'))
 
-@view_config(route_name='templates_edit', renderer='templates/templates_add.jinja2', layout='base')
+@view_config(route_name='templates_edit', renderer='templates/templates_add.jinja2', layout='base', permission='view')
 def templates_edit(request):
     template = DBSession.query(Templates).get(request.matchdict['id'])
     if not template:
@@ -370,7 +413,7 @@ def templates_edit(request):
     return { 'metaconf' : template.metaconf,
              'templateName' : template.name}
     
-@view_config(route_name='templates_add', renderer='templates/templates_add.jinja2', layout='base')
+@view_config(route_name='templates_add', renderer='templates/templates_add.jinja2', layout='base', permission='view')
 def templates_add(request):
     if request.POST:
         metaconf_json, templateName = generateMetaconfJson(request.POST)
@@ -380,7 +423,7 @@ def templates_add(request):
     return {'metaconf' : '{}',
             'templateName':''}
 
-@view_config(route_name='templates_assign', renderer='templates/archive_apply_config.jinja2', layout='base')
+@view_config(route_name='templates_assign', renderer='templates/archive_apply_config.jinja2', layout='base', permission='view')
 def templates_assign(request):
     template = DBSession.query(Templates).get(request.matchdict['id'])
     if not template:
@@ -410,7 +453,7 @@ def templates_assign(request):
     return { 'devices' : devices,
              'checked' : checked}
 
-@view_config(route_name='templates_action', renderer='templates/templates.jinja2', layout='base')
+@view_config(route_name='templates_action', renderer='templates/templates.jinja2', layout='base', permission='view')
 def templates_action(request):
     action = request.matchdict['action']
     template = DBSession.query(Templates).get(request.matchdict['id'])
@@ -423,7 +466,7 @@ def templates_action(request):
 
     return exc.HTTPNotFound()
 
-@view_config(route_name='openwrt_action', renderer='templates/openwrt_add.jinja2', layout='base')
+@view_config(route_name='openwrt_action', renderer='templates/openwrt_add.jinja2', layout='base', permission='view')
 def openwrt_action(request):
     action = request.matchdict['action']
     device = DBSession.query(OpenWrt).get(request.matchdict['uuid'])
@@ -443,7 +486,7 @@ def openwrt_action(request):
 
     return HTTPFound(location=request.route_url('openwrt_detail', uuid=request.matchdict['uuid']))
 
-@view_config(route_name='sshkeys', renderer='templates/sshkeys.jinja2', layout='base')
+@view_config(route_name='sshkeys', renderer='templates/sshkeys.jinja2', layout='base', permission='view')
 def sshkeys(request):
     sshkeys = DBSession.query(SshKey)
     openwrts = {}
@@ -457,7 +500,7 @@ def sshkeys(request):
              'table_fields' : ['id', 'key', 'comment', 'openwrt' ,'actions'],
              'actions' : ['delete']}
 
-@view_config(route_name='sshkeys_add', renderer='templates/sshkeys_add.jinja2', layout='base')
+@view_config(route_name='sshkeys_add', renderer='templates/sshkeys_add.jinja2', layout='base', permission='view')
 def sshkeys_add(request):
     form = SshKeyForm(request.POST)
     if request.method == 'POST' and form.validate():
@@ -473,7 +516,7 @@ def sshkeys_add(request):
     return {'save_url':save_url, 'form':form}
 
 
-@view_config(route_name='sshkeys_assign', renderer='templates/archive_apply_config.jinja2', layout='base')
+@view_config(route_name='sshkeys_assign', renderer='templates/archive_apply_config.jinja2', layout='base', permission='view')
 def sshkeys_assign(request):
     sshkey = DBSession.query(SshKey).get(request.matchdict['id'])
     if not sshkey:
@@ -509,12 +552,12 @@ def sshkeys_assign(request):
     return { 'devices' : devices,
              'checked' : checked}
 
-@view_config(route_name='luci', renderer='templates/luci.jinja2', layout='base')
+@view_config(route_name='luci', renderer='templates/luci.jinja2', layout='base', permission='view')
 def luci2(request):
     print(request)
     return {}
 
-@view_config(route_name='ubus',renderer="json")
+@view_config(route_name='ubus',renderer="json", permission='view')
 def ubus(request):
     command = request.matchdict['command']
     proxy = Proxy()
@@ -526,7 +569,7 @@ def ubus(request):
     #print(str(res))
     return json.loads(res.app_iter[0].decode('utf8'))
 
-@view_config(route_name='sshkeys_action', renderer='templates/sshkeys.jinja2', layout='base')
+@view_config(route_name='sshkeys_action', renderer='templates/sshkeys.jinja2', layout='base', permission='view')
 def sshkeys_action(request):
     action = request.matchdict['action']
     id = request.matchdict['id']

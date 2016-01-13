@@ -26,6 +26,10 @@ class OpenWrtEditForm(Form):
     password = TextField('password')
     configuration = TextField('configuration')
 
+class LoginForm(Form):
+    login = TextField('login')
+    password = TextField('password')
+
 class SshKeyForm(Form):
     key = TextField('key')
     comment = TextField('comment')

@@ -1,10 +1,31 @@
 from pyramid.config import Configurator
 from sqlalchemy import engine_from_config
 
+import ldap3
+
+from pyramid_ldap3 import (
+    get_ldap_connector,
+    groupfinder)
+
+from pyramid.security import (
+   Allow,
+   Authenticated,
+   remember,
+   forget)
+
+from pyramid.authentication import AuthTktAuthenticationPolicy
+from pyramid.authorization import ACLAuthorizationPolicy
+
 from .models import (
     DBSession,
     Base,
     )
+
+
+class RootFactory(object):
+    __acl__ = [(Allow, Authenticated, 'view')]
+    def __init__(self, request):
+        pass
 
 
 def main(global_config, **settings):
@@ -13,7 +34,34 @@ def main(global_config, **settings):
     engine = engine_from_config(settings, 'sqlalchemy.')
     DBSession.configure(bind=engine)
     Base.metadata.bind = engine
-    config = Configurator(settings=settings)
+    config = Configurator(settings=settings, root_factory=RootFactory)
+
+    config.set_authentication_policy(
+        AuthTktAuthenticationPolicy(
+            'seekr1t', callback=groupfinder))
+    config.set_authorization_policy(
+        ACLAuthorizationPolicy())
+
+    config.ldap_setup(
+        'ldap://localhost',
+        bind='cn=admin,dc=OpenWifi,dc=local',
+        passwd='fh\\52ENEPb\'G[y8=ne%Z+xEb3')
+
+    config.ldap_set_login_query(
+        base_dn='ou=Users,dc=OpenWifi,dc=local',
+        filter_tmpl='(uid=%(login)s)',
+        #filter_tmpl='(sAMAccountName=%(login)s)',
+        scope=ldap3.SEARCH_SCOPE_SINGLE_LEVEL)
+
+    config.ldap_set_groups_query(
+        base_dn='CN=Users,DC=OpenWifi,DC=local',
+        filter_tmpl='(&(objectCategory=Groups)(member=%(userdn)s))',
+        scope=ldap3.SEARCH_SCOPE_WHOLE_SUBTREE,
+        cache_period=600)
+
+    config.add_route('login', '/login')
+    config.add_route('logout', '/logout')
+
     config.add_static_view('static', 'static', cache_max_age=3600)
     config.add_route('home', '/')
 
