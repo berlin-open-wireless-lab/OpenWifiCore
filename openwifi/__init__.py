@@ -45,7 +45,7 @@ def main(global_config, **settings):
     config.ldap_setup(
         'ldap://localhost',
         bind='cn=admin,dc=OpenWifi,dc=local',
-        passwd='fh\\52ENEPb\'G[y8=ne%Z+xEb3')
+        passwd='ldap')
 
     config.ldap_set_login_query(
         base_dn='ou=Users,dc=OpenWifi,dc=local',
