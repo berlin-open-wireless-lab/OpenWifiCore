@@ -27,7 +27,7 @@
 			{%- endfor -%}
 		{%- elif field == 'openwrt' -%}
 			{%- for openwrt in openwrts[item['id']] -%}
-		      	<a href='/openwrt/{{ openwrt['uuid'] }}'>{{ openwrt['name'] }} / {{ openwrt['uuid'] }}</a> <br>
+		      	<a href='{{request.route_path('openwrt_list')}}/{{ openwrt['uuid'] }}'>{{ openwrt['name'] }} / {{ openwrt['uuid'] }}</a> <br>
 		      {%- endfor -%}
 		{%- else -%}
 			  {{ item[field] }}
@@ -42,5 +42,5 @@
   <p class="lead">no data</p>
   {%- endfor %}
   </table>
-  <a class="btn btn-primary" href="/sshkeys_add">Add</a>
+  <a class="btn btn-primary" href="{{request.route_path('sshkeys_add')}}">Add</a>
 {% endblock %}

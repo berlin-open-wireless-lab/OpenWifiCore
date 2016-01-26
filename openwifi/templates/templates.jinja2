@@ -25,7 +25,7 @@
 		  {%- elif field == 'openwrt' -%}
 		  	<td>
 		  	{%- for openwrt in openwrts[item['id']] -%}
-				<a href='/openwrt/{{ openwrt['uuid'] }}'>{{ openwrt['name'] }} / {{ openwrt['uuid'] }}</a> <br>
+				<a href='{{request.route_path('openwrt_list')}}/{{ openwrt['uuid'] }}'>{{ openwrt['name'] }} / {{ openwrt['uuid'] }}</a> <br>
 			{%- endfor -%}
 			</td>
 		  {%- else -%}
@@ -33,11 +33,11 @@
 		  {%- endif -%}
         {% endfor %}
 		<td>
-			<a href="/templates_assign/{{ item['id'] }}" class="btn btn-primary">Assign Nodes</a>
-			<a href="/templates_edit/{{ item['id'] }}" class="btn btn-primary">Edit</a>
-			<a href="/templates_delete/{{ item['id'] }}" class="btn btn-danger">Delete</a>
+			<a href="{{request.route_path('templates_assign')}}/{{ item['id'] }}" class="btn btn-primary">Assign Nodes</a>
+			<a href="{{request.route_path('templates_edit')}}/{{ item['id'] }}" class="btn btn-primary">Edit</a>
+			<a href="{{request.route_path('templates_delete')}}/{{ item['id'] }}" class="btn btn-danger">Delete</a>
 			{%- for action in actions -%}
-				<a href="/templates/{{ item['id'] }}/{{ action }}" class="btn btn-primary">{{ action }}</a>
+				<a href="{{request.route_path('templates')}}/{{ item['id'] }}/{{ action }}" class="btn btn-primary">{{ action }}</a>
 			{%- endfor -%}
 		</td>
         </tr>
@@ -48,7 +48,7 @@
   <p class="lead">no data</p>
   {%- endfor %}
   </table>
-<a class="btn btn-primary" href="/templates_add">Add Template</a>
+<a class="btn btn-primary" href="{{request.route_path('templates_add')}}">Add Template</a>
 
 </p>
 {% endblock %}

@@ -65,7 +65,7 @@ def login(request):
             print("data found!!")
             dn = data[0]
             headers = remember(request, dn)
-            return HTTPFound('/', headers=headers)
+            return HTTPFound(location=request.route_url('home'), headers=headers)
         else:
             print("wrong credentials")
             error = 'Invalid credentials'

@@ -29,11 +29,11 @@
 
         <div class="collapse navbar-collapse" id="mynav-collapse">
           <ul class="nav navbar-nav">
-            <li><a href="/">Home</a></li>
-            <li><a href="/openwrt">OpenWrt</a></li>
-            <li><a href="/confarchive">Archive</a></li>
-            <li><a href="/templates">Templates</a></li>
-            <li><a href="/sshkeys">SSH Keys</a></li>
+            <li><a href="{{request.route_path('home')}}">Home</a></li>
+            <li><a href="{{request.route_path('openwrt_list')}}">OpenWrt</a></li>
+            <li><a href="{{request.route_path('confarchive')}}">Archive</a></li>
+            <li><a href="{{request.route_path('templates')}}">Templates</a></li>
+            <li><a href="{{request.route_path('sshkeys')}}">SSH Keys</a></li>
           </ul>
         </div><!--/.nav-collapse -->
       </div>
