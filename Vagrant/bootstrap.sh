@@ -38,9 +38,9 @@ cp -rv /vagrant/deploy_keys/* /home/openwifi/.ssh/
 chown -R openwifi:openwifi /home/openwifi/.ssh
 
 # install openwifi as openwifi user
-su openwifi -c "cd ~; git clone git@gitlab.inet.tu-berlin.de:OpenWiFi/Controller.git; cd Controller;mv development.ini devel.bak.ini; sed s/127.0.0.1/0.0.0.0/g devel.bak.ini > development.ini; virtualenv venv; . venv/bin/activate; pip install -r requirements.txt; python setup.py develop; initialize_openwifi_db development.ini"
+su openwifi -c "cd ~; git clone git@gitlab.inet.tu-berlin.de:OpenWiFi/Controller.git; cd Controller;mv development.ini devel.bak.ini; sed s/127.0.0.1/0.0.0.0/g devel.bak.ini > development.ini; virtualenv venv; . venv/bin/activate; pip install -r requirements.txt; python setup.py develop; initialize_openwifi_db development.ini;cp /vagrant/openwifi.wsgi ."
 
-start openwifi
+#start openwifi
 start openwifi-jobserver
 start openwifi-jobserver-beat
 
@@ -78,3 +78,10 @@ mysql -uicingaweb2 -picingaweb2 icingaweb2 < /usr/share/icingaweb2/etc/schema/my
 mysql -uicingaweb2 -picingaweb2 icingaweb2 -e "INSERT INTO icingaweb_user (name, active, password_hash) VALUES ('icingaadmin', 1, '\$1\$iQSrnmO9\$T3NVTu0zBkfuim4lWNRmH.');"
 
 /etc/init.d/mysql restart
+
+#setup apache mod_wsgi
+
+ apt-get -y install libapache2-mod-wsgi-py3 
+ cp /vagrant/openwifi.conf /etc/apache2/conf-enabled/
+ cp /vagrant/mpm_prefork.conf /etc/apache2/mods-available/
+ service apache2 restart
