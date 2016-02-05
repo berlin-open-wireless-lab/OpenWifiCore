@@ -29,7 +29,8 @@ adduser \
    --home /home/openwifi \
    openwifi
 
-cp /vagrant/openwifi*conf /etc/init
+cp openwifi-jobserver-beat.conf /etc/init
+cp openwifi-jobserver.conf /etc/init
 
 # deploy keys
 mkdir /home/openwifi/.ssh
