@@ -37,6 +37,7 @@ mkdir /home/openwifi/.ssh
 chmod 700 /home/openwifi/.ssh
 cp -rv /vagrant/deploy_keys/* /home/openwifi/.ssh/
 chown -R openwifi:openwifi /home/openwifi/.ssh
+chmod 600 /home/openwifi/.ssh/*
 
 # install openwifi as openwifi user
 su openwifi -c "cd ~; git clone git@gitlab.inet.tu-berlin.de:OpenWiFi/Controller.git; cd Controller;mv development.ini devel.bak.ini; sed s/127.0.0.1/0.0.0.0/g devel.bak.ini > development.ini; virtualenv venv; . venv/bin/activate; pip install -r requirements.txt; python setup.py develop; initialize_openwifi_db development.ini;cp /vagrant/openwifi.wsgi ."
@@ -82,7 +83,10 @@ mysql -uicingaweb2 -picingaweb2 icingaweb2 -e "INSERT INTO icingaweb_user (name,
 
 #setup apache mod_wsgi
 
- apt-get -y install libapache2-mod-wsgi-py3 
- cp /vagrant/openwifi.conf /etc/apache2/conf-enabled/
- cp /vagrant/mpm_prefork.conf /etc/apache2/mods-available/
- service apache2 restart
+apt-get -y install libapache2-mod-wsgi-py3 
+
+cp /vagrant/openwifi.conf /etc/apache2/conf-available
+cd /etc/apache2/conf-enabled
+ln -s ../conf-available/openwifi.conf
+#cp /vagrant/mpm_prefork.conf /etc/apache2/mods-available/
+service apache2 restart
