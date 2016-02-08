@@ -97,5 +97,18 @@ chmod 770 /home/openwifi/Controller
 chgrp www-data /home/openwifi/Controller/openwifi.sqlite
 chmod 660 /home/openwifi/Controller/openwifi.sqlite
 
+# install index site
+
+cp /home/openwifi/Controller/openwifi/static/index.html /var/www/html
+cp /home/openwifi/Controller/openwifi/static/sites.json /var/www/html
+mkdir /var/www/html/js
+mkdir /var/www/html/css
+cp /home/openwifi/Controller/openwifi/static/css/bootstrap.min.css /var/www/html/css
+cp /home/openwifi/Controller/openwifi/static/css/base_layout.css /var/www/html/css
+cp /home/openwifi/Controller/openwifi/static/js/jquery.js /var/www/html/js
+cp /home/openwifi/Controller/openwifi/static/js/bootstrap.min.js /var/www/html/js
+chgrp -R www-data /var/www/html
+chown -R www-data /var/www/html
+
 #cp /vagrant/mpm_prefork.conf /etc/apache2/mods-available/
 service apache2 restart
