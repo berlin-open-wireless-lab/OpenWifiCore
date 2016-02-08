@@ -29,8 +29,8 @@ adduser \
    --home /home/openwifi \
    openwifi
 
-cp openwifi-jobserver-beat.conf /etc/init
-cp openwifi-jobserver.conf /etc/init
+cp /vagrant/openwifi-jobserver-beat.conf /etc/init
+cp /vagrant/openwifi-jobserver.conf /etc/init
 
 # deploy keys
 mkdir /home/openwifi/.ssh
@@ -88,5 +88,14 @@ apt-get -y install libapache2-mod-wsgi-py3
 cp /vagrant/openwifi.conf /etc/apache2/conf-available
 cd /etc/apache2/conf-enabled
 ln -s ../conf-available/openwifi.conf
+
+#rights to the database
+chgrp www-data /home/openwifi
+chmod 770 /home/openwifi
+chgrp www-data /home/openwifi/Controller
+chmod 770 /home/openwifi/Controller
+chgrp www-data /home/openwifi/Controller/openwifi.sqlite
+chmod 660 /home/openwifi/Controller/openwifi.sqlite
+
 #cp /vagrant/mpm_prefork.conf /etc/apache2/mods-available/
 service apache2 restart
