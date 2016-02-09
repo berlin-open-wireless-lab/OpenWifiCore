@@ -12,6 +12,6 @@
         </tbody>
     </table>
     {%- for action in actions -%}
-    <a class="btn btn-primary" href="/openwrt/{{ device['uuid'] }}/{{ action }}">{{ action }}</a>
+    <a class="btn btn-primary" href="{{request.route_path('openwrt_list')}}/{{ device['uuid'] }}/{{ action }}">{{ action }}</a>
     {%- endfor -%}
 {% endblock %}
