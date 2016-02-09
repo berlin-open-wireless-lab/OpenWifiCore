@@ -21,7 +21,7 @@
 
         <script type="text/javascript">
             $(function() {
-                var L = new LuCI2();
+                var L = new LuCI2("{{ uuid }}");
 
                 L.ui.login().then(function() {
                     L.ui.load();

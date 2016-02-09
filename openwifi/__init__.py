@@ -87,8 +87,8 @@ def main(global_config, **settings):
     config.add_route('sshkeys_assign', '/sshkeys_assign/{id}')
     config.add_route('sshkeys_action', '/sshkeys/{id}/{action}')
 
-    config.add_route('luci', '/luci')
-    config.add_route('ubus', '/ubus/{command}')
+    config.add_route('luci', '/luci/{uuid}')
+    config.add_route('ubus', '/ubus/{uuid}/{command}')
 
     config.include('pyramid_rpc.jsonrpc')
     config.add_jsonrpc_endpoint('api', '/api')

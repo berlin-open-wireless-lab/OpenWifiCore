@@ -139,7 +139,8 @@ $(document).ready(function(){
         {%- set rowloop = loop %}
         {%- for field in table_fields -%}
 		{%- if field == "configuration" -%}
-		  <td><a class="btn btn-primary" href="{{ confdomain }}/{{ item[idfield] }}" >show  config</a></td>
+		  <td><a class="btn btn-primary" href="{{ confdomain }}/{{ item[idfield] }}" >show  config</a>
+		  <a class="btn btn-primary" href="{{ request.route_path('luci',uuid=item[idfield]) }}" target="_blank" >start luci</a></td>
 		{%- else -%}
 		  <td>
 		  <a href="{{ domain }}/{{ item[idfield] }}" >{{ item[field] }}</a>
