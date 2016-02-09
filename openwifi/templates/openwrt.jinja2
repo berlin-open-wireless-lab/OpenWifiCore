@@ -116,7 +116,7 @@ $(function() {
 
 $(document).ready(function(){
 	devices = JSON.parse('{{devices|safe}}');
-	RPCClient = new $.JsonRpcClient({ ajaxUrl: "{{request.get_path('home')}}/api", timeout: 1000 });
+	RPCClient = new $.JsonRpcClient({ ajaxUrl: "{{request.route_path('home')}}/api", timeout: 1000 });
 	updateStatusRouter();
 });
 </script>
