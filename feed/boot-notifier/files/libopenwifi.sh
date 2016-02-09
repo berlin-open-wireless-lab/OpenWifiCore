@@ -127,9 +127,9 @@ device_discover() {
     entries=$(jsonfilter -s "$mdns" -e '$["_openwifi._tcp"][*]')
     entries=$(echo $entries|sed s/\ //g|sed s/\}/}\ /g)
     for entry in $entries ; do
-	    ip =  $(jsonfilter -s "$entry" -e '$["ipv4"]')
-	    path =  $(jsonfilter -s "$entry" -e '$["txt"]'|sed s/path=//)
-	    port =  $(jsonfilter -s "$entry" -e '$["port"]')
+	    ip=$(jsonfilter -s "$entry" -e '$["ipv4"]')
+	    path=$(jsonfilter -s "$entry" -e '$["txt"]'|sed s/path=//)
+	    port=$(jsonfilter -s "$entry" -e '$["port"]')
 	    if device_discover_server "$ip" "$port" "$path" ; then
 		    set_controller "$ip" "$port" "$path"
 		    return 0
