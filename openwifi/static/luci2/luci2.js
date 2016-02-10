@@ -230,7 +230,7 @@ function LuCI2(uuid, basepath)
 
 	Class.require = function(name)
 	{
-		var path = basepath + 'static/' + name.replace(/\./g, '/') + '.js';
+		var path = L.globals.basepath + 'static/' + name.replace(/\./g, '/') + '.js';
 
 		return $.ajax(path, {
 			method: 'GET',
@@ -691,7 +691,8 @@ function LuCI2(uuid, basepath)
 
 	this.globals = {
 		timeout:  15000,
-		resource: '/static/luci2',
+		resource: basepath+'static/luci2',
+		basepath: basepath,
 		sid:      '00000000000000000000000000000000'
 	};
 

@@ -51,7 +51,7 @@
 
 		loadProtocolHandler: function(proto)
 		{
-			var url = '/static/luci2/proto/' + proto + '.js';
+			var url = L.globals.resource + '/proto/' + proto + '.js';
 			var self = L.network;
 
 			var def = $.Deferred();
