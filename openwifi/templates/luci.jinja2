@@ -21,7 +21,7 @@
 
         <script type="text/javascript">
             $(function() {
-                var L = new LuCI2("{{ uuid }}");
+                var L = new LuCI2("{{ uuid }}", "{{request.route_url('home')}}");
 
                 L.ui.login().then(function() {
                     L.ui.load();

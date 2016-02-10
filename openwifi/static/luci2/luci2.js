@@ -180,10 +180,11 @@ if (!window.location.origin)
 		(window.location.port ? ':' + window.location.port : '')
 	);
 
-function LuCI2(uuid)
+function LuCI2(uuid, basepath)
 {
 	var L = this;
 	var uuid = "/"+ uuid;
+	var basepath = basepath
 
 	var Class = function() { };
 
@@ -229,7 +230,7 @@ function LuCI2(uuid)
 
 	Class.require = function(name)
 	{
-		var path = '../static/' + name.replace(/\./g, '/') + '.js';
+		var path = basepath + 'static/' + name.replace(/\./g, '/') + '.js';
 
 		return $.ajax(path, {
 			method: 'GET',

@@ -17,7 +17,7 @@ Class.extend({
 		else
 			q += '/%s.%s'.format(req.params[1], req.params[2]);
 
-		return $.ajax('/ubus' + uuid + q, {
+		return $.ajax(basepath + 'ubus' + uuid + q, {
 			cache:       false,
 			contentType: 'application/json',
 			data:        JSON.stringify(req),
