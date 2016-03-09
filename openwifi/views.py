@@ -164,15 +164,6 @@ def archiveapplyconfig(request):
     return { 'devices' : devices,
              'checked' : [] }
 
-# @view_config(route_name='openwrt_edit', renderer='templates/openwrt_edit.jinja2', layout='base')
-def openwrt_edit(request):
-    form = OpenWrtEditForm(request.POST)
-    ap = DBSession.query(OpenWrt).filter_by(uuid=form.uuid).one()
-    if request.method == 'POST' and form.validate():
-        return HTTPFound(locaton = request.route_url('openwrt_list'))
-
-    return {'form': form}
-
 @view_config(route_name='openwrt_detail', renderer='templates/openwrt_detail.jinja2', layout='base', permission='view')
 def openwrt_detail(request):
     device = DBSession.query(OpenWrt).get(request.matchdict['uuid'])
