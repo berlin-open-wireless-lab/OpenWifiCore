@@ -457,13 +457,12 @@ def templates_action(request):
 
     return exc.HTTPNotFound()
 
-@view_config(route_name='openwrt_action', renderer='templates/openwrt_add.jinja2', layout='base', permission='view')
-def openwrt_action(request):
-    action = request.matchdict['action']
-    device = DBSession.query(OpenWrt).get(request.matchdict['uuid'])
-    if not device:
-        return exc.HTTPNotFound()
 
+def do_multi_openwrt_action(openwrts, action):
+    for openwrt in openwrts:
+        do_action_with_device(action, openwrt)
+
+def do_action_with_device(action, device):
     if action == 'delete':
         DBSession.delete(device)
         return HTTPFound(location=request.route_url('openwrt_list'))
@@ -475,7 +474,13 @@ def openwrt_action(request):
         DBSession.add(confToBeArchived)
         return HTTPFound(location=request.route_url('confarchive'))
 
-    return HTTPFound(location=request.route_url('openwrt_detail', uuid=request.matchdict['uuid']))
+@view_config(route_name='openwrt_action', renderer='templates/openwrt_add.jinja2', layout='base', permission='view')
+def openwrt_action(request):
+    action = request.matchdict['action']
+    device = DBSession.query(OpenWrt).get(request.matchdict['uuid'])
+    if not device:
+        return exc.HTTPNotFound()
+    return do_action_with_device(action, device)
 
 @view_config(route_name='sshkeys', renderer='templates/sshkeys.jinja2', layout='base', permission='view')
 def sshkeys(request):
