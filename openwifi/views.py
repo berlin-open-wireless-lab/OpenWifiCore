@@ -128,7 +128,7 @@ def openwrt_list(request):
             'devices': json.dumps(devices),
             'confdomain': 'openwrt_edit_config',
             'items': openwrt,
-            'table_fields': ['name', 'distribution', 'version', 'address', 'uuid', 'login', 'password', 'configuration', 'configured']}
+            'table_fields': ['name', 'distribution', 'version', 'address', 'uuid','configuration', 'configured']}
 
 @view_config(route_name='confarchive', renderer='templates/archive_list.jinja2', layout='base', permission='view')
 def confarchive(request):
@@ -171,7 +171,7 @@ def openwrt_detail(request):
         return exc.HTTPNotFound()
 
     return {'device': device,
-            'fields': ['name', 'distribution', 'version', 'address', 'uuid'],
+            'fields': ['name', 'distribution', 'version', 'address', 'uuid', 'login', 'password', 'templates'],
             'actions': ['delete', 'getConfig', 'saveConfToArchive']}
 
 @view_config(route_name='openwrt_edit_config', renderer='templates/openwrt_edit_config.jinja2', layout='base', permission='view')
