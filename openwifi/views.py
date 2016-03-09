@@ -77,58 +77,9 @@ def logout(request):
     headers = forget(request)
     return Response('Logged out', headers=headers)
 
-
-
 @view_config(route_name='home', renderer='templates/home.jinja2', layout='base', permission='view')
 def home(request):
     return {}
-
-@jsonrpc_method(method='device_check_registered', endpoint='api')
-def device_check_registered(request, uuid, name):
-    """
-    check if a device is already present in database. This call is used by a device to check if it must register again.
-    """
-    device = DBSession.query(OpenWrt).get(uuid)
-    if device:
-        return True
-    else:
-        return False
-
-@jsonrpc_method(method='device_register', endpoint='api')
-def device_register(request, uuid, name, address, distribution, version, proto, login, password):
-    device = DBSession.query(OpenWrt).get(uuid)
-    # if uuid exists, update information
-    if device:
-    # otherwise add new device
-        device.name = name
-        device.address = address
-        device.distribution = distribution
-        device.version = version
-        device.proto = proto
-        device.login = login
-        device.password = password
-    else:
-        ap = OpenWrt(name, address, distribution, version, uuid, login, password, False)
-        DBSession.add(ap)
-    DBSession.flush()
-
-@jsonrpc_method(endpoint='api')
-def hello(request):
-    """ this call is used for discovery to ensure """
-    return "openwifi"
-
-@view_config(route_name='openwrt_list', renderer='templates/openwrt.jinja2', layout='base', permission='view')
-def openwrt_list(request):
-    openwrt = DBSession.query(OpenWrt)
-    devices = []
-    for device in openwrt:
-        devices.append(str(device.uuid))
-    return {'idfield': 'uuid',
-            'domain': 'openwrt',
-            'devices': json.dumps(devices),
-            'confdomain': 'openwrt_edit_config',
-            'items': openwrt,
-            'table_fields': ['name', 'distribution', 'version', 'address', 'uuid','configuration', 'configured']}
 
 @view_config(route_name='confarchive', renderer='templates/archive_list.jinja2', layout='base', permission='view')
 def confarchive(request):
@@ -140,76 +91,6 @@ def confarchive(request):
             'actions' : {'show config':'archive_edit_config',
                          'apply config':'archive_apply_config'}
             }
-
-@view_config(route_name='archive_apply_config', renderer='templates/archive_apply_config.jinja2', layout='base', permission='view')
-def archiveapplyconfig(request):
-    config = DBSession.query(ConfigArchive).get(request.matchdict['id'])
-    if not config:
-        return exc.HTTPNotFound()
-    openwrt = DBSession.query(OpenWrt)
-    devices = {}
-    if request.POST:
-        for name,value in request.POST.dict_of_lists().items():
-            if name!='submitted' and value: # if item is not the submit button and it's checkd
-                deviceToBeUpdated = DBSession.query(openwrt).get(name)
-                deviceToBeUpdated.configuration = config.configuration
-                transaction.commit()
-                jobtask.update_config.delay(str(deviceToBeUpdated.uuid))
-            return HTTPFound(location = request.route_url('confarchive'))
-    for device in openwrt:
-        name = str(device.name)
-        while name in devices.keys():
-            name += '_'
-        devices[name] = str(device.uuid)
-    return { 'devices' : devices,
-             'checked' : [] }
-
-@view_config(route_name='openwrt_detail', renderer='templates/openwrt_detail.jinja2', layout='base', permission='view')
-def openwrt_detail(request):
-    device = DBSession.query(OpenWrt).get(request.matchdict['uuid'])
-    if not device:
-        return exc.HTTPNotFound()
-
-    return {'device': device,
-            'fields': ['name', 'distribution', 'version', 'address', 'uuid', 'login', 'password', 'templates'],
-            'actions': ['delete', 'getConfig', 'saveConfToArchive']}
-
-@view_config(route_name='openwrt_edit_config', renderer='templates/openwrt_edit_config.jinja2', layout='base', permission='view')
-def openwrt_edit_config(request):
-    device = DBSession.query(OpenWrt).get(request.matchdict['uuid'])
-    if not device:
-        return exc.HTTPNotFound()
-    conf = Uci()
-    conf.load_tree(device.configuration);
-    if request.POST:
-        configsToBeUpdated=[]
-        newConfig = {}
-        for key, val in request.POST.dict_of_lists().items():
-            if key != "submitted":
-                val[0] = val[0].replace("'", '"') # for better json recognition
-                packagename, configname, optionname = key.split()
-                if not (packagename in newConfig.keys()):
-                    newConfig[packagename] = {}
-                    newConfig[packagename]['values'] = {}
-                if not (configname in newConfig[packagename]['values'].keys()):
-                    newConfig[packagename]['values'][configname] = {}
-                try:
-                    savevalue = json.loads(val[0])
-                except ValueError:
-                    savevalue = val[0]
-                newConfig[packagename]['values'][configname][optionname] = savevalue
-        newUci = Uci()
-        newUci.load_tree(json.dumps(newConfig));
-        pp = pprint.PrettyPrinter(indent=4)
-        pp.pprint(conf.diff(newUci));
-        device.configuration = newUci.export_json()
-        transaction.commit()
-        jobtask.update_config.delay(request.matchdict['uuid'])
-        return HTTPFound(location=request.route_url('openwrt_list'))
-    return{ 'hiddenOptions' : ['.index','.type','.name','.anonymous'],
-            'config'        : conf,
-           'devicename'     : device.name}
-
 
 @view_config(route_name='archive_edit_config', renderer='templates/archive_edit_config.jinja2', layout='base', permission='view')
 def archive_edit_config(request):
@@ -249,7 +130,51 @@ def archive_edit_config(request):
             'routerName'    : device.name,
             'date'          : archiveConfig.date}
 
+@view_config(route_name='archive_apply_config', renderer='templates/archive_apply_config.jinja2', layout='base', permission='view')
+def archiveapplyconfig(request):
+    config = DBSession.query(ConfigArchive).get(request.matchdict['id'])
+    if not config:
+        return exc.HTTPNotFound()
+    openwrt = DBSession.query(OpenWrt)
+    devices = {}
+    if request.POST:
+        for name,value in request.POST.dict_of_lists().items():
+            if name!='submitted' and value: # if item is not the submit button and it's checkd
+                deviceToBeUpdated = DBSession.query(openwrt).get(name)
+                deviceToBeUpdated.configuration = config.configuration
+                transaction.commit()
+                jobtask.update_config.delay(str(deviceToBeUpdated.uuid))
+            return HTTPFound(location = request.route_url('confarchive'))
+    for device in openwrt:
+        name = str(device.name)
+        while name in devices.keys():
+            name += '_'
+        devices[name] = str(device.uuid)
+    return { 'devices' : devices,
+             'checked' : [] }
 
+@view_config(route_name='openwrt_list', renderer='templates/openwrt.jinja2', layout='base', permission='view')
+def openwrt_list(request):
+    openwrt = DBSession.query(OpenWrt)
+    devices = []
+    for device in openwrt:
+        devices.append(str(device.uuid))
+    return {'idfield': 'uuid',
+            'domain': 'openwrt',
+            'devices': json.dumps(devices),
+            'confdomain': 'openwrt_edit_config',
+            'items': openwrt,
+            'table_fields': ['name', 'distribution', 'version', 'address', 'uuid','configuration', 'configured']}
+
+@view_config(route_name='openwrt_detail', renderer='templates/openwrt_detail.jinja2', layout='base', permission='view')
+def openwrt_detail(request):
+    device = DBSession.query(OpenWrt).get(request.matchdict['uuid'])
+    if not device:
+        return exc.HTTPNotFound()
+
+    return {'device': device,
+            'fields': ['name', 'distribution', 'version', 'address', 'uuid', 'login', 'password', 'templates'],
+            'actions': ['delete', 'getConfig', 'saveConfToArchive']}
 
 @view_config(route_name='openwrt_add', renderer='templates/openwrt_add.jinja2', layout='base', permission='view')
 def openwrt_add(request):
@@ -261,6 +186,66 @@ def openwrt_add(request):
 
     save_url = request.route_url('openwrt_add')
     return {'save_url':save_url, 'form':form}
+
+@view_config(route_name='openwrt_edit_config', renderer='templates/openwrt_edit_config.jinja2', layout='base', permission='view')
+def openwrt_edit_config(request):
+    device = DBSession.query(OpenWrt).get(request.matchdict['uuid'])
+    if not device:
+        return exc.HTTPNotFound()
+    conf = Uci()
+    conf.load_tree(device.configuration);
+    if request.POST:
+        configsToBeUpdated=[]
+        newConfig = {}
+        for key, val in request.POST.dict_of_lists().items():
+            if key != "submitted":
+                val[0] = val[0].replace("'", '"') # for better json recognition
+                packagename, configname, optionname = key.split()
+                if not (packagename in newConfig.keys()):
+                    newConfig[packagename] = {}
+                    newConfig[packagename]['values'] = {}
+                if not (configname in newConfig[packagename]['values'].keys()):
+                    newConfig[packagename]['values'][configname] = {}
+                try:
+                    savevalue = json.loads(val[0])
+                except ValueError:
+                    savevalue = val[0]
+                newConfig[packagename]['values'][configname][optionname] = savevalue
+        newUci = Uci()
+        newUci.load_tree(json.dumps(newConfig));
+        pp = pprint.PrettyPrinter(indent=4)
+        pp.pprint(conf.diff(newUci));
+        device.configuration = newUci.export_json()
+        transaction.commit()
+        jobtask.update_config.delay(request.matchdict['uuid'])
+        return HTTPFound(location=request.route_url('openwrt_list'))
+    return{ 'hiddenOptions' : ['.index','.type','.name','.anonymous'],
+            'config'        : conf,
+           'devicename'     : device.name}
+
+def do_multi_openwrt_action(openwrts, action):
+    for openwrt in openwrts:
+        do_action_with_device(action, openwrt)
+
+def do_action_with_device(action, device):
+    if action == 'delete':
+        DBSession.delete(device)
+        return HTTPFound(location=request.route_url('openwrt_list'))
+    if action == 'getConfig':
+        jobtask.get_config.delay(request.matchdict['uuid'])
+        return HTTPFound(location=request.route_url('openwrt_list'))
+    if action == 'saveConfToArchive':
+        confToBeArchived = ConfigArchive(datetime.now(),device.configuration,device.uuid,id_generator())
+        DBSession.add(confToBeArchived)
+        return HTTPFound(location=request.route_url('confarchive'))
+
+@view_config(route_name='openwrt_action', renderer='templates/openwrt_add.jinja2', layout='base', permission='view')
+def openwrt_action(request):
+    action = request.matchdict['action']
+    device = DBSession.query(OpenWrt).get(request.matchdict['uuid'])
+    if not device:
+        return exc.HTTPNotFound()
+    return do_action_with_device(action, device)
 
 def generateMetaconfJson(POST):
         # init metaconf
@@ -458,29 +443,6 @@ def templates_action(request):
     return exc.HTTPNotFound()
 
 
-def do_multi_openwrt_action(openwrts, action):
-    for openwrt in openwrts:
-        do_action_with_device(action, openwrt)
-
-def do_action_with_device(action, device):
-    if action == 'delete':
-        DBSession.delete(device)
-        return HTTPFound(location=request.route_url('openwrt_list'))
-    if action == 'getConfig':
-        jobtask.get_config.delay(request.matchdict['uuid'])
-        return HTTPFound(location=request.route_url('openwrt_list'))
-    if action == 'saveConfToArchive':
-        confToBeArchived = ConfigArchive(datetime.now(),device.configuration,device.uuid,id_generator())
-        DBSession.add(confToBeArchived)
-        return HTTPFound(location=request.route_url('confarchive'))
-
-@view_config(route_name='openwrt_action', renderer='templates/openwrt_add.jinja2', layout='base', permission='view')
-def openwrt_action(request):
-    action = request.matchdict['action']
-    device = DBSession.query(OpenWrt).get(request.matchdict['uuid'])
-    if not device:
-        return exc.HTTPNotFound()
-    return do_action_with_device(action, device)
 
 @view_config(route_name='sshkeys', renderer='templates/sshkeys.jinja2', layout='base', permission='view')
 def sshkeys(request):
@@ -548,6 +510,18 @@ def sshkeys_assign(request):
     return { 'devices' : devices,
              'checked' : checked}
 
+@view_config(route_name='sshkeys_action', renderer='templates/sshkeys.jinja2', layout='base', permission='view')
+def sshkeys_action(request):
+    action = request.matchdict['action']
+    id = request.matchdict['id']
+    sshkey = DBSession.query(SshKey).get(id)
+    if not sshkey:
+        return exc.HTTPNotFound()
+    if action == 'delete':
+        DBSession.delete(sshkey)
+        return HTTPFound(location=request.route_url('sshkeys'))
+    return { 'keys' : sshkeys }
+
 @view_config(route_name='luci', renderer='templates/luci.jinja2', layout='base', permission='view')
 def luci2(request):
     print(request)
@@ -589,17 +563,10 @@ def ubus(request):
     #print(str(res))
     return json.loads(res.app_iter[0].decode('utf8'))
 
-@view_config(route_name='sshkeys_action', renderer='templates/sshkeys.jinja2', layout='base', permission='view')
-def sshkeys_action(request):
-    action = request.matchdict['action']
-    id = request.matchdict['id']
-    sshkey = DBSession.query(SshKey).get(id)
-    if not sshkey:
-        return exc.HTTPNotFound()
-    if action == 'delete':
-        DBSession.delete(sshkey)
-        return HTTPFound(location=request.route_url('sshkeys'))
-    return { 'keys' : sshkeys }
+@jsonrpc_method(endpoint='api')
+def hello(request):
+    """ this call is used for discovery to ensure """
+    return "openwifi"
 
 @jsonrpc_method(method='uuid_generate', endpoint='api')
 def uuid_generate(request, unique_identifier):
@@ -614,6 +581,35 @@ def get_node_status(request, uuid):
     if resp['status'] == 'online':
         resp['interfaces'] = json.loads(r.hget(str(uuid), 'networkstatus').decode())
     return resp
+
+@jsonrpc_method(method='device_register', endpoint='api')
+def device_register(request, uuid, name, address, distribution, version, proto, login, password):
+    device = DBSession.query(OpenWrt).get(uuid)
+    # if uuid exists, update information
+    if device:
+    # otherwise add new device
+        device.name = name
+        device.address = address
+        device.distribution = distribution
+        device.version = version
+        device.proto = proto
+        device.login = login
+        device.password = password
+    else:
+        ap = OpenWrt(name, address, distribution, version, uuid, login, password, False)
+        DBSession.add(ap)
+    DBSession.flush()
+
+@jsonrpc_method(method='device_check_registered', endpoint='api')
+def device_check_registered(request, uuid, name):
+    """
+    check if a device is already present in database. This call is used by a device to check if it must register again.
+    """
+    device = DBSession.query(OpenWrt).get(uuid)
+    if device:
+        return True
+    else:
+        return False
 
 def id_generator(size=6, chars=string.ascii_uppercase + string.digits):
     return ''.join(random.choice(chars) for _ in range(size))
