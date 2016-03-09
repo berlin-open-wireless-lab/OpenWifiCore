@@ -33,9 +33,9 @@
 		  {%- endif -%}
         {% endfor %}
 		<td>
-			<a href="{{request.route_path('templates_assign')}}/{{ item['id'] }}" class="btn btn-primary">Assign Nodes</a>
-			<a href="{{request.route_path('templates_edit')}}/{{ item['id'] }}" class="btn btn-primary">Edit</a>
-			<a href="{{request.route_path('templates_delete')}}/{{ item['id'] }}" class="btn btn-danger">Delete</a>
+			<a href="{{request.route_path('templates_assign', id=item['id']) }}" class="btn btn-primary">Assign Nodes</a>
+			<a href="{{request.route_path('templates_edit', id=item['id']) }}" class="btn btn-primary">Edit</a>
+			<a href="{{request.route_path('templates_delete', id=item['id']) }}" class="btn btn-danger">Delete</a>
 			{%- for action in actions -%}
 				<a href="{{request.route_path('templates')}}/{{ item['id'] }}/{{ action }}" class="btn btn-primary">{{ action }}</a>
 			{%- endfor -%}
