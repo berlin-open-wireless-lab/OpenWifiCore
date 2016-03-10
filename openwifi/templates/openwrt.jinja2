@@ -125,6 +125,7 @@ $(document).ready(function(){
 
   <table id="sorttable" class="table">
   {% for item in items -%}
+    <form class="openwifi form-inline" method="POST">
     {% if loop.first %}
       <thead>
         <tr>
@@ -146,6 +147,7 @@ $(document).ready(function(){
 		  <a href="{{ domain }}/{{ item[idfield] }}" >{{ item[field] }}</a>
 		  {%- if loop.first -%}
 		  <div id="Status_{{item[idfield]}}" style="display:inline;"></div>
+          <input class='check' type='checkbox' name='{{item[idfield]}}' >
 		  {%- endif -%}
 		  </td>
 		{%- endif -%}
@@ -160,6 +162,12 @@ $(document).ready(function(){
           {%- endfor %}
 	  </tr><tr>
       <th colspan="{{ table_fields|length }}" class="ts-pager form-horizontal">
+        <select title="Select openwrt action">
+            {%- for action in actions -%}
+                <option value="{{action}}">{{action}}</option>
+            {%- endfor -%}
+        </select>
+        <button type='submit' name='submitted' class='btn btn-primary'>Do action</button>
         <button type="button" class="btn first"><i class="icon-step-backward glyphicon glyphicon-step-backward"></i></button>
         <button type="button" class="btn prev"><i class="icon-arrow-left glyphicon glyphicon-backward"></i></button>
         <span class="pagedisplay"></span> <!-- this can be any element, including an input -->
@@ -179,6 +187,7 @@ $(document).ready(function(){
   {%- else -%}
   <p class="lead">no data</p>
   {%- endfor %}
+   </form>
   </table>
   <a class="btn btn-primary" href="{{request.route_path('openwrt_add')}}">Add</a>
 {% endblock %}
