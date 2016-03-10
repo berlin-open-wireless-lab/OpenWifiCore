@@ -166,8 +166,8 @@ def openwrt_list(request):
             if name=='submitted':
                 pass
             elif name=='action':
-                action=value
-            elif value=='on':
+                action=value[0]
+            elif value[0]=='on':
                 openwrts.append(DBSession.query(OpenWrt).get(name))
         do_multi_openwrt_action(openwrts, action)
         return get_action_return(action)
