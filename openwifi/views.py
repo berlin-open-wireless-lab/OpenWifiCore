@@ -153,6 +153,8 @@ def archiveapplyconfig(request):
     return { 'devices' : devices,
              'checked' : [] }
 
+openwrt_actions = ['delete', 'getConfig', 'saveConfToArchive'] 
+
 @view_config(route_name='openwrt_list', renderer='templates/openwrt.jinja2', layout='base', permission='view')
 def openwrt_list(request):
     openwrt = DBSession.query(OpenWrt)
@@ -164,7 +166,8 @@ def openwrt_list(request):
             'devices': json.dumps(devices),
             'confdomain': 'openwrt_edit_config',
             'items': openwrt,
-            'table_fields': ['name', 'distribution', 'version', 'address', 'uuid','configuration', 'configured']}
+            'table_fields': ['name', 'distribution', 'version', 'address', 'uuid','configuration', 'configured'],
+            'actions' : openwrt_actions }
 
 @view_config(route_name='openwrt_detail', renderer='templates/openwrt_detail.jinja2', layout='base', permission='view')
 def openwrt_detail(request):
@@ -174,7 +177,7 @@ def openwrt_detail(request):
 
     return {'device': device,
             'fields': ['name', 'distribution', 'version', 'address', 'uuid', 'login', 'password', 'templates'],
-            'actions': ['delete', 'getConfig', 'saveConfToArchive']}
+            'actions': openwrt_actions }
 
 @view_config(route_name='openwrt_add', renderer='templates/openwrt_add.jinja2', layout='base', permission='view')
 def openwrt_add(request):
