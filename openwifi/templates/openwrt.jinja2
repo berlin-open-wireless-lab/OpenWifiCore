@@ -12,6 +12,14 @@
 <script type="text/javascript" src="{{request.static_path('openwifi:static/js/jquery.tablesorter.pager.js')}}"></script> 
 <script type="text/javascript" src="{{request.static_path('openwifi:static/js/jquery.jsonrpcclient.js')}}"></script> 
 <script>
+function selectAll()
+{
+        $("tr").filter(".odd, .even").filter(function() { return $(this).css("display") != "none";}).children().children().filter("input[type=checkbox]").prop('checked',true);
+}
+function deselectAll()
+{
+        $("input[type=checkbox]").prop('checked', false);
+}
 var devices;
 var RPCClient;
 function responseRPC(result)
@@ -167,6 +175,8 @@ $(document).ready(function(){
                 <option value="{{action}}">{{action}}</option>
             {%- endfor -%}
         </select>
+       <a href="javascript:selectAll();" class="btn btn-primary">Select All</a>
+       <a href="javascript:deselectAll();" class="btn btn-primary">Deselect All</a>
         <button type='submit' name='submitted' class='btn btn-primary'>Do action</button>
         <button type="button" class="btn first"><i class="icon-step-backward glyphicon glyphicon-step-backward"></i></button>
         <button type="button" class="btn prev"><i class="icon-arrow-left glyphicon glyphicon-backward"></i></button>
