@@ -1,5 +1,5 @@
 
-from wtforms import Form, TextField, IntegerField
+from wtforms import Form, TextField, IntegerField, PasswordField
 
 class AccessPointAddForm(Form):
     name = TextField('name')
@@ -23,12 +23,12 @@ class OpenWrtEditForm(Form):
     uuid = TextField('uuid') # remote host key
     configured = TextField('configured')
     login = TextField('login')
-    password = TextField('password')
+    password = PasswordField('password')
     configuration = TextField('configuration')
 
 class LoginForm(Form):
     login = TextField('login')
-    password = TextField('password')
+    password = PasswordField('password')
 
 class SshKeyForm(Form):
     key = TextField('key')
