@@ -155,10 +155,22 @@ def archiveapplyconfig(request):
 
 openwrt_actions = ['delete', 'getConfig', 'saveConfToArchive'] 
 
-@view_config(route_name='openwrt_list', renderer='templates/openwrt.jinja2', layout='base', permission='view')
+@view_config(route_name='openwrt_list', renderer='templates/openwrt.jinja2', layout='base')
 def openwrt_list(request):
     openwrt = DBSession.query(OpenWrt)
     devices = []
+    if request.POST:
+        openwrts = []
+        action = ""
+        for name,value in request.POST.dict_of_lists().items():
+            if name=='submitted':
+                pass
+            elif name=='action':
+                action=value
+            elif key=='on':
+                openwrts.append(DBSession.query(OpenWrt).get(name))
+        do_multi_openwrt_action(openwrts, action)
+        return get_action_return(action)
     for device in openwrt:
         devices.append(str(device.uuid))
     return {'idfield': 'uuid',
@@ -233,13 +245,18 @@ def do_multi_openwrt_action(openwrts, action):
 def do_action_with_device(action, device):
     if action == 'delete':
         DBSession.delete(device)
-        return HTTPFound(location=request.route_url('openwrt_list'))
     if action == 'getConfig':
         jobtask.get_config.delay(request.matchdict['uuid'])
-        return HTTPFound(location=request.route_url('openwrt_list'))
     if action == 'saveConfToArchive':
         confToBeArchived = ConfigArchive(datetime.now(),device.configuration,device.uuid,id_generator())
         DBSession.add(confToBeArchived)
+
+def get_action_return(action):
+    if action == 'delete':
+        return HTTPFound(location=request.route_url('openwrt_list'))
+    if action == 'getConfig':
+        return HTTPFound(location=request.route_url('openwrt_list'))
+    if action == 'saveConfToArchive':
         return HTTPFound(location=request.route_url('confarchive'))
 
 @view_config(route_name='openwrt_action', renderer='templates/openwrt_add.jinja2', layout='base', permission='view')
@@ -248,7 +265,8 @@ def openwrt_action(request):
     device = DBSession.query(OpenWrt).get(request.matchdict['uuid'])
     if not device:
         return exc.HTTPNotFound()
-    return do_action_with_device(action, device)
+    do_action_with_device(action, device)
+    return get_action_return(action)
 
 def generateMetaconfJson(POST):
         # init metaconf
