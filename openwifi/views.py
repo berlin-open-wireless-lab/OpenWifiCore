@@ -170,7 +170,7 @@ def openwrt_list(request):
             elif value[0]=='on':
                 openwrts.append(DBSession.query(OpenWrt).get(name))
         do_multi_openwrt_action(openwrts, action)
-        return get_action_return(action)
+        return get_action_return(action, request)
     for device in openwrt:
         devices.append(str(device.uuid))
     return {'idfield': 'uuid',
@@ -251,7 +251,7 @@ def do_action_with_device(action, device):
         confToBeArchived = ConfigArchive(datetime.now(),device.configuration,device.uuid,id_generator())
         DBSession.add(confToBeArchived)
 
-def get_action_return(action):
+def get_action_return(action, request):
     if action == 'delete':
         return HTTPFound(location=request.route_url('openwrt_list'))
     if action == 'getConfig':
@@ -266,7 +266,7 @@ def openwrt_action(request):
     if not device:
         return exc.HTTPNotFound()
     do_action_with_device(action, device)
-    return get_action_return(action)
+    return get_action_return(action, request)
 
 def generateMetaconfJson(POST):
         # init metaconf
