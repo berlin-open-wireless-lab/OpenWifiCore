@@ -256,5 +256,7 @@ def update_openwrt_sshkeys(uuid):
     js = jsonubus.JsonUbus(url=url,
                            user=openwrt.login,
                            password=openwrt.password)
-    js.call('file', 'write', path='/etc/dropbear/authorized_keys', data=keys)
+    keyfile='/etc/dropbear/authorized_keys'
+    js.call('file', 'write', path=keyfile, data=keys)
+    js.call('file', 'exec',command='chmod', params=['600',keyfile])
     DBSession.close()
