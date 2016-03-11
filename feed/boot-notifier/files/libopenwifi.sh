@@ -17,6 +17,7 @@ device_register() {
   local port=$2
   local path=$3
   local uuid=$4
+  local hostname=$(uci get system.@system[0].hostname)
   local address
 
   address=$(nslookup "$server" 2>/dev/null | tail -n1 | awk '{print $3}')
