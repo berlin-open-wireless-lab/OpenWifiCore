@@ -246,7 +246,7 @@ def do_action_with_device(action, device):
     if action == 'delete':
         DBSession.delete(device)
     if action == 'getConfig':
-        jobtask.get_config.delay(request.matchdict['uuid'])
+        jobtask.get_config.delay(device.uuid)
     if action == 'saveConfToArchive':
         confToBeArchived = ConfigArchive(datetime.now(),device.configuration,device.uuid,id_generator())
         DBSession.add(confToBeArchived)
