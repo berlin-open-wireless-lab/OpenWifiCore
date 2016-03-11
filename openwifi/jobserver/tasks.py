@@ -75,12 +75,12 @@ def diff_update_config(diff, url, user, passwd):
             js.call('uci','commit',config=packname)
 
     # add new configs
-    for confname, conf in diff['newconfigs']:
+    for confname, conf in diff['newconfigs'].items():
         js.call('uci','add',config=confname[0], **conf.export_dict(foradd=True))
         js.call('uci','commit', config=confname[0])
 
     # remove old configs
-    for confname, conf in diff['oldconfigs']:
+    for confname, conf in diff['oldconfigs'].items():
         js.call('uci','delete',config=confname[0],section=confname[1])
         js.call('uci','commit',config=confname[0])
 
