@@ -27,6 +27,7 @@ app.conf.CELERYBEAT_SCHEDULE = {
 
 app.conf.CELERY_TIMEZONE = 'UTC'
 
+
 def get_sql_session():
     engine = create_engine(sqlurl)
     Session = sessionmaker()
@@ -260,3 +261,25 @@ def update_openwrt_sshkeys(uuid):
     js.call('file', 'write', path=keyfile, data=keys)
     js.call('file', 'exec',command='chmod', params=['600',keyfile])
     DBSession.close()
+
+def get_wifi_devices(uuid):
+    DBSession = get_sql_session()
+    openwrt = DBSession.query(OpenWrt).get(uuid)
+    url = "http://"+openwrt.address+"/ubus"
+    js = jsonubus.JsonUbus(url=url,
+                           user=openwrt.login,
+                           password=openwrt.password)
+    wifi_devices = js.call('iwinfo', 'devices')
+    DBSession.close()
+    return wifi_devices
+
+def get_assoclist(uuid, wifi_device):
+    DBSession = get_sql_session()
+    openwrt = DBSession.query(OpenWrt).get(uuid)
+    url = "http://"+openwrt.address+"/ubus"
+    js = jsonubus.JsonUbus(url=url,
+                           user=openwrt.login,
+                           password=openwrt.password)
+    assoclist = js.call('iwinfo', 'assoclist', device=wifi_device)
+    DBSession.close()
+    return assoclist
