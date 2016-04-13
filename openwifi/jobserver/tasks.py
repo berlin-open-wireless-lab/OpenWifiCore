@@ -87,10 +87,8 @@ def get_config(uuid):
 
 
 @app.task
-def diff_update_config(diff, url, user, passwd):
-    js = jsonubus.JsonUbus(url=url,
-                           user=user,
-                           password=passwd)
+def diff_update_config(diff, uuid):
+    js = get_jsonubus_from_uuid(uuid)
     # add new packages via file-interface and insert corresponding configs
     for packname, pack in diff['newpackages'].items():
         js.call('file', 'write', path='/etc/config/'+packname, data='')
@@ -137,15 +135,12 @@ def update_config(uuid):
     device = DBSession.query(OpenWrt).get(uuid)
     new_configuration = Uci()
     new_configuration.load_tree(device.configuration)
-    device_url = "http://"+device.address+"/ubus"
+
     cur_configuration = Uci()
-    cur_configuration.load_tree(return_config_from_node_as_json(device_url,
-                                                                device.login,
-                                                                device.password))
+    cur_configuration.load_tree(return_jsonconfig_from_device(device))
     conf_diff = cur_configuration.diff(new_configuration)
     update_diff_conf = signature('openwifi.jobserver.tasks.diff_update_config',
-                                 args=(conf_diff, device_url,
-                                       device.login, device.password))
+                                 args=(conf_diff, uuid))
     DBSession.commit()
     DBSession.close()
     update_diff_conf.delay()
