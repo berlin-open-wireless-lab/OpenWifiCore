@@ -38,8 +38,8 @@ def get_sql_session():
 def get_jsonubus_from_uuid(uuid):
     DBSession=get_sql_session()
     device = DBSession.query(OpenWrt).get(uuid)
-    jsonubus = get_jsonubus_from_openwrt(device)
-    DBSession.close()
+jsonubus = get_jsonubus_from_openwrt(device)
+DBSession.close()
     return jsonubus
 
 def get_jsonubus_from_openwrt(openwrt):
@@ -49,8 +49,18 @@ def get_jsonubus_from_openwrt(openwrt):
                                  password = openwrt.password)
     return jsonubus
 
+# depricated
 def return_config_from_node_as_json(url, user, passwd):
         js = jsonubus.JsonUbus(url = url, user = user, password = passwd)
+        device_configs = js.call('uci', 'configs')
+        configuration="{"
+        for cur_config in device_configs[1]['configs']:
+            configuration+='"'+cur_config+'":'+json.dumps(js.call("uci","get",config=cur_config)[1])+","
+        configuration = configuration[:-1]+"}"
+        return configuration
+
+def return_jsonconfig_from_device(openwrt):
+        js = get_jsonubus_from_openwrt(openwrt)
         device_configs = js.call('uci', 'configs')
         configuration="{"
         for cur_config in device_configs[1]['configs']:
@@ -63,10 +73,7 @@ def get_config(uuid):
     try:
         DBSession=get_sql_session()
         device = DBSession.query(OpenWrt).get(uuid)
-        device_url = "http://"+device.address+"/ubus"
-        device.configuration = return_config_from_node_as_json(device_url,
-                                                               device.login,
-                                                               device.password)
+        device.configuration =  return_jsonconfig_from_device(device)
         device.configured = True
         DBSession.commit()
         DBSession.close()
@@ -74,6 +81,8 @@ def get_config(uuid):
     except Exception as thrownexpt:
         print(thrownexpt)
         device.configured = False
+        DBSession.commit()
+        DBSession.close()
         return False
 
 
