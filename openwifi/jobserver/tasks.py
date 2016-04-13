@@ -38,16 +38,16 @@ def get_sql_session():
 def get_jsonubus_from_uuid(uuid):
     DBSession=get_sql_session()
     device = DBSession.query(OpenWrt).get(uuid)
-    jsonubus = get_jsonubus_from_openwrt(device)
+    js = get_jsonubus_from_openwrt(device)
     DBSession.close()
-    return jsonubus
+    return js
 
 def get_jsonubus_from_openwrt(openwrt):
     device_url = "http://"+openwrt.address+"/ubus"
-    jsonubus = jsonubus.JsonUbus(url = openwrt.url, \
-                                 user = openwrt.login, \
-                                 password = openwrt.password)
-    return jsonubus
+    js = jsonubus.JsonUbus(url = openwrt.url, \
+                           user = openwrt.login, \
+                           password = openwrt.password)
+    return js
 
 # depricated
 def return_config_from_node_as_json(url, user, passwd):
