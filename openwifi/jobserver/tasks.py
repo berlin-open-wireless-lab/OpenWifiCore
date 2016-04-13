@@ -43,7 +43,7 @@ def get_jsonubus_from_uuid(uuid):
     return jsonubus
 
 def get_jsonubus_from_openwrt(openwrt):
-    device_url = "http://"+device.address+"/ubus"
+    device_url = "http://"+openwrt.address+"/ubus"
     jsonubus = jsonubus.JsonUbus(url = openwrt.url, \
                                  user = openwrt.login, \
                                  password = openwrt.password)
