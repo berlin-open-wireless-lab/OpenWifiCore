@@ -160,8 +160,7 @@ def update_status():
     devices = DBSession.query(OpenWrt)
     redisDB = redis.StrictRedis(host=redishost, port=redisport, db=redisdb)
     for device in devices:
-        device_url = "http://"+device.address+"/ubus"
-        js = jsonubus.JsonUbus(url=device_url, user=device.login, password=device.password)
+        js = get_jsonubus_from_openwrt(device)
         try:
             networkstatus = js.callp('network.interface','dump')
         except OSError as error:
@@ -271,10 +270,7 @@ def update_openwrt_sshkeys(uuid):
     for sshkey in openwrt.ssh_keys:
         keys = keys+'#'+sshkey.comment+'\n'
         keys = keys+sshkey.key+'\n'
-    url = "http://"+openwrt.address+"/ubus"
-    js = jsonubus.JsonUbus(url=url,
-                           user=openwrt.login,
-                           password=openwrt.password)
+    js = get_jsonubus_from_openwrt(openwrt)
     keyfile='/etc/dropbear/authorized_keys'
     js.call('file', 'write', path=keyfile, data=keys)
     js.call('file', 'exec',command='chmod', params=['600',keyfile])
