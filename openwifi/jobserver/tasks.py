@@ -38,8 +38,8 @@ def get_sql_session():
 def get_jsonubus_from_uuid(uuid):
     DBSession=get_sql_session()
     device = DBSession.query(OpenWrt).get(uuid)
-jsonubus = get_jsonubus_from_openwrt(device)
-DBSession.close()
+    jsonubus = get_jsonubus_from_openwrt(device)
+    DBSession.close()
     return jsonubus
 
 def get_jsonubus_from_openwrt(openwrt):
