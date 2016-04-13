@@ -276,24 +276,10 @@ def update_openwrt_sshkeys(uuid):
     js.call('file', 'exec',command='chmod', params=['600',keyfile])
     DBSession.close()
 
-def get_wifi_devices(uuid):
-    DBSession = get_sql_session()
-    openwrt = DBSession.query(OpenWrt).get(uuid)
-    url = "http://"+openwrt.address+"/ubus"
-    js = jsonubus.JsonUbus(url=url,
-                           user=openwrt.login,
-                           password=openwrt.password)
+def get_wifi_devices_via_jsonubus(js):
     wifi_devices = js.call('iwinfo', 'devices')
-    DBSession.close()
     return wifi_devices
 
-def get_assoclist(uuid, wifi_device):
-    DBSession = get_sql_session()
-    openwrt = DBSession.query(OpenWrt).get(uuid)
-    url = "http://"+openwrt.address+"/ubus"
-    js = jsonubus.JsonUbus(url=url,
-                           user=openwrt.login,
-                           password=openwrt.password)
+def get_assoclist_via_jsonubus_of_wifi_device(js, wifi_device):
     assoclist = js.call('iwinfo', 'assoclist', device=wifi_device)
-    DBSession.close()
     return assoclist
