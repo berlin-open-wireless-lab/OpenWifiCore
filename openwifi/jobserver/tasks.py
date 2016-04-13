@@ -283,3 +283,8 @@ def get_wifi_devices_via_jsonubus(js):
 def get_assoclist_via_jsonubus_of_wifi_device(js, wifi_device):
     assoclist = js.call('iwinfo', 'assoclist', device=wifi_device)
     return assoclist
+
+def get_assoc_count_of_wifi_device(js, wifi_device):
+    assoclist = get_assoclist_via_jsonubus_of_wifi_device(js, wifi_device)
+    assoclist_results = assoclist[1]['results']
+    return len(assoclist_results)
