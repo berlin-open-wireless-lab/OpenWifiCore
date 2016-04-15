@@ -97,7 +97,7 @@ def main(global_config, **settings):
     config.scan()
 
     # Add plugin Views
-    for entry_point in iter_entry_points(group='OpenWifi.plugin', name=None):
+    for entry_point in iter_entry_points(group='OpenWifi.plugin', name="addPluginRoutes"):
         entry_function = entry_point.load()
         entry_function(config)
         config.scan(entry_point.module_name)

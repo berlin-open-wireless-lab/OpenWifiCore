@@ -9,6 +9,8 @@ from datetime import timedelta
 import redis
 import json
 
+from pkg_resources import iter_entry_points
+
 app = Celery('tasks', broker=brokerurl)
 
 app.conf.CELERYBEAT_SCHEDULE = {
@@ -27,6 +29,10 @@ app.conf.CELERYBEAT_SCHEDULE = {
 
 app.conf.CELERY_TIMEZONE = 'UTC'
 
+# Add Plugin Tasks
+for entry_point in iter_entry_points(group='OpenWifi.plugin', name="addJobserverTasks"):
+    entry_function = entry_point.load()
+    entry_function(app)
 
 def get_sql_session():
     engine = create_engine(sqlurl)
