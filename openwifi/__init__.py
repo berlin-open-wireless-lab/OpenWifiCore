@@ -21,6 +21,7 @@ from .models import (
     Base,
     )
 
+from pkg_resources import iter_entry_points
 
 class RootFactory(object):
     __acl__ = [(Allow, Authenticated, 'view')]
@@ -94,4 +95,11 @@ def main(global_config, **settings):
     config.add_jsonrpc_endpoint('api', '/api')
 
     config.scan()
+
+    # Add plugin Views
+    for entry_point in iter_entry_points(group='OpenWifi.plugin', name=None):
+        entry_function = entry_point.load()
+        entry_function(config)
+        config.scan(entry_point.module_name)
+
     return config.make_wsgi_app()
