@@ -22,9 +22,16 @@ from zope.sqlalchemy import ZopeTransactionExtension
 
 from .guid import GUID
 
+from pkg_resources import iter_entry_points
+import importlib
+
 
 DBSession = scoped_session(sessionmaker(extension=ZopeTransactionExtension()))
 Base = declarative_base()
+
+# import Plugin
+for iter_entry in iter_entry_points(group="OpenWifi.plugin", name="models"):
+    importlib.import_module(iter_entry.load())
 
 essid_association_table = Table('essid_association', Base.metadata,
         Column('radio_id', Integer, ForeignKey('radio.id')),
