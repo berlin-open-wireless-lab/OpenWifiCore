@@ -32,6 +32,9 @@ class RootFactory(object):
 def main(global_config, **settings):
     """ This function returns a Pyramid WSGI application.
     """
+
+    configure_global_views(settings)
+
     engine = engine_from_config(settings, 'sqlalchemy.')
     DBSession.configure(bind=engine)
     Base.metadata.bind = engine
@@ -103,3 +106,20 @@ def main(global_config, **settings):
         config.scan(entry_point.module_name)
 
     return config.make_wsgi_app()
+
+def configure_global_views(settings):
+    # Set global views as [view_callable, display_name]
+    settings["OpenWifi.globalViews"]=[['home','Home'],
+                                      ['openwrt_list','OpenWrt'],
+                                      ['confarchive','Archive'],
+                                      ['templates','Templates'],
+                                      ['sshkeys','SSH Keys'],
+                                      ]
+    # add Global Plugin Views
+    for entry_point in iter_entry_points(group='OpenWifi.plugin', name="globalPluginViews"):
+        globalPluginViews = entry_point.load()
+        for view in globalPluginViews:
+            settings["OpenWifi.globalViews"].append(view)
+
+    #always have logout as the last entry
+    settings["OpenWifi.globalViews"].append(['logout','Logout'])
