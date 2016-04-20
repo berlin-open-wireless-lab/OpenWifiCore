@@ -155,7 +155,7 @@ def archiveapplyconfig(request):
 
 openwrt_actions = ['delete', 'getConfig', 'saveConfToArchive'] 
 
-@view_config(route_name='openwrt_list', renderer='templates/openwrt.jinja2', layout='base')
+@view_config(route_name='openwrt_list', renderer='templates/openwrt.jinja2', layout='base', permission='view')
 def openwrt_list(request):
     openwrt = DBSession.query(OpenWrt)
     devices = []
