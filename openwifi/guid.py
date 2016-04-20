@@ -25,12 +25,12 @@ class GUID(TypeDecorator):
         else:
             if not isinstance(value, uuid.UUID):
                 try:
-                    return "%.32x" % uuid.UUID(str(value))
+                    return "%.32x" % uuid.UUID(str(value)).int
                 except ValueError:
-                    return "%.32x" % uuid.uuid5(uuid.NAMESPACE_DNS, str(value))
+                    return "%.32x" % uuid.uuid5(uuid.NAMESPACE_DNS, str(value)).int
             else:
                 # hexstring
-                return "%.32x" % value
+                return "%.32x" % value.int
 
     def process_result_value(self, value, dialect):
         if value is None:
