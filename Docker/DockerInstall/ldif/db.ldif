@@ -1,0 +1,43 @@
+# Directory Superuser
+
+dn: uid=admin,{DOMAIN}
+uid: admin
+cn: system administrator
+sn: administrator
+objectClass: top
+objectClass: person
+objectClass: organizationalPerson
+objectClass: inetOrgPerson
+displayName: Super User
+userPassword: {PASSWORD}
+
+# Organization Units
+
+dn: ou=Users,dc=OpenWifi,dc=local
+objectClass: organizationalUnit
+ou: Users
+
+dn: ou=Groups,dc=OpenWifi,dc=local
+objectClass: organizationalUnit
+ou: Groups
+
+dn: cn=miners,ou=Groups,dc=OpenWifi,dc=local
+objectClass: posixGroup
+cn: miners
+gidNumber: 5000
+
+dn: uid=test,ou=Users,dc=OpenWifi,dc=local
+objectClass: inetOrgPerson
+objectClass: posixAccount
+objectClass: shadowAccount
+uid: test
+sn: Test Test
+givenName: Test
+cn: Test Test
+displayName: John Doe
+uidNumber: 10000
+gidNumber: 5000
+userPassword: test
+gecos: John Doe
+loginShell: /bin/bash
+homeDirectory: /home/john

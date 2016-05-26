@@ -1,43 +1,47 @@
-#!/usr/bin/env bash
+#!/usr/bin/env sh
+set -e
+#set -x
 
-# LDAP install
+LDAP_DOMAIN_DC="dc=$(echo $LDAP_DOMAIN | sed 's/\./,dc=/')"
+LDAP_DOMAIN_TOP=$(echo $LDAP_DOMAIN | sed 's/\..*//')
+LDAP_PASSWORD_ENC=$(slappasswd -h {SSHA} -s $LDAP_PASSWORD)
 
-# echo "127.0.1.1 vagrant-ubuntu-trusty-64.OpenWifi.local vagrant-ubuntu-trusty-64" >> /etc/hosts
+# Delete data
+if [ -f /var/lib/ldap/DB_CONFIG ]
+then
+  TMPDIR=$(mktemp -d)
+  rm -f $TMPDIR/DB_CONFIG
+  cp -v /var/lib/ldap/DB_CONFIG ./DB_CONFIG
+fi
+rm -rf /etc/ldap/slapd.d/*
+rm -rf /var/lib/ldap/*
+if [ -f $TMPDIR/DB_CONFIG ]
+then
+  cp -v $TMPDIR/DB_CONFIG /var/lib/ldap/DB_CONFIG
+  rm -rf $TMPDIR
+fi
 
-apt-get -y install slapd ldap-utils
+# Reconfigure
+sed -e 's/{DOMAIN}/'"$LDAP_DOMAIN_DC"'/' /DockerInstall/ldif/slapd.conf.ldif | sed -e 's!{PASSWORD_ENC}!'"$LDAP_PASSWORD_ENC"'!' | slapadd -F /etc/ldap/slapd.d -b "cn=config"
+# Load memberof and ref-int overlays and configure them.
+cat /DockerInstall/ldif/memberof.ldif | slapadd -F /etc/ldap/slapd.d -b "cn=config"
 
-# fix file permissions
+# Add base domain.
+slapadd -F /etc/ldap/slapd.d <<EOM
+dn: $LDAP_DOMAIN_DC
+objectClass: top
+objectClass: domain
+dc: $LDAP_DOMAIN_TOP
+EOM
+
+chown -R openldap:openldap /etc/ldap/slapd.d
 chown -R openldap:openldap /var/lib/ldap
-chown -R openldap:openldap /etc/ldap
-#chown -R openldap:openldap ${CONTAINER_SERVICE_DIR}/slapd
 
-LDAP_ADMIN_PASSWORD="ldap"
-LDAP_DOMAIN="OpenWifi.local"
-LDAP_ORGANISATION="OpenWifi"
+/etc/init.d/slapd start
 
-    cat <<EOF | debconf-set-selections
-slapd slapd/internal/generated_adminpw password ${LDAP_ADMIN_PASSWORD}
-slapd slapd/internal/adminpw password ${LDAP_ADMIN_PASSWORD}
-slapd slapd/password2 password ${LDAP_ADMIN_PASSWORD}
-slapd slapd/password1 password ${LDAP_ADMIN_PASSWORD}
-slapd slapd/dump_database_destdir string /var/backups/slapd-VERSION
-slapd slapd/domain string ${LDAP_DOMAIN}
-slapd shared/organization string ${LDAP_ORGANISATION}
-slapd slapd/backend string HDB
-slapd slapd/purge_database boolean true
-slapd slapd/move_old_database boolean true
-slapd slapd/allow_ldap_v2 boolean false
-slapd slapd/no_configuration boolean false
-slapd slapd/dump_database select when needed
-EOF
+# Import data.
+sed -e 's/{DOMAIN}/'"$LDAP_DOMAIN_DC"'/' /DockerInstall/ldif/db.ldif |
+  ldapadd -x -D "cn=admin,$LDAP_DOMAIN_DC" -w $LDAP_PASSWORD -h localhost -p 389
 
-dpkg-reconfigure -f noninteractive slapd
-
-slapd -h "ldap://localhost ldapi:///" -u openldap -g openldap -F /etc/ldap/slap.d
-
-ps aux
-
-ldapadd -H "ldap://localhost" -x -D cn=admin,dc=OpenWifi,dc=local -w ldap -f /DockerInstall/add_content.ldif
-
-#/etc/init.d/slapd restart
+kill $(pidof slapd)
 

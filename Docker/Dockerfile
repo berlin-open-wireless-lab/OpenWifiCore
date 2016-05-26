@@ -1,13 +1,23 @@
 FROM ubuntu:14.04
 
-
 ADD ./DockerInstall /DockerInstall
 
-RUN groupadd -r openldap && useradd -r -g openldap openldap
-RUN chmod 700 /DockerInstall/install_ldap.sh
-RUN /DockerInstall/install_ldap.sh
+RUN apt-get update
 
-#RUN chmod 700 /DockerInstall/install_openwifi.sh
-#RUN /DockerInstall/install_openwifi.sh
+ENV LDAP_DOMAIN=OpenWifi.local
+ENV LDAP_PASSWORD=ldap
+ENV DEBIAN_FRONTEND=noninteractive
 
-CMD ["/bin/bash"]
+RUN apt-get update -qq && apt-get install -y slapd ldap-utils -qq
+RUN rm -rf /etc/ldap/slapd.d && rm -rf /var/lib/ldap/* && mkdir /etc/ldap/slapd.d
+RUN chmod +x /DockerInstall/run_ldap.sh /DockerInstall/install_ldap.sh
+
+RUN chmod 700 /DockerInstall/install_openwifi.sh
+RUN /DockerInstall/install_openwifi.sh
+
+
+# Supervisord
+RUN apt-get install -y supervisor
+RUN cp /DockerInstall/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+
+CMD ["/usr/bin/supervisord"]
