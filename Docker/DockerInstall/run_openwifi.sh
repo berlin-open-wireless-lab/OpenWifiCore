@@ -1,5 +1,10 @@
 #!/bin/bash
 
+if [ ! -e /OpenWifi/setup.py ] && [ ! -e /home/openwifi/OpenWifi ]; then
+    /DockerInstall/install_openwifi.sh
+    return false
+fi
+
 if [ -e /home/openwifi/OpenWifi ]; then
         su openwifi -c". /home/openwifi/venv/bin/activate; pserve /home/openwifi/OpenWifi/development_listen_global.ini"
 else
