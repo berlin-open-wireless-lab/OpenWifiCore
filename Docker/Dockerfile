@@ -12,8 +12,11 @@ RUN apt-get update -qq && apt-get install -y slapd ldap-utils -qq
 RUN rm -rf /etc/ldap/slapd.d && rm -rf /var/lib/ldap/* && mkdir /etc/ldap/slapd.d
 RUN chmod +x /DockerInstall/run_ldap.sh /DockerInstall/install_ldap.sh
 
-RUN chmod 700 /DockerInstall/install_openwifi.sh
-RUN /DockerInstall/install_openwifi.sh
+RUN chmod 700 /DockerInstall/install_openwifi_relative.sh
+RUN chmod 700 /DockerInstall/run_openwifi.sh
+RUN /DockerInstall/install_openwifi_relative.sh
+
+EXPOSE 6543
 
 
 # Supervisord
