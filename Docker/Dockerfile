@@ -16,8 +16,10 @@ RUN chmod 700 /DockerInstall/install_openwifi_relative.sh
 RUN chmod 700 /DockerInstall/run_openwifi.sh /DockerInstall/install_openwifi.sh
 RUN /DockerInstall/install_openwifi_relative.sh
 
-EXPOSE 6543
+RUN chmod 700 /DockerInstall/install_avahi.sh /DockerInstall/run_avahi.sh
+RUN /DockerInstall/install_avahi.sh
 
+EXPOSE 6543
 
 # Supervisord
 RUN apt-get install -y supervisor
