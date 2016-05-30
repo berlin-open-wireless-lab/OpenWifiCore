@@ -28,8 +28,8 @@
 
   <service>
     <type>_openwifi._tcp</type>
-    <port>80</port>
-    <txt-record>path=/openwifi</txt-record>
+    <port>6543</port>
+    <txt-record>path=/</txt-record>
   </service>
 
 </service-group>
