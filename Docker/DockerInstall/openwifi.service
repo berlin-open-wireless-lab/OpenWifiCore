@@ -29,7 +29,7 @@
   <service>
     <type>_openwifi._tcp</type>
     <port>6543</port>
-    <txt-record>path=/</txt-record>
+    <txt-record>path=</txt-record>
   </service>
 
 </service-group>
