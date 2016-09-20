@@ -94,6 +94,8 @@ def main(global_config, **settings):
     config.add_route('luci', '/luci/{uuid}')
     config.add_route('ubus', '/ubus/{uuid}*command')
 
+    config.add_route('file_upload', '/file_upload')
+
     config.include('pyramid_rpc.jsonrpc')
     config.add_jsonrpc_endpoint('api', '/api')
 
@@ -114,6 +116,7 @@ def configure_global_views(settings):
                                       ['confarchive','Archive'],
                                       ['templates','Templates'],
                                       ['sshkeys','SSH Keys'],
+                                      ['file_upload','File Upload']
                                       ]
     # add Global Plugin Views
     for entry_point in iter_entry_points(group='OpenWifi.plugin', name="globalPluginViews"):

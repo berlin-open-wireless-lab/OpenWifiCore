@@ -12,6 +12,9 @@ from openwifi.jobserver_config import redishost, redisport, redisdb
 import redis
 from wsgiproxy import Proxy
 
+import shutil
+import os
+
 import json
 from pyuci import Uci
 import openwifi.jobserver.tasks as jobtask
@@ -542,6 +545,28 @@ def sshkeys_action(request):
         DBSession.delete(sshkey)
         return HTTPFound(location=request.route_url('sshkeys'))
     return { 'keys' : sshkeys }
+
+@view_config(route_name='file_upload', renderer='templates/file_upload.jinja2', layout='base', request_method="GET", permission='view')
+def file_upload_get(request):
+    return {}
+
+@view_config(route_name='file_upload', renderer='templates/file_upload.jinja2', layout='base', request_method="POST", permission='view')
+def file_upload_post(request):
+    filename = request.POST['file'].filename #TODO: check filename if it can be trusted!
+    input_file = request.POST['file'].file
+
+    basepath = os.path.dirname(os.path.abspath(__file__))
+    file_path = os.path.join(basepath, 'upload', filename)
+
+    temp_file_path = file_path + '~'
+
+    input_file.seek(0)
+    with open(temp_file_path, 'wb') as output_file:
+        shutil.copyfileobj(input_file, output_file)
+
+    os.rename(temp_file_path, file_path)
+
+    return HTTPFound(location=request.route_url('home'))
 
 @view_config(route_name='luci', renderer='templates/luci.jinja2', layout='base', permission='view')
 def luci2(request):
