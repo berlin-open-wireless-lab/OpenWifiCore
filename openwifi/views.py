@@ -646,6 +646,9 @@ def device_register(request, uuid, name, address, distribution, version, proto, 
         DBSession.add(ap)
     DBSession.flush()
 
+    for devRegFunc in request.registry.settings['OpenWifi.onDeviceRegister']:
+        devRegFunc(uuid)
+
 @jsonrpc_method(method='device_check_registered', endpoint='api')
 def device_check_registered(request, uuid, name):
     """

@@ -35,6 +35,8 @@ def main(global_config, **settings):
 
     configure_global_views(settings)
 
+    registerOnDeviceRegisterFunctions(settings)
+
     engine = engine_from_config(settings, 'sqlalchemy.')
     DBSession.configure(bind=engine)
     Base.metadata.bind = engine
@@ -126,3 +128,11 @@ def configure_global_views(settings):
 
     #always have logout as the last entry
     settings["OpenWifi.globalViews"].append(['logout','Logout'])
+
+def registerOnDeviceRegisterFunctions(settings):
+    settings['OpenWifi.onDeviceRegister'] = []
+
+    for entry_point in iter_entry_points(group='OpenWifi.plugin', name="onDeviceRegister"):
+        devRegFunction = entry_point.load()
+        settings["OpenWifi.onDeviceRegister"].append(devRegFunction)
+
