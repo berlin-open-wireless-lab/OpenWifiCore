@@ -36,3 +36,4 @@ class SshKeyForm(Form):
 
 class SettingsForm(Form):
     baseImageUrl = TextField('Base Image URL')
+    baseImageMD5Url = TextField('Base Image MD5 Checksum file URL')

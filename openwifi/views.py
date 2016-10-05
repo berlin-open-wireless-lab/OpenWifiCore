@@ -211,17 +211,21 @@ def openwrt_add(request):
 def settingsView(request):
     form = SettingsForm(request.POST)
 
-    # Fill data from DB into form
-    for field in form:
-        setting = DBSession.query(OpenWifiSettings).get(field.name)
-        if setting:
-            field.data = setting.value
-
     if request.method == 'POST' and form.validate():
         for key, value in form.data.items():
-            setting = OpenWifiSettings(key, value)
-            DBSession.add(setting)
+            alreadySavedSetting = DBSession.query(OpenWifiSettings).get(key)
+            if alreadySavedSetting:
+                alreadySavedSetting.value = value
+            else:
+                setting = OpenWifiSettings(key, value)
+                DBSession.add(setting)
         return HTTPFound(location=request.route_url('home'))
+    else:
+        # Fill data from DB into form
+        for field in form:
+            setting = DBSession.query(OpenWifiSettings).get(field.name)
+            if setting:
+                field.data = setting.value
 
     save_url = request.route_url('settings')
     return {'save_url':save_url, 'form':form}
@@ -642,8 +646,10 @@ def uuid_generate(request, unique_identifier):
 @jsonrpc_method(method='get_default_image_url', endpoint='api')
 def get_default_image_url(request, uuid):
     baseImageUrl = DBSession.query(OpenWifiSettings).get('baseImageUrl')
-    if baseImageUrl:
-        return {'default_image' : baseImageUrl.value}
+    baseImageMD5Url = DBSession.query(OpenWifiSettings).get('baseImageMD5Url')
+    if baseImageUrl and baseImageMD5Url:
+        return {'default_image' : baseImageUrl.value, 
+                'default_md5' : baseImageMD5Url.value}
     else:
         return False
 
