@@ -85,6 +85,15 @@ class ConfigArchive(Base):
         self.router_uuid   = router_uuid
         self.id            = id
 
+class OpenWifiSettings(Base):
+    __tablename__ = 'OpenWifiSettings'
+    key = Column(Text, primary_key=True)
+    value = Column(Text)
+
+    def __init__(self, key, value):
+        self.key = key
+        self.value = value
+
 class Templates(Base):
     __tablename__ = "templates"
     name = Column(Text)

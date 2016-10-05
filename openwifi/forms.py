@@ -33,3 +33,6 @@ class LoginForm(Form):
 class SshKeyForm(Form):
     key = TextField('key')
     comment = TextField('comment')
+
+class SettingsForm(Form):
+    baseImageUrl = TextField('Base Image URL')

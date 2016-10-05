@@ -28,14 +28,16 @@ from .models import (
     OpenWrt,
     ConfigArchive,
     Templates,
-    SshKey
+    SshKey,
+    OpenWifiSettings
     )
 
 from .forms import (
         AccessPointAddForm,
         OpenWrtEditForm,
         LoginForm,
-        SshKeyForm
+        SshKeyForm,
+        SettingsForm
         )
 
 from .utils import generate_device_uuid
@@ -203,6 +205,25 @@ def openwrt_add(request):
         return HTTPFound(location=request.route_url('openwrt_list'))
 
     save_url = request.route_url('openwrt_add')
+    return {'save_url':save_url, 'form':form}
+
+@view_config(route_name='settings', renderer='templates/settings.jinja2', layout='base', permission='view')
+def settingsView(request):
+    form = SettingsForm(request.POST)
+
+    # Fill data from DB into form
+    for field in form:
+        setting = DBSession.query(OpenWifiSettings).get(field.name)
+        if setting:
+            field.data = setting.value
+
+    if request.method == 'POST' and form.validate():
+        for key, value in form.data.items():
+            setting = OpenWifiSettings(key, value)
+            DBSession.add(setting)
+        return HTTPFound(location=request.route_url('home'))
+
+    save_url = request.route_url('settings')
     return {'save_url':save_url, 'form':form}
 
 @view_config(route_name='openwrt_edit_config', renderer='templates/openwrt_edit_config.jinja2', layout='base', permission='view')
@@ -617,6 +638,14 @@ def hello(request):
 @jsonrpc_method(method='uuid_generate', endpoint='api')
 def uuid_generate(request, unique_identifier):
     return {'uuid': generate_device_uuid(unique_identifier) }
+
+@jsonrpc_method(method='get_default_image_url', endpoint='api')
+def get_default_image_url(request, uuid):
+    baseImageUrl = DBSession.query(OpenWifiSettings).get('baseImageUrl')
+    if baseImageUrl:
+        return {'default_image' : baseImageUrl.value}
+    else:
+        return False
 
 @jsonrpc_method(method='get_node_status', endpoint='api')
 def get_node_status(request, uuid):

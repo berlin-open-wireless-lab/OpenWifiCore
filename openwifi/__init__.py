@@ -70,6 +70,7 @@ def main(global_config, **settings):
 
     config.add_static_view('static', 'static', cache_max_age=3600)
     config.add_route('home', '/')
+    config.add_route('settings','/settings')
 
     config.add_route('openwrt_list', '/openwrt')
     config.add_route('openwrt_detail', '/openwrt/{uuid}')
@@ -114,6 +115,7 @@ def main(global_config, **settings):
 def configure_global_views(settings):
     # Set global views as [view_callable, display_name]
     settings["OpenWifi.globalViews"]=[['home','Home'],
+                                      ['settings','Settings'],
                                       ['openwrt_list','OpenWrt'],
                                       ['confarchive','Archive'],
                                       ['templates','Templates'],
