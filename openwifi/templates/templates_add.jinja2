@@ -177,6 +177,12 @@ function addOption(confIdS, confPrefixS)
 	optString += "<input name=\""+optPrefixName+".Name\" id='optName' type='text' class='form-control' placeholder='Option Name'>";
 	optString += "<label for='optValue'>Value</label>";
 	optString += "<input name=\""+optPrefixName+".Value\" id='optValue' type='text' class='form-control' placeholder='Option Value'>";
+	optString += "<select name=\""+optPrefixName+".Type\" id='optType' class='form-control' placeholder='Option Value'>";
+	optString += "<option value='normal'>normal</option>";
+	optString += "<option value='appendToList'>append to list</option>";
+	optString += "<option value='removeFromList'>remove from list</option>";
+	optString += "<option value='isList'>Value is a (json) list</option>";
+	optString += "</select>";
 	optString += "<button class='btn btn-danger btn-sm' style='float:right;' onclick='delOption(\"#"+optIdStr+"\");'><span class='glyphicon glyphicon-remove'></span></button>";
 	optString += "</div>";
 	optString += "</div>";

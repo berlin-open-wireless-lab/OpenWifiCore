@@ -367,11 +367,26 @@ def generateMetaconfJson(POST):
                                     config['change']={}
                                     config['change']['add']=[]
                                     config['change']['del']=[]
+                                    config['change']['appendToList']=[]
+                                    config['change']['removeFromList']=[]
                                     optsToAdd = [value for key, value in curconfig.items() if key.startswith('optA')]
                                     for opt in optsToAdd:
-                                        config['change']['add'].append(\
-                                                [opt['Name'], \
-                                                 opt['Value']])
+                                        if opt['Type'] == 'normal':
+                                            config['change']['add'].append(\
+                                                    [opt['Name'], \
+                                                     opt['Value']])
+                                        elif opt['Type'] == 'appendToList':
+                                            config['change']['appendToList'].append(\
+                                                    [opt['Name'], \
+                                                     opt['Value']])
+                                        elif opt['Type'] == 'removeFromList':
+                                            config['change']['removeFromList'].append(\
+                                                    [opt['Name'], \
+                                                     opt['Value']])
+                                        elif opt['Type'] == 'isList':
+                                            config['change']['add'].append(\
+                                                    [opt['Name'], \
+                                                     json.loads(opt['Value'])])
                                     optsToDel = [value for key, value in curconfig.items() if key.startswith('optD')]
                                     for opt in optsToDel:
                                         config['change']['del'].append(\
