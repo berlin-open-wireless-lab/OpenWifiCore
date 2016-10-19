@@ -13,7 +13,8 @@ RUN rm -rf /etc/ldap/slapd.d && rm -rf /var/lib/ldap/* && mkdir /etc/ldap/slapd.
 RUN chmod +x /DockerInstall/run_ldap.sh /DockerInstall/install_ldap.sh
 
 RUN chmod 700 /DockerInstall/install_openwifi_relative.sh
-RUN chmod 700 /DockerInstall/run_openwifi.sh /DockerInstall/install_openwifi.sh
+RUN chmod 700 /DockerInstall/run_openwifi.sh /DockerInstall/install_openwifi.sh /DockerInstall/run_openwifi.sh  /DockerInstall/run_openwifi_jobserver.sh  /DockerInstall/run_openwifi_jobserver_beat.sh
+
 RUN /DockerInstall/install_openwifi_relative.sh
 
 RUN chmod 700 /DockerInstall/install_avahi.sh /DockerInstall/run_avahi.sh
@@ -24,5 +25,6 @@ EXPOSE 6543
 # Supervisord
 RUN apt-get install -y supervisor
 RUN cp /DockerInstall/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+RUN cp /DockerInstall/supervisord.conf.master /etc/supervisor/supervisord.conf
 
 CMD ["/usr/bin/supervisord"]
