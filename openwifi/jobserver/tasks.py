@@ -252,10 +252,10 @@ def update_template(openwrtConfJSON, templateJSON):
                             pass
                     # new options that might not be in older templates
                     try:
-                        for option in conf_macht['change']['appendToList']:
+                        for option in conf_match['change']['appendToList']:
                             if type(mconfig.keys[option[0]]) is list and option[1] not in mconfig.keys[option[0]]:
                                 mconfig.keys[option[0]].append(option[1])
-                        for option in conf_macht['change']['removeFromList']:
+                        for option in conf_match['change']['removeFromList']:
                             if type(mconfig.keys[option[0]]) is list and option[1]  in mconfig.keys[option[0]]:
                                 indexInList = mconfig.keys[option[0]].index(option[1])
                                 mconfig.keys[option[0]].pop(indexInList)
