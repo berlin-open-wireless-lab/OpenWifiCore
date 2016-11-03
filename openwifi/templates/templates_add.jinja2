@@ -8,6 +8,9 @@ var delPackageId = 0;
 var delConfId = 0;
 var confId = 0;
 var optionId = 0;
+var pastePackIdS;
+var pasteConfPrefix;
+var pasteIsSubconf;
 
 function addPackage() 
 {
@@ -26,6 +29,7 @@ function addPackage()
 	packageString += "class='package'>";
 	packageString += "<input  name=\"packageA"+packageId.toString()+".Name\"type='text' class='form-control' placeholder='Package Name'>";
 	packageString += "<button type='button' class='btn btn-success' onclick='addConf(\"#"+packIdStr+"Add\",\"packageA"+packageId.toString()+"\",false);' >Add Config</button>";
+	packageString += "<button type='button' class='btn btn-success' onclick='addConfPaste(\"#"+packIdStr+"Add\",\"packageA"+packageId.toString()+"\",false);' >Add Config by Pasting</button>";
 	packageString += "<button type='button' class='btn btn-danger' onclick='delConf("+packageId+");' >Del Config</button>";
 	packageString += "</div>";
 	packageString += "<div id='"+packIdStr+"Del'>";
@@ -165,6 +169,70 @@ function addConf(packIdS, confPrefix, isSubconf)
 	$(packIdS).append(confString);
 	confId++;
 };
+
+function addConfPaste(packIdS, confPrefix, isSubconf)
+{
+	pastePackIdS = packIdS;
+	pasteConfPrefix = confPrefix;
+	pasteIsSubconf = isSubconf;
+	$('#pasteModal').modal();
+}
+
+function removeQuotes(inputString)
+{
+	return inputString.replace(/[\'\"]/g,"");
+}
+
+function AddConfPasteApply()
+{
+	var linesOfPastedText = $("#uciPaste").val().split('\n');
+	var inConfig = false;
+	var curConfId;
+	for(var i = 0; i < linesOfPastedText.length; i++)
+	{
+
+		// replace tabs with spaces
+		curLine = linesOfPastedText[i].replace(/\t/g," ");
+		// remove multiple spaces
+		curLine = curLine.replace(/ +(?= )/g,'');
+		// remove spaces at beginning
+		curLine = curLine.replace(/^ +/g,'');
+		if (curLine === "")
+			continue;
+
+		curLine = curLine.split(" ");
+
+		if (curLine.length != 3)
+			continue;
+
+		if (curLine[0] != "config" && !inConfig)
+			continue;
+
+		if (curLine[0] == "config")
+		{
+			curConfId = confId;
+			inConfig = true;
+			addConf(pastePackIdS, pasteConfPrefix, pasteIsSubconf);
+			$("input[name='"+pasteConfPrefix+".configA"+curConfId.toString()+".Name']").val(removeQuotes(curLine[2]));
+			$("input[name='"+pasteConfPrefix+".configA"+curConfId.toString()+".Type']").val(curLine[1]);
+		}
+
+		if (curLine[0] == "list")
+		{
+			var opt = [curLine[1], removeQuotes(curLine[2])];
+			addOptionFilled(curConfId, pasteConfPrefix, opt, "appendToList");
+		}
+
+		if (curLine[0] == "option")
+		{
+			var opt = [curLine[1], removeQuotes(curLine[2])];
+			addOptionFilled(curConfId, pasteConfPrefix, opt, "normal");
+		}
+	}
+
+	$("#uciPaste").val('');
+	$("#pasteModal").modal('hide');
+}
 
 function addOption(confIdS, confPrefixS)
 {
@@ -377,5 +445,27 @@ $(document).ready( function() {
 <option value='3'>
 <option value='4'>
 </datalist>
+
+<!-- Modal for pasting UCI Conf -->
+<div class="modal fade" id="pasteModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        <h4 class="modal-title" id="myModalLabel">Paste UCI Config</h4>
+      </div>
+      <div class="modal-body">
+      <form id="pasteModalForm">
+        <textarea class="form-control" rows="15" id="uciPaste"></textarea>
+      </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-primary" onclick="AddConfPasteApply();">Insert Config</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 </p> <!-- end main condainer -->
 {% endblock %}
