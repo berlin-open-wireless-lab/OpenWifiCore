@@ -69,6 +69,8 @@ def main(global_config, **settings):
     config.include('pyramid_rpc.jsonrpc')
     config.add_jsonrpc_endpoint('api', '/api')
 
+    config.include('cornice')
+
     config.scan()
 
     # Add plugin Views
