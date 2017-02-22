@@ -1,4 +1,0 @@
-{
-	"OpenWifi" : ["/openwifi","input[id=login]","input[id=password]","button[type=submit]"],
-	"Icinga" : ["/icingaweb2","input[id^=form_login_username]","input[id^=form_login_password]","input[id^=form_login_btn_submit]"] 
-}
