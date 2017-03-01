@@ -60,6 +60,9 @@ class OpenWrt(Base):
     ssh_keys = relationship("SshKey",secondary=ssh_key_association_table,backref="openwrt")
 
     def __init__(self, name, address, distribution, version, device_uuid, login, password, configured=False):
+        self.set(self, name, address, distribution, version, device_uuid, login, password, configured=False)
+
+    def set(self, name, address, distribution, version, device_uuid, login, password, configured=False):
         self.name = name
         self.address = address
         self.distribution = distribution
