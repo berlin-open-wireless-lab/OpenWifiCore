@@ -32,14 +32,6 @@ from .models import (
     OpenWifiSettings
     )
 
-from .forms import (
-        AccessPointAddForm,
-        OpenWrtEditForm,
-        LoginForm,
-        SshKeyForm,
-        SettingsForm
-        )
-
 from .utils import generate_device_uuid
 
 from pyramid.security import (
