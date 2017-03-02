@@ -14,3 +14,4 @@ openwifi/jobserver/exconf
 openwifi/jobserver/test.py
 .gitignore
 tags
+Plugins/
