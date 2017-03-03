@@ -25,6 +25,8 @@ from .guid import GUID
 from pkg_resources import iter_entry_points
 import importlib
 
+import pyuci
+import json
 
 DBSession = scoped_session(sessionmaker(extension=ZopeTransactionExtension()))
 Base = declarative_base()
@@ -56,6 +58,7 @@ class OpenWrt(Base):
     configuration = Column(Text)
     login = Column(Text)
     password = Column(Text)
+    master_conf_id = Column(Integer, ForeignKey('MasterConfigurations.id'))
     templates = relationship("Templates",secondary=template_association_table,backref="openwrt")
     ssh_keys = relationship("SshKey",secondary=ssh_key_association_table,backref="openwrt")
 
@@ -161,6 +164,58 @@ class SshKey(Base):
     key = Column(Text)
 
     def __init__(self,key,comment,id):
-	    self.id = id
-	    self.comment = comment
-	    self.key = key
+        self.id = id
+        self.comment = comment
+        self.key = key
+
+
+class MasterConfiguration(Base):
+    __tablename__ = "MasterConfigurations"
+    id = Column(Integer, primary_key=True)
+    configurations = relationship("Configuration", backref="masterconf")
+    openwrt = relationship("OpenWrt", backref="masterconf")
+    links = relationship("ConfigurationLink", backref="masterconf")
+
+    def __init__(self, id):
+        self.id = id
+
+    def exportUCI(self):
+        uci = pyuci.Uci()
+        for conf in self.configurations:
+            package = uci.add_package(conf.package)
+            package.add_config_json(json.loads(conf.data))
+        return uci
+
+    def exportJSON(self):
+        uci = self.exportUCI()
+        return uci.export_json()
+
+from_conf_to_link = Table('from_conf_to_link_table', Base.metadata,
+        Column('conf_id', Integer, ForeignKey('Configurations.id')),
+        Column('link_id', Integer, ForeignKey('Links.id')))
+
+from_link_to_conf = Table('from_link_to_conf_table', Base.metadata,
+        Column('link_id', Integer, ForeignKey('Links.id')),
+        Column('conf_id', Integer, ForeignKey('Configurations.id')))
+
+class Configuration(Base):
+    __tablename__ = "Configurations"
+    id = Column(Integer, primary_key=True)
+    name = Column(Text)
+    data = Column(Text)
+    package = Column(Text)
+    to_links = relationship("ConfigurationLink", secondary=from_conf_to_link, backref="from_config")
+    master_conf_id = Column(Integer, ForeignKey('MasterConfigurations.id'))
+
+    def __init__(self, id):
+        self.id = id
+
+class ConfigurationLink(Base):
+    __tablename__ = "Links"
+    id = Column(Integer, primary_key=True)
+    data = Column(Text)
+    to_config = relationship("Configuration", secondary=from_link_to_conf, backref="from_links")
+    master_conf_id = Column(Integer, ForeignKey('MasterConfigurations.id'))
+
+    def __init__(self, id):
+        self.id = id
