@@ -96,7 +96,6 @@ def parseToDBModel(device):
     for confname, conflist in dict_of_configs.items():
         for config in conflist:
             newMasterConf.configurations.append(config)
-    transaction.commit()
 
 def deleteMasterConf(masterConf):
     for conf in masterConf.configurations:
