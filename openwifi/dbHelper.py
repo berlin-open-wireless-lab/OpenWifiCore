@@ -240,3 +240,82 @@ def getMasterConfigJSON(request):
         return False
     return masterconf.exportJSON()
 
+queryMasterConfig = Service(name='QueryMasterConfig',
+                            path='/masterConfig/{ID}/query',
+                            description='get an option key of a masterConfig')
+
+@queryMasterConfig.get()
+def get_queryMasterConfig(request):
+    usage = {'package' : 'optional package name',
+             'name'    : 'optional config name',
+             'type'    : 'optional config type',
+             'option'  : 'option name, it is possible to go though a link with dots like: linkname.option',
+             'matchOptions' : 'optional dict of option-value pairs to match'}
+    return usage
+
+# TODO: add validator
+@queryMasterConfig.post()
+def post_queryMasterConfig(request):
+    query = json.loads(request.body.decode())
+
+    mconfID = request.matchdict['ID']
+    masterConfig = DBSession.query(MasterConfiguration).get(mconfID)
+
+    option = query['option']
+
+    configs = masterConfig.configurations
+
+    filterConfigsByPackage = []
+    if 'package' in query.keys():
+        package = query['package']
+        for config in configs:
+            if config.package == package:
+                filterConfigsByPackage.append(config)
+        configs = filterConfigsByPackage
+
+    filterConfigsByName = []
+    if 'name' in query.keys():
+        name = query['name']
+        for config in configs:
+            if config.name == name:
+                filterConfigsByName.append(config)
+        configs = filterConfigsByName
+
+    filterConfigsByType = []
+    if 'type' in query.keys():
+        type = query['type']
+        for config in configs:
+            configData = json.loads(config.data)
+            if configData['.type'] == type:
+                filterConfigsByType.append(config)
+        configs = filterConfigsByType
+
+    filterConfigsByMatchOptions = []
+    if 'matchOptions' in query.keys():
+        matchOptions = query['matchOptions']
+        for config in configs:
+            configData = json.loads(config.data)
+            doesMatch = False
+
+            for key, value in  matchOptions.items():
+                if not (key in configData.keys() and value == configData[key]):
+                    doesMatch = False
+                    break
+                else:
+                    doesMatch = True
+
+            if doesMatch:
+                filterConfigsByMatchOptions.append(config)
+        configs = filterConfigsByMatchOptions
+
+    optionList = query['option'].split('.')
+
+    values = []
+    for config in configs:
+        curConf = config
+        for i in range(len(optionList)-1):
+            curConf = curConf.getLinkByName(optionList[i]).to_config[0]
+        curConfData = json.loads(curConf.data)
+        values.append(curConfData[optionList[-1]])
+
+    return values

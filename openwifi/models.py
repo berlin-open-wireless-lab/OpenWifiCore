@@ -210,6 +210,11 @@ class Configuration(Base):
     def __init__(self, id):
         self.id = id
 
+    def getLinkByName(self, name):
+        for link in self.to_links:
+            if link.data == name:
+                return link
+
 class ConfigurationLink(Base):
     __tablename__ = "Links"
     id = Column(Integer, primary_key=True)
