@@ -128,19 +128,19 @@ def getMConfigGraph(mconfig):
 
     # add master and first config nodes
     graph['nodes'].append({ 'id'   : "mc",
-                            'name' : "master"})
+                            'label' : "master"})
     for node in nodesList:
         if not node.from_links: # if node has no links to it, it is a top level node
             graph['edges'].append({'from' : 'mc',
                                    'to'   : get_node_id(node)})
         graph['nodes'].append( {'id'   : get_node_id(node),
-                                'name' : get_node_name(node)})
+                                'label' : get_node_name(node)})
 
     linksList = mconfig.links
 
     for link in linksList:
         graph['nodes'].append( {'id'   : get_node_id(link),
-                                'name' : get_node_name(link)})
+                                'label' : get_node_name(link)})
 
         for config in link.to_config:
             graph['edges'].append({'from' : get_node_id(link),
