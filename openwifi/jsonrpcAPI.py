@@ -67,7 +67,11 @@ def get_default_image_url(request, uuid):
 def get_node_status(request, uuid):
     r = redis.StrictRedis(host=redishost, port=redisport, db=redisdb)
     resp = {}
-    resp['status'] = r.hget(str(uuid), 'status').decode()
+    status = r.hget(str(uuid), 'status')
+    if status: 
+        resp['status'] = status.decode()
+    else:
+        resp['status'] = 'no status information available'
     resp['uuid']=uuid
     if resp['status'] == 'online':
         resp['interfaces'] = json.loads(r.hget(str(uuid), 'networkstatus').decode())
