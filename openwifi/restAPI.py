@@ -1,21 +1,68 @@
+import json
+import random
+import string
+from .utils import generate_device_uuid_str
+
 from .models import (
     DBSession,
     OpenWrt
     )
 
 from cornice import Service
+from cornice.resource import resource
 
-listNodes = Service(name='nodes',
-                    path='/list_nodes',
-                    description='Get list of Nodes')
+@resource(collection_path='/nodes', path='/nodes/{UUID}')
+class Nodes(object):
 
-@listNodes.get()
-def get_info(request):
-    """ Return List of registered Nodes
-    """
-    nodes = DBSession.query(OpenWrt)
-    nodeUUIDs = []
-    for node in nodes:
-        nodeUUIDs.append(str(node.uuid))
+    def __init__(self, request):
+        self.request = request
 
-    return nodeUUIDs
+    def collection_get(self):
+        uuids = []
+        for openwrt in DBSession.query(OpenWrt):
+            uuids.append(str(openwrt.uuid))
+        return uuids
+
+    # add new openwifi node
+    def collection_post(self):
+        newNodeData = json.loads(self.request.body.decode())
+        if 'uuid' in newNodeData.keys() and newNodeData['uuid']:
+            uuid = newNodeData['uuid']
+        else:
+            uuid = generate_device_uuid_str(id_generator())
+        ap = OpenWrt(newNodeData['name'], newNodeData['address'], newNodeData['distribution'], newNodeData['version'], uuid, newNodeData['login'], newNodeData['password'], False)
+        DBSession.add(ap)
+        return str(ap.uuid)
+
+    def get(self):
+        uuid = self.request.matchdict['UUID']
+        openwrt = DBSession.query(OpenWrt).get(uuid)
+
+        return openwrt.jsonParsable()
+
+    # modify node TODO: add validator
+    def post(self):
+        uuid = self.request.matchdict['UUID']
+        openwrt = DBSession.query(OpenWrt).get(uuid)
+
+        if not openwrt:
+            return False
+
+        modData = json.loads(self.request.body.decode())
+
+        for key, value in modData.items():
+            openwrt.setData(key, value)
+
+        return True
+
+    def delete(self):
+        uuid = self.request.matchdict['UUID']
+        openwrt = DBSession.query(OpenWrt).get(uuid)
+        if openwrt:
+            DBSession.delete(openwrt)
+            return True
+        else:
+            return False
+
+def id_generator(size=6, chars=string.ascii_uppercase + string.digits):
+    return ''.join(random.choice(chars) for _ in range(size))

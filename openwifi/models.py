@@ -63,7 +63,7 @@ class OpenWrt(Base):
     ssh_keys = relationship("SshKey",secondary=ssh_key_association_table,backref="openwrt")
 
     def __init__(self, name, address, distribution, version, device_uuid, login, password, configured=False):
-        self.set(self, name, address, distribution, version, device_uuid, login, password, configured=False)
+        self.set(name, address, distribution, version, device_uuid, login, password, configured)
 
     def set(self, name, address, distribution, version, device_uuid, login, password, configured=False):
         self.name = name
@@ -77,6 +77,37 @@ class OpenWrt(Base):
             self.uuid = device_uuid
         except ValueError:
             self.uuid = device_uuid
+
+    def jsonParsable(self):
+        if self.configuration:
+            conf = json.loads(self.configuration)
+        else:
+            conf = None
+        return {'name'         : self.name,
+                'address'      : self.address,
+                'distribution' : self.distribution,
+                'version'      : self.version,
+                'configured'   : self.configured,
+                'configuration': conf,
+                'login'        : self.login,
+                'password'     : self.password,
+                'uuid'         : str(self.uuid) }
+
+    def setData(self, key, value):
+        if key == 'name':
+            self.name = value
+        if key == 'address':
+            self.address = value
+        if key == 'distribution':
+            self.distribution = value
+        if key == 'version':
+            self.version = value
+        if key == 'configuration':
+            self.configuration = value
+        if key == 'login':
+            self.login = value
+        if key == 'password':
+            self.password = value
 
 class ConfigArchive(Base):
     __tablename__ = "configarchive"
