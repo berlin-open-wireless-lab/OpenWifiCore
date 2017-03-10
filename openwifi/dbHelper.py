@@ -250,7 +250,7 @@ def get_queryMasterConfig(request):
              'name'    : 'optional config name',
              'type'    : 'optional config type',
              'option'  : 'option name, it is possible to go though a link with dots like: linkname.option',
-             'matchOptions' : 'optional dict of option-value pairs to match'}
+             'matchOptions' : 'optional dict of option-value pairs to match, dot is possible like in option, use null if you just want to check of the option exists'}
     return usage
 
 # TODO: add validator
@@ -293,29 +293,45 @@ def post_queryMasterConfig(request):
     filterConfigsByMatchOptions = []
     if 'matchOptions' in query.keys():
         matchOptions = query['matchOptions']
+
         for config in configs:
-            configData = json.loads(config.data)
             doesMatch = False
 
             for key, value in  matchOptions.items():
-                if not (key in configData.keys() and value == configData[key]):
+                try:
+                    curConf, option = getCurConfigAndOption(config, key)
+                    configData = json.loads(curConf.data)
+                    if (option in configData.keys() and 
+                        (value == configData[option] or value == None)):
+                        doesMatch = True
+                    else:
+                        doesMatch = False
+                        break
+                # an exception might occur if we try to 
+                # find a subconfig that doesn't exist
+                except:
                     doesMatch = False
                     break
-                else:
-                    doesMatch = True
 
             if doesMatch:
                 filterConfigsByMatchOptions.append(config)
         configs = filterConfigsByMatchOptions
 
-    optionList = query['option'].split('.')
+    options = query['option']
 
     values = []
     for config in configs:
-        curConf = config
-        for i in range(len(optionList)-1):
-            curConf = curConf.getLinkByName(optionList[i]).to_config[0]
+        curConf, option = getCurConfigAndOption(config, options)
         curConfData = json.loads(curConf.data)
-        values.append(curConfData[optionList[-1]])
+        values.append(curConfData[option])
 
     return values
+
+def getCurConfigAndOption(config, options):
+    curConf = config
+    optionList = options.split('.')
+    option = optionList[-1]
+    # TODO: handle multiple links?
+    for i in range(len(optionList)-1):
+        curConf = curConf.getLinkByName(optionList[i]).to_config[0]
+    return curConf, option
