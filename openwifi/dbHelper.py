@@ -249,8 +249,11 @@ def get_queryMasterConfig(request):
     usage = {'package' : 'optional package name',
              'name'    : 'optional config name',
              'type'    : 'optional config type',
-             'option'  : 'option name, it is possible to go though a link with dots like: linkname.option',
-             'matchOptions' : 'optional dict of option-value pairs to match, dot is possible like in option, use null if you just want to check of the option exists'}
+             'matchOptions' : 'optional dict of option-value pairs to match, dot is possible like in option, use null if you just want to check of the option exists',
+             'option'  : 'optional option name, it is possible to go though a link with dots like: linkname.option',
+             'set'     : 'optional set option to this value',
+             'add_options' : 'optional dict of key-value pairs that should be added to found configs',
+             'del_options' : 'optional list of options to remove'}
     return usage
 
 # TODO: add validator
@@ -317,15 +320,49 @@ def post_queryMasterConfig(request):
                 filterConfigsByMatchOptions.append(config)
         configs = filterConfigsByMatchOptions
 
-    options = query['option']
+    if 'option' in query.keys():
+        options = query['option']
+    else:
+        options = False
 
-    values = []
+    result = {'values' : [],
+              'added' : [],
+              'deleted' : []}
+
     for config in configs:
-        curConf, option = getCurConfigAndOption(config, options)
-        curConfData = json.loads(curConf.data)
-        values.append(curConfData[option])
+        if options:
+            curConf, option = getCurConfigAndOption(config, options)
+            curConfData = json.loads(curConf.data)
+            value = curConfData[option]
 
-    return values
+            if 'set' in query.keys():
+                curConfData[option] = query['set']
+                result['values'].append({'from' : value, \
+                                         'to'   : query['set']})
+            else:
+                result['values'].append(value)
+        else:
+            curConf = config
+            curConfData = json.loads(curConf.data)
+
+        if 'add_options' in query.keys():
+            for k, v in query['add_options'].items():
+                curConfData[k] = v
+                result['added'].append({k:v})
+
+        if 'del_options' in query.keys():
+            for opt in query['del_options']:
+                try:
+                    result['deleted'].append({opt:curConfData.pop(opt)})
+                except KeyError:
+                    pass
+
+        if 'del_options' in query.keys() or \
+           'add_options' in query.keys() or \
+           'set' in query.keys():
+            curConf.data = json.dumps(curConfData)
+
+    return result
 
 def getCurConfigAndOption(config, options):
     curConf = config
