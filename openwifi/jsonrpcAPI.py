@@ -40,10 +40,6 @@ from pyramid.security import (
    remember,
    forget)
 
-from pyramid_ldap3 import (
-    get_ldap_connector,
-    groupfinder)
-
 @jsonrpc_method(endpoint='api')
 def hello(request):
     """ this call is used for discovery to ensure """
