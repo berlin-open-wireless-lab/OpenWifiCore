@@ -40,3 +40,4 @@ zope.sqlalchemy==0.7.4
 -e git+https://github.com/berlin-open-wireless-lab/pyuci.git#egg=pyuci
 pyramid-ldap3==0.2.5
 WSGIProxy2==0.4.2
+cornice
