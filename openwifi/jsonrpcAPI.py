@@ -52,10 +52,10 @@ def uuid_generate(request, unique_identifier):
 @jsonrpc_method(method='get_default_image_url', endpoint='api')
 def get_default_image_url(request, uuid):
     baseImageUrl = DBSession.query(OpenWifiSettings).get('baseImageUrl')
-    baseImageMD5Url = DBSession.query(OpenWifiSettings).get('baseImageMD5Url')
-    if baseImageUrl and baseImageMD5Url:
+    baseImageChecksumUrl = DBSession.query(OpenWifiSettings).get('baseImageChecksumUrl')
+    if baseImageUrl and baseImageChecksumUrl:
         return {'default_image' : baseImageUrl.value, 
-                'default_md5' : baseImageMD5Url.value}
+                'default_checksum' : baseImageChecksumUrl.value}
     else:
         return False
 
