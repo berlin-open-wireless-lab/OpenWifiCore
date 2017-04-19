@@ -3,9 +3,12 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from openwifi.jobserver_config import sqlurl, brokerurl, redishost, redisport, redisdb
 from openwifi.netcli import jsonubus
-from openwifi.models import ( OpenWrt, Templates )
+from openwifi.models import ( OpenWrt, Templates, ConfigArchive )
 from pyuci import Uci, Package, Config
-from datetime import timedelta
+
+import datetime
+import string
+import random
 import redis
 import json
 
@@ -16,12 +19,12 @@ app = Celery('tasks', broker=brokerurl)
 app.conf.CELERYBEAT_SCHEDULE = {
     'look-for-unconfigured-nodes-every-30-seconds': {
         'task': 'openwifi.jobserver.tasks.update_unconfigured_nodes',
-        'schedule': timedelta(seconds=30),
+        'schedule': datetime.timedelta(seconds=30),
         'args': ()
     },
     'update-node-status-every-30-seconds': {
         'task': 'openwifi.jobserver.tasks.update_status',
-        'schedule': timedelta(seconds=30),
+        'schedule': datetime.timedelta(seconds=30),
         'args': ()
     },
 
@@ -77,7 +80,7 @@ def return_jsonconfig_from_device(openwrt):
 @app.task
 def get_config(uuid):
     try:
-        DBSession=get_sql_session()
+        DBSession = get_sql_session()
         device = DBSession.query(OpenWrt).get(uuid)
         device.configuration =  return_jsonconfig_from_device(device)
         device.configured = True
@@ -90,6 +93,27 @@ def get_config(uuid):
         DBSession.commit()
         DBSession.close()
         return False
+
+@app.task
+def archive_config(uuid):
+    DBSession = get_sql_session()
+    device = DBSession.query(OpenWrt).get(uuid)
+
+    if not device:
+        return False
+
+    confToBeArchived = ConfigArchive(datetime.datetime.now(), \
+                                     device.configuration, \
+                                     device.uuid, \
+                                     id_generator())
+    DBSession.add(confToBeArchived)
+    DBSession.commit()
+    DBSession.close()
+
+    return True
+
+def id_generator(size=6, chars=string.ascii_uppercase + string.digits):
+    return ''.join(random.choice(chars) for _ in range(size))
 
 
 @app.task
