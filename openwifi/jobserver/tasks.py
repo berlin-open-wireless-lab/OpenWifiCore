@@ -5,10 +5,9 @@ from openwifi.jobserver_config import sqlurl, brokerurl, redishost, redisport, r
 from openwifi.netcli import jsonubus
 from openwifi.models import ( OpenWrt, Templates, ConfigArchive )
 from pyuci import Uci, Package, Config
+from openwifi.utils import id_generator
 
 import datetime
-import string
-import random
 import redis
 import json
 
@@ -111,10 +110,6 @@ def archive_config(uuid):
     DBSession.close()
 
     return True
-
-def id_generator(size=6, chars=string.ascii_uppercase + string.digits):
-    return ''.join(random.choice(chars) for _ in range(size))
-
 
 @app.task
 def diff_update_config(diff, uuid):

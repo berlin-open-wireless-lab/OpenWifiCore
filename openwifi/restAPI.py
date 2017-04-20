@@ -1,7 +1,5 @@
 import json
-import random
-import string
-from .utils import generate_device_uuid_str
+from .utils import generate_device_uuid_str, id_generator
 
 from .models import (
     DBSession,
@@ -63,6 +61,3 @@ class Nodes(object):
             return True
         else:
             return False
-
-def id_generator(size=6, chars=string.ascii_uppercase + string.digits):
-    return ''.join(random.choice(chars) for _ in range(size))

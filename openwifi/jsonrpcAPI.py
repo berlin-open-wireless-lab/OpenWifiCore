@@ -4,9 +4,7 @@ from pyramid.httpexceptions import HTTPFound
 from pyramid_rpc.jsonrpc import jsonrpc_method
 from pyramid import httpexceptions as exc
 import transaction
-import random
 from datetime import datetime
-import string
 import pprint
 from openwifi.jobserver_config import redishost, redisport, redisdb
 import redis
@@ -18,6 +16,7 @@ import os
 import json
 from pyuci import Uci
 import openwifi.jobserver.tasks as jobtask
+from openwifi.utils import id_generator
 
 from sqlalchemy.exc import DBAPIError
 from sqlalchemy.sql.expression import func as sql_func
@@ -104,6 +103,3 @@ def device_check_registered(request, uuid, name):
         return True
     else:
         return False
-
-def id_generator(size=6, chars=string.ascii_uppercase + string.digits):
-    return ''.join(random.choice(chars) for _ in range(size))
