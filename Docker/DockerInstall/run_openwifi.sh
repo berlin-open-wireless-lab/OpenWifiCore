@@ -7,9 +7,12 @@ fi
 
 if [ -e /home/openwifi/OpenWifi ]; then
     su openwifi -c "/home/openwifi/OpenWifi/Docker/DockerInstall/openwifi_update_plugins.sh"
-    su openwifi -c". /home/openwifi/venv/bin/activate; pserve /home/openwifi/OpenWifi/development_listen_global.ini"
+    exec sudo -u openwifi /bin/bash - <<'    EOF'
+        . /home/openwifi/venv/bin/activate
+        exec pserve /home/openwifi/OpenWifi/development_listen_global.ini
+    EOF
 else
-    su openwifi -c"ln -s /OpenWifi /home/openwifi/OpenWifi"
-    su openwifi -c". /home/openwifi/venv/bin/activate; cd /home/openwifi/OpenWifi; python setup.py develop; initialize_openwifi_db development.ini"
-    return false
+        su openwifi -c"ln -s /OpenWifi /home/openwifi/OpenWifi"
+        su openwifi -c". /home/openwifi/venv/bin/activate; cd /home/openwifi/OpenWifi; python setup.py develop; initialize_openwifi_db development.ini"
+        return false
 fi

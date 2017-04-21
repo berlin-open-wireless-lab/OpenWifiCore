@@ -1,6 +1,10 @@
 #!/bin/bash
 if [ -e /home/openwifi/OpenWifi ]; then
-        su openwifi -c". /home/openwifi/venv/bin/activate; cd ~; celery -A openwifi.jobserver.tasks worker --loglevel=info"
+    exec sudo -u openwifi /bin/bash - <<'    EOF'
+        . /home/openwifi/venv/bin/activate
+        cd ~
+        exec celery -A openwifi.jobserver.tasks worker --loglevel=info
+    EOF
 else
         return false
 fi
