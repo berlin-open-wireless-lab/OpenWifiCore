@@ -2,7 +2,7 @@
 if [ -e /home/openwifi/OpenWifi ]; then
     exec sudo -u openwifi /bin/bash - <<'    EOF'
         . /home/openwifi/venv/bin/activate
-        cd ~
+        cd /home/openwifi
         exec celery -A openwifi.jobserver.tasks worker --loglevel=info
     EOF
 else

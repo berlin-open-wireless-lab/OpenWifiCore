@@ -1,9 +1,8 @@
 #!/bin/bash
 if [ -e /home/openwifi/OpenWifi ]; then
-        su openwifi -c""
     exec sudo -u openwifi /bin/bash - <<'    EOF'
         . /home/openwifi/venv/bin/activate
-        cd ~
+        cd /home/openwifi
         exec celery -A openwifi.jobserver.tasks beat
     EOF
 else
