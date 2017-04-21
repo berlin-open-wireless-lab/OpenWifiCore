@@ -27,4 +27,8 @@ RUN apt-get install -y supervisor
 RUN cp /DockerInstall/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 RUN cp /DockerInstall/supervisord.conf.master /etc/supervisor/supervisord.conf
 
+# Dnsmasq
+RUN apt-get install -y dnsmasq
+RUN cp /DockerInstall/dnsmasq.conf /etc/dnsmasq.conf
+
 CMD ["/usr/bin/supervisord"]
