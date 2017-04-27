@@ -312,6 +312,20 @@ def update_openwrt_sshkeys(uuid):
     js.call('file', 'exec',command='chmod', params=['600',keyfile])
     DBSession.close()
 
+@app.task
+def exec_on_device(uuid, cmd, prms):
+    DBSession = get_sql_session()
+    openwrt = DBSession.query(OpenWrt).get(uuid)
+
+    if not openwrt:
+        return False
+
+    js = get_jsonubus_from_openwrt(openwrt)
+    ans = js.call('file', 'exec', command=cmd, params=prms)
+    DBSession.close()
+
+    return ans
+
 def get_wifi_devices_via_jsonubus(js):
     wifi_devices = js.call('iwinfo', 'devices')
     return wifi_devices
