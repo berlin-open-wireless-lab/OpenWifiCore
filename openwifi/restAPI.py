@@ -81,4 +81,5 @@ def post_execService(request):
     query = json.loads(request.body.decode())
     uuid = request.matchdict['UUID']
 
-    return exec_on_device(uuid, query['command'], query['params'])
+    r = exec_on_device.delay(uuid, query['command'], query['params'])
+    return request.route_url('execStatus', UUID=r.id)

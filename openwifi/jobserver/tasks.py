@@ -13,7 +13,7 @@ import json
 
 from pkg_resources import iter_entry_points
 
-app = Celery('tasks', broker=brokerurl)
+app = Celery('tasks', backend="redis://"+redishost, broker=brokerurl)
 
 app.conf.CELERYBEAT_SCHEDULE = {
     'look-for-unconfigured-nodes-every-30-seconds': {
@@ -30,6 +30,7 @@ app.conf.CELERYBEAT_SCHEDULE = {
 }
 
 app.conf.CELERY_TIMEZONE = 'UTC'
+app.conf.CELERY_TASK_RESULT_EXPIRES = datetime.timedelta(hours=1)
 
 # Add Plugin Tasks
 for entry_point in iter_entry_points(group='OpenWifi.plugin', name="addJobserverTasks"):

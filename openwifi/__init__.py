@@ -49,6 +49,7 @@ def main(global_config, **settings):
 
     config.include('pyramid_rpc.jsonrpc')
     config.add_jsonrpc_endpoint('api', '/api')
+    config.add_route('execStatus', '/exec/{UUID}')
 
     config.include('cornice')
 
