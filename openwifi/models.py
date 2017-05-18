@@ -61,6 +61,8 @@ class OpenWrt(Base):
     master_conf_id = Column(Integer, ForeignKey('MasterConfigurations.id'))
     templates = relationship("Templates",secondary=template_association_table,backref="openwrt")
     ssh_keys = relationship("SshKey",secondary=ssh_key_association_table,backref="openwrt")
+    capabilities = Column(Text)
+    communication_protocol = Column(Text)
 
     def __init__(self, name, address, distribution, version, device_uuid, login, password, configured=False):
         self.set(name, address, distribution, version, device_uuid, login, password, configured)
