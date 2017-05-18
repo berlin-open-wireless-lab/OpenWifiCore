@@ -73,7 +73,7 @@ def get_node_status(request, uuid):
     return resp
 
 @jsonrpc_method(method='device_register', endpoint='api')
-def device_register(request, uuid, name, address, distribution, version, proto, login, password):
+def device_register(request, uuid, name, address, distribution, version, proto, login, password,capabilities=[], communication_protocol=""):
     device = DBSession.query(OpenWrt).get(uuid)
     # if uuid exists, update information
     if device:
@@ -85,8 +85,12 @@ def device_register(request, uuid, name, address, distribution, version, proto, 
         device.proto = proto
         device.login = login
         device.password = password
+        device.capabilities = capabilities
+        device.communication_protocol = communication_protocol
     else:
         ap = OpenWrt(name, address, distribution, version, uuid, login, password, False)
+        ap.capabilities = capabilities
+        ap.communication_protocol = communication_protocol
         DBSession.add(ap)
     DBSession.flush()
 

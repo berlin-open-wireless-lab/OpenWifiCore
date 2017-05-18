@@ -52,30 +52,24 @@ def get_jsonubus_from_uuid(uuid):
     return js
 
 def get_jsonubus_from_openwrt(openwrt):
-    device_url = "http://"+openwrt.address+"/ubus"
+    if openwrt.communication_protocol == "JSONUBUS_HTTPS":
+        device_url = "https://"+openwrt.address+"/ubus"
+    else:
+        device_url = "http://"+openwrt.address+"/ubus"
+
     js = jsonubus.JsonUbus(url = device_url, \
                            user = openwrt.login, \
                            password = openwrt.password)
     return js
 
-# depricated
-def return_config_from_node_as_json(url, user, passwd):
-        js = jsonubus.JsonUbus(url = url, user = user, password = passwd)
-        device_configs = js.call('uci', 'configs')
-        configuration="{"
-        for cur_config in device_configs[1]['configs']:
-            configuration+='"'+cur_config+'":'+json.dumps(js.call("uci","get",config=cur_config)[1])+","
-        configuration = configuration[:-1]+"}"
-        return configuration
-
 def return_jsonconfig_from_device(openwrt):
-        js = get_jsonubus_from_openwrt(openwrt)
-        device_configs = js.call('uci', 'configs')
-        configuration="{"
-        for cur_config in device_configs[1]['configs']:
-            configuration+='"'+cur_config+'":'+json.dumps(js.call("uci","get",config=cur_config)[1])+","
-        configuration = configuration[:-1]+"}"
-        return configuration
+    js = get_jsonubus_from_openwrt(openwrt)
+    device_configs = js.call('uci', 'configs')
+    configuration="{"
+    for cur_config in device_configs[1]['configs']:
+        configuration+='"'+cur_config+'":'+json.dumps(js.call("uci","get",config=cur_config)[1])+","
+    configuration = configuration[:-1]+"}"
+    return configuration
 
 @app.task
 def get_config(uuid):
