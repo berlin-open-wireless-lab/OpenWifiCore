@@ -21,19 +21,41 @@ def getMaxId(dbObject): # object needs to have an interger field named id
     except:
         max = 0
 
+def updateMasterConfig(device, newJsonString):
+    uci_conf = Uci()
+    uci_conf.load_tree(newJsonString)
+
+    changed = False
+
+    if device.masterconf:
+        diff = device.masterconf.exportUCI().diff(uci_conf)
+        for key, value in diff.items():
+            if value != {}:
+                changed = True
+                break
+    else:
+        changed = True
+
+    if changed:
+        newMasterConf = masterConfigFromUci(uci_conf)
+        if device.masterconf:
+            deleteMasterConf(device.masterconf)
+        newMasterConf.openwrt.append(device)
+
 def parseToDBModel(device):
     uci_conf = Uci()
     uci_conf.load_tree(device.configuration)
-    dict_of_configs = {}
 
-    newMasterConf = MasterConfiguration(getMaxId(MasterConfiguration))
+    newMasterConf = masterConfigFromUci(uci_conf)
     newMasterConf.openwrt.append(device)
-    DBSession.add(newMasterConf)
+
+def masterConfigFromUci(uci_conf):
+    dict_of_configs = {}
+    newMasterConf = MasterConfiguration(getMaxId(MasterConfiguration))
 
     for packagename, package in uci_conf.packages.items():
         for confname, conf in package.items():
             newConf = Configuration(getMaxId(Configuration))
-            DBSession.add(newConf)
             newConf.package = package.name
             newConf.name = confname
             newConf.data = json.dumps(conf.export_dict(forjson=True))
@@ -91,11 +113,12 @@ def parseToDBModel(device):
                         for config in dict_of_configs[key]:
                             config.to_links.append(newLink)
                         newLink.masterconf = newMasterConf
-                        DBSession.add(newLink)
 
     for confname, conflist in dict_of_configs.items():
         for config in conflist:
             newMasterConf.configurations.append(config)
+
+    return newMasterConf
 
 def deleteMasterConf(masterConf):
     for conf in masterConf.configurations:
@@ -238,7 +261,7 @@ def getMasterConfigJSON(request):
     masterconf = DBSession.query(MasterConfiguration).get(id)
     if not masterconf:
         return False
-    return masterconf.exportJSON()
+    return json.loads(masterconf.exportJSON())
 
 queryMasterConfig = Service(name='QueryMasterConfig',
                             path='/masterConfig/{ID}/query',

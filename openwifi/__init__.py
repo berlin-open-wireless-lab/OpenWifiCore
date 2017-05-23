@@ -55,6 +55,8 @@ def main(global_config, **settings):
 
     config.scan()
 
+    registerDatabaseListeners()
+
     # Add plugin Views
     for entry_point in iter_entry_points(group='OpenWifi.plugin', name="addPluginRoutes"):
         entry_function = entry_point.load()
@@ -121,3 +123,12 @@ def setupLDAP(config, settings):
         filter_tmpl='(&(objectCategory=Groups)(member=%(userdn)s))',
         scope=ldap3.SEARCH_SCOPE_WHOLE_SUBTREE,
         cache_period=600)
+
+def registerDatabaseListeners():
+    from sqlalchemy import event
+    from openwifi.models import OpenWrt
+    
+    @event.listens_for(OpenWrt.configuration, 'set')
+    def listenConf(target, value, oldvalue, initiator):
+        from openwifi.dbHelper import updateMasterConfig
+        updateMasterConfig(target, value)

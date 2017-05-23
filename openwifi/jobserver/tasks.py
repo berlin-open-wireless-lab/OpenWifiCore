@@ -13,6 +13,9 @@ import json
 
 from pkg_resources import iter_entry_points
 
+from openwifi import registerDatabaseListeners
+
+registerDatabaseListeners()
 app = Celery('tasks', backend="redis://"+redishost, broker=brokerurl)
 
 app.conf.CELERYBEAT_SCHEDULE = {
