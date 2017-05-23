@@ -85,11 +85,11 @@ def device_register(request, uuid, name, address, distribution, version, proto, 
         device.proto = proto
         device.login = login
         device.password = password
-        device.capabilities = capabilities
+        device.capabilities = json.dumps(capabilities)
         device.communication_protocol = communication_protocol
     else:
         ap = OpenWrt(name, address, distribution, version, uuid, login, password, False)
-        ap.capabilities = capabilities
+        ap.capabilities = json.dumps(capabilities)
         ap.communication_protocol = communication_protocol
         DBSession.add(ap)
     DBSession.flush()
