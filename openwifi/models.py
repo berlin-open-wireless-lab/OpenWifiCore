@@ -63,6 +63,8 @@ class OpenWrt(Base):
     ssh_keys = relationship("SshKey",secondary=ssh_key_association_table,backref="openwrt")
     capabilities = Column(Text)
     communication_protocol = Column(Text)
+    synd_diff_rev_id = Column(Text, ForeignKey('Revisions.id'))
+    sync_diffs = relationship("Revision")
 
     def __init__(self, name, address, distribution, version, device_uuid, login, password, configured=False):
         self.set(name, address, distribution, version, device_uuid, login, password, configured)
@@ -254,6 +256,16 @@ class ConfigurationLink(Base):
     data = Column(Text)
     to_config = relationship("Configuration", secondary=from_link_to_conf, backref="from_links")
     master_conf_id = Column(Integer, ForeignKey('MasterConfigurations.id'))
+
+    def __init__(self, id):
+        self.id = id
+
+class Revision(Base):
+    __tablename__ = "Revisions"
+    id = Column(Text, primary_key=True)
+    previous = Column(Text)
+    next = Column(Text)
+    data = Column(Text)
 
     def __init__(self, id):
         self.id = id
