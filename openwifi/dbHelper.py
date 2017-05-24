@@ -14,12 +14,28 @@ from openwifi.models import (
 
 import json
 
-def getMaxId(dbObject): # object needs to have an interger field named id
+def getMaxId(dbObject): # object needs to have an integer field named id
     query = DBSession.query(sql_func.max(dbObject.id)) 
     try: 
         max = int(query[0][0])
     except:
         max = 0
+
+def updateDeviceConfig(masterConfig):
+    for device in masterConfig.openwrt:
+        uci_conf = Uci()
+        uci_conf.load_tree(device.configuration)
+
+        changed = False
+
+        diff = masterConfig.exportUCI().diff(uci_conf)
+        for key, value in diff.items():
+            if value != {}:
+                changed = True
+                break
+
+        if changed:
+            device.configuration = masterConfig.exportJSON()
 
 def updateMasterConfig(device, newJsonString):
     uci_conf = Uci()
@@ -384,6 +400,9 @@ def post_queryMasterConfig(request):
            'add_options' in query.keys() or \
            'set' in query.keys():
             curConf.data = json.dumps(curConfData)
+
+    #TODO: maybe just do this if it is necessary
+    updateDeviceConfig(masterConfig)
 
     return result
 
