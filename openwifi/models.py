@@ -134,6 +134,29 @@ class OpenWrt(Base):
         rev.data = source + str(diff)
         session.add(rev)
 
+    def get_diff_list(self):
+        if not self.sync_diffs:
+            return []
+
+        diffList = []
+        curRev = self.sync_diffs
+        session = self.get_session()
+
+        while (curRev.next != ""):
+            diffList.append(curRev.data)
+            curRev = session.query(Revision).get(curRev.next)
+        
+        diffList.append(curRev.data)
+
+        return diffList
+
+    def get_session(self):
+        from sqlalchemy.orm import sessionmaker
+        Session = sessionmaker()
+        session = Session.object_session(self)
+        return session
+
+
 class ConfigArchive(Base):
     __tablename__ = "configarchive"
     date = Column(DateTime)

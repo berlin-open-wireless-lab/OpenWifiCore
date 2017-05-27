@@ -83,3 +83,18 @@ def post_execService(request):
 
     r = exec_on_device.delay(uuid, query['command'], query['params'])
     return request.route_url('execStatus', UUID=r.id)
+
+
+diffNodeService = Service(name='diffFromNode',
+                          path='/nodes/{UUID}/diff',
+                          description='get diff list by nodes')
+
+@diffNodeService.get()
+def get_diffNode(request):
+    uuid = request.matchdict['UUID']
+    device = DBSession.query(OpenWrt).get(uuid)
+
+    if device:
+        return device.get_diff_list()
+
+    return []
