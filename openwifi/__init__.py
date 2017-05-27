@@ -132,3 +132,5 @@ def registerDatabaseListeners():
     def listenConf(target, value, oldvalue, initiator):
         from openwifi.dbHelper import updateMasterConfig
         updateMasterConfig(target, value)
+        from openwifi.jobserver.tasks import update_config
+        update_config.delay(target.uuid)

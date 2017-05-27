@@ -1,6 +1,6 @@
 from celery import Celery, signature
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import sessionmaker, scoped_session
 from openwifi.jobserver_config import sqlurl, brokerurl, redishost, redisport, redisdb
 from openwifi.netcli import jsonubus
 from openwifi.models import ( OpenWrt, Templates, ConfigArchive )
@@ -15,7 +15,14 @@ from pkg_resources import iter_entry_points
 
 from openwifi import registerDatabaseListeners
 
-registerDatabaseListeners()
+from celery.signals import celeryd_after_setup
+
+from openwifi.utils import diffChanged
+
+@celeryd_after_setup.connect
+def setup_register_database_listeners(sender, instance, **kwargs):
+    registerDatabaseListeners()
+
 app = Celery('tasks', backend="redis://"+redishost, broker=brokerurl)
 
 app.conf.CELERYBEAT_SCHEDULE = {
@@ -42,10 +49,9 @@ for entry_point in iter_entry_points(group='OpenWifi.plugin', name="addJobserver
 
 def get_sql_session():
     engine = create_engine(sqlurl)
-    Session = sessionmaker()
-    Session.configure(bind=engine)
-    DBSession=Session()
-    return DBSession
+    session_factory = sessionmaker(bind=engine)
+    Session = scoped_session(session_factory)
+    return Session()
 
 def get_jsonubus_from_uuid(uuid):
     DBSession=get_sql_session()
@@ -79,8 +85,25 @@ def get_config(uuid):
     try:
         DBSession = get_sql_session()
         device = DBSession.query(OpenWrt).get(uuid)
-        device.configuration =  return_jsonconfig_from_device(device)
-        device.configured = True
+
+        if device.configured:
+            newConf = return_jsonconfig_from_device(device)
+
+            newUci = Uci()
+            newUci.load_tree(newConf)
+
+            oldUci = Uci()
+            oldUci.load_tree(device.configuration)
+
+            diff = oldUci.diff(newUci)
+
+            if diffChanged(diff):
+                device.append_diff(diff, DBSession, "download: ")
+                device.configuration = newConf
+        else:
+            device.configuration = return_jsonconfig_from_device(device)
+            device.configured = True
+
         DBSession.commit()
         DBSession.close()
         return True
@@ -152,21 +175,30 @@ def diff_update_config(diff, uuid):
                 values={optkey[2]:optval[1]})
         js.call('uci','commit',config=optkey[0])
 
-@app.task
-def update_config(uuid):
-    DBSession = get_sql_session()
-    device = DBSession.query(OpenWrt).get(uuid)
-    new_configuration = Uci()
-    new_configuration.load_tree(device.configuration)
+@app.task(bind=True)
+def update_config(self, uuid):
+    try:
+        DBSession = get_sql_session()
+        device = DBSession.query(OpenWrt).get(uuid)
+        new_configuration = Uci()
+        new_configuration.load_tree(device.configuration)
 
-    cur_configuration = Uci()
-    cur_configuration.load_tree(return_jsonconfig_from_device(device))
-    conf_diff = cur_configuration.diff(new_configuration)
-    update_diff_conf = signature('openwifi.jobserver.tasks.diff_update_config',
-                                 args=(conf_diff, uuid))
+        cur_configuration = Uci()
+        cur_configuration.load_tree(return_jsonconfig_from_device(device))
+        conf_diff = cur_configuration.diff(new_configuration)
+        changed = diffChanged(conf_diff)
+
+        if changed:
+            diff_update_config(conf_diff, uuid)
+    except Exception as exc:
+        DBSession.commit()
+        DBSession.close()
+        raise self.retry(exc=exc, countdown=60)
+    
+    if changed:
+        device.append_diff(conf_diff, DBSession, "upload: ")
     DBSession.commit()
     DBSession.close()
-    update_diff_conf.delay()
 
 @app.task
 def update_unconfigured_nodes():

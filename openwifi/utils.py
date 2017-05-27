@@ -12,3 +12,13 @@ def generate_device_uuid_str(unique_identifier):
 
 def id_generator(size=6, chars=string.ascii_uppercase + string.digits):
     return ''.join(random.choice(chars) for _ in range(size))
+
+def diffChanged(diff):
+    changed = False
+
+    for key, value in diff.items():
+        if value != {}:
+            changed = True
+            break
+
+    return changed

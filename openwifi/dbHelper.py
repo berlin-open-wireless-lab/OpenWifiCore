@@ -14,6 +14,8 @@ from openwifi.models import (
 
 import json
 
+from openwifi.utils import diffChanged
+
 def getMaxId(dbObject): # object needs to have an integer field named id
     query = DBSession.query(sql_func.max(dbObject.id)) 
     try: 
@@ -26,33 +28,21 @@ def updateDeviceConfig(masterConfig):
         uci_conf = Uci()
         uci_conf.load_tree(device.configuration)
 
-        changed = False
-
         diff = masterConfig.exportUCI().diff(uci_conf)
-        for key, value in diff.items():
-            if value != {}:
-                changed = True
-                break
 
-        if changed:
+        if diffChanged(diff):
             device.configuration = masterConfig.exportJSON()
 
 def updateMasterConfig(device, newJsonString):
     uci_conf = Uci()
     uci_conf.load_tree(newJsonString)
 
-    changed = False
+    if not device.masterconf:
+        return False
 
-    if device.masterconf:
-        diff = device.masterconf.exportUCI().diff(uci_conf)
-        for key, value in diff.items():
-            if value != {}:
-                changed = True
-                break
-    else:
-        changed = True
+    diff = device.masterconf.exportUCI().diff(uci_conf)
 
-    if changed:
+    if diffChanged(diff):
         newMasterConf = masterConfigFromUci(uci_conf)
         if device.masterconf:
             deleteMasterConf(device.masterconf)
@@ -137,11 +127,15 @@ def masterConfigFromUci(uci_conf):
     return newMasterConf
 
 def deleteMasterConf(masterConf):
+    from sqlalchemy.orm import sessionmaker
+    Session = sessionmaker()
+    session = Session.object_session(masterConf)
+
     for conf in masterConf.configurations:
         for link in conf.to_links:
-            DBSession.delete(link)
-        DBSession.delete(conf)
-    DBSession.delete(masterConf)
+            session.delete(link)
+        session.delete(conf)
+    session.delete(masterConf)
 
 def get_node_id(node):
     typePrefix = '?'

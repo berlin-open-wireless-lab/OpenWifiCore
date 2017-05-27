@@ -113,6 +113,27 @@ class OpenWrt(Base):
         if key == 'password':
             self.password = value
 
+    def append_diff(self, diff, session, source):
+        from openwifi.utils import id_generator
+
+        rev = Revision(id_generator())
+
+        if self.sync_diffs:
+            curRev = self.sync_diffs
+
+            while (curRev.next != ""):
+                curRev = session.query(Revision).get(curRev.next)
+
+            curRev.next = rev.id
+            rev.previous = curRev.id
+        else:
+            rev.previous = ""
+            self.sync_diffs = rev
+
+        rev.next = ""
+        rev.data = source + str(diff)
+        session.add(rev)
+
 class ConfigArchive(Base):
     __tablename__ = "configarchive"
     date = Column(DateTime)
