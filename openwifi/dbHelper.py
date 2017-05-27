@@ -38,7 +38,9 @@ def updateMasterConfig(device, newJsonString):
     uci_conf.load_tree(newJsonString)
 
     if not device.masterconf:
-        return False
+        newMasterConf = masterConfigFromUci(uci_conf)
+        newMasterConf.openwrt.append(device)
+        return
 
     diff = device.masterconf.exportUCI().diff(uci_conf)
 
