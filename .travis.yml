@@ -16,6 +16,7 @@ install:
   - docker login -u="$DOCKER_USERNAME" -p="$DOCKER_PASSWORD"
   - docker tag openwifiimage openwifi/openwificore
   - docker push openwifi/openwificore
+  - cd ..
 
 script:
   - "python setup.py nosetests"
