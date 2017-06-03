@@ -1,8 +1,21 @@
+sudo: required
+
 language: python
+
+services:
+    - docker
+
 python:
   - "3.4"
+
 install:
   - "pip install -r requirements.txt"
   - "python setup.py develop"
+  - cd Docker
+  - ./build_image.sh
+  - docker login -u="$DOCKER_USERNAME" -p="$DOCKER_PASSWORD"
+  - docker tag openwifiimage openwifi/openwificore
+  - docker push openwifi/openwificore
+
 script:
   - "python setup.py nosetests"
