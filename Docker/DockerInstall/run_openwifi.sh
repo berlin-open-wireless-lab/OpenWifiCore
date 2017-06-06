@@ -1,5 +1,9 @@
 #!/bin/bash
 
+if [ -n "$OPENWIFI_UID" ]; then
+    usermod -u $OPENWIFI_UID openwifi
+fi
+
 if [ ! -e /OpenWifi/setup.py ] && [ ! -e /home/openwifi/OpenWifi ]; then
     /DockerInstall/install_openwifi.sh
     return false
