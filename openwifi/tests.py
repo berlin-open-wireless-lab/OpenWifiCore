@@ -102,3 +102,53 @@ class JSONRPCTest(unittest.TestCase):
 
     def test_hello(self):
         assert self._callFUT('hello', [])['result'] == 'openwifi'
+
+class deviceDetectAndRegisterTest(unittest.TestCase):
+    def setUp(self):
+        import docker
+        import os.path
+        
+        self.dockerClient = docker.from_env()
+        self.dockerClient.images.pull("openwifi/openwificore")
+        self.dockerClient.images.pull("openwifi/ledecontainer")
+        path = os.path.split(os.path.split(os.path.realpath(__file__))[0])[0]
+
+        self.openwifi = self.dockerClient.containers.run("openwifi/openwificore", 
+                volumes={path: {'bind': '/OpenWifi', 'mode': 'rw'}}, 
+                ports={'6543/tcp': 6543}, detach=True)
+
+    def testRegister(self):
+        import requests
+        import time
+
+        # wait until server is ready
+        while True:
+            try:
+                r = requests.get('http://localhost:6543/nodes')
+            except:
+                time.sleep(2)
+                continue
+
+            break
+
+        self.assertEqual(r.text, "[]")
+
+        self.lede = self.dockerClient.containers.run("openwifi/ledecontainer", "/sbin/init", detach=True)
+        while not self.lede.exec_run('ash -c "ps|grep \\"[o]penwifi\\""'):
+            time.sleep(2)
+        
+        self.lede.exec_run('/etc/init.d/openwifi-boot-notifier restart')
+        time.sleep(10)
+
+        r = requests.get('http://localhost:6543/nodes')
+
+        uuid = self.lede.exec_run('uci get openwifi.@device[0].uuid').decode('utf8').strip('\n')
+        self.assertEqual(r.text, '["'+uuid+'"]')
+
+    def tearDown(self):
+        if self.lede:
+            self.lede.kill()
+            self.lede.remove()
+        if self.openwifi:
+            self.openwifi.kill()
+            self.openwifi.remove()
