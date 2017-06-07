@@ -108,7 +108,7 @@ class deviceDetectAndRegisterTest(unittest.TestCase):
         import docker
         import os.path
         
-        self.dockerClient = docker.from_env()
+        self.dockerClient = docker.from_env(version='auto')
         self.dockerClient.images.pull("openwifi/openwificore")
         self.dockerClient.images.pull("openwifi/ledecontainer")
         path = os.path.split(os.path.split(os.path.realpath(__file__))[0])[0]
