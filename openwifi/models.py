@@ -28,6 +28,8 @@ import importlib
 import pyuci
 import json
 
+from openwifi.utils import id_generator
+
 DBSession = scoped_session(sessionmaker(extension=ZopeTransactionExtension()))
 Base = declarative_base()
 
@@ -114,8 +116,6 @@ class OpenWrt(Base):
             self.password = value
 
     def append_diff(self, diff, session, source):
-        from openwifi.utils import id_generator
-
         rev = Revision(id_generator())
 
         if self.sync_diffs:
@@ -156,6 +156,45 @@ class OpenWrt(Base):
         session = Session.object_session(self)
         return session
 
+user2access = Table('user2access', Base.metadata,
+    Column('user_id', Integer, ForeignKey('users.id')),
+    Column('access_id', Integer, ForeignKey('nodeAccess.id'))
+)
+
+apikey2access = Table('apikey2access', Base.metadata,
+    Column('apikey_id', Integer, ForeignKey('apiKeys.id')),
+    Column('access_id', Integer, ForeignKey('nodeAccess.id'))
+)
+
+class User(Base):
+    __tablename__ = "users"
+    login = Column(Text, unique=True)
+    hash = Column(Text)
+    access = relationship("NodeAccess", secondary=user2access, backref='user')
+    apikeys = relationship("ApiKey")
+    id = Column(Text, primary_key=True)
+
+    def __init__(self, login, hash):
+        self.login = login
+        self.hash = hash
+        self.id = id_generator()
+
+class ApiKey(Base):
+    __tablename__ = "apiKeys"
+    key = Column(Text)
+    access = relationship("NodeAccess", secondary=apikey2access, backref='apikey')
+    user_id  = Column(Text, ForeignKey('users.id'))
+    id = Column(Text, primary_key=True)
+
+    def __init__(self, key, user):
+        self.key = key
+        self.id = id_generator()
+        self.user_id = user.id
+
+class NodeAccess(Base):
+    __tablename__ = "nodeAccess"
+    data = Column(Text)
+    id = Column(Text, primary_key=True)
 
 class ConfigArchive(Base):
     __tablename__ = "configarchive"

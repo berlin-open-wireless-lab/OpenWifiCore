@@ -14,7 +14,11 @@ from pyramid.authorization import ACLAuthorizationPolicy
 from .models import (
     DBSession,
     Base,
+    User
     )
+
+from openwifi.authentication import user_pwd_context, create_user
+import os, os.path
 
 from pkg_resources import iter_entry_points
 
@@ -31,7 +35,6 @@ class AllowEverybody(object):
 def main(global_config, **settings):
     """ This function returns a Pyramid WSGI application.
     """
-
     configure_global_views(settings)
 
     registerOnDeviceRegisterFunctions(settings)
@@ -43,6 +46,9 @@ def main(global_config, **settings):
     if settings['openwifi.useLDAP'] == 'true':
         config = Configurator(settings=settings, root_factory=RootFactory)
         setupLDAP(config, settings)
+    if settings['openwifi.useAuth'] == 'true':
+        config = Configurator(settings=settings, root_factory=RootFactory)
+        init_auth(config, settings)
     else:
         config = Configurator(settings=settings, root_factory=AllowEverybody)
         setupAuth(config)
@@ -134,3 +140,18 @@ def registerDatabaseListeners():
         updateMasterConfig(target, value)
         from openwifi.jobserver.tasks import update_config
         update_config.delay(target.uuid)
+
+def init_auth(config, settings):
+    user_pwd_context.load_path(os.path.dirname(__file__) + os.sep + ".." + os.sep + "crypt.ini")
+
+    # if no user in database create admin:admin
+    if not DBSession.query(User).first():
+        print('create admin:admin user')
+        create_user('admin', 'admin')
+        import transaction
+        transaction.commit()
+
+    from openwifi.authentication import OpenWifiAuthPolicy
+
+    config.set_authentication_policy(OpenWifiAuthPolicy(settings))
+    config.set_authorization_policy(ACLAuthorizationPolicy())
