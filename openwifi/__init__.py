@@ -24,6 +24,9 @@ from pkg_resources import iter_entry_points
 
 class RootFactory(object):
     __acl__ = [(Allow, Authenticated, 'view')]
+    __acl__.append((Allow, 'admin', 'addUsers'))
+    __acl__.append((Allow, 'admin', 'viewUsers'))
+    __acl__.append((Allow, 'admin', 'modUsers'))
     def __init__(self, request):
         pass
 

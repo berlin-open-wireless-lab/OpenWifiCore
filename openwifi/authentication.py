@@ -1,5 +1,6 @@
 from openwifi.models import User, DBSession
 from passlib.context import CryptContext
+import json
 user_pwd_context = CryptContext()
 
 def create_user(login, password):
@@ -15,8 +16,13 @@ def check_password(login, password):
     if not valid_password:
         return False
 
-    user.hash = new_hash
+    if new_hash:
+        user.hash = new_hash
     return True
+
+def change_password(user, password):
+    hash = user_pwd_context.hash(password)
+    user.hash = hash
 
 from pyramid.authentication import AuthTktCookieHelper, CallbackAuthenticationPolicy
 from pyramid.security import Everyone, Authenticated
@@ -50,3 +56,50 @@ class OpenWifiAuthPolicy(CallbackAuthenticationPolicy):
         result = self.cookie.identify(request)
         if result:
             return result['userid']
+
+from cornice.resource import resource, view
+
+@resource(collection_path='/users', path='/users/{USER_ID}')
+class Users(object):
+
+    def __init__(self, request):
+        self.request = request
+
+    @view(permission = 'viewUsers')
+    def collection_get(self):
+        users = DBSession.query(User)
+        result = []
+        for user in users:
+            result.append({user.login : user.id})
+
+        return result
+
+    @view(permission = 'addUsers')
+    def collection_post(self):
+        data = json.loads(self.request.body.decode())
+
+        if 'login' not in data or 'password' not in data:
+            return False
+
+        login = data['login']
+        password = data['password']
+        create_user(login, password)
+        return True
+
+    @view(permission = 'modUsers')
+    def post(self):
+        data = json.loads(self.request.body.decode())
+
+        if 'login' not in data and 'password' not in data:
+            return False
+
+        user_id = self.request.matchdict['USER_ID']
+        user = DBSession.query(User).get(user_id)
+
+        if 'login' in data:
+            user.login = data['login']
+        
+        if 'password' in data:
+            change_password(user, data['password'])
+
+
