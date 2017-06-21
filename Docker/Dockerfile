@@ -25,6 +25,9 @@ RUN /DockerInstall/install_openwifi_relative.sh
 RUN if $USE_AVAHI; then chmod 700 /DockerInstall/install_avahi.sh /DockerInstall/run_avahi.sh; fi
 RUN if $USE_AVAHI; then /DockerInstall/install_avahi.sh; fi
 
+RUN if $USE_NGINX; then chmod 700 /DockerInstall/install_nginx.sh; fi
+RUN if $USE_NGINX; then /DockerInstall/install_nginx.sh; fi
+
 EXPOSE 6543
 
 # Supervisord
@@ -35,6 +38,7 @@ RUN cp /DockerInstall/supervisord.conf.master /etc/supervisor/supervisord.conf
 RUN if ! $USE_LDAP; then sed -i '/ldap/s/^/#/g' /etc/supervisor/conf.d/supervisord.conf; fi
 RUN if ! $USE_AVAHI; then sed -i '/avahi/s/^/#/g' /etc/supervisor/conf.d/supervisord.conf; fi
 RUN if ! $USE_DNSMASQ; then sed -i '/dnsmasq/s/^/#/g' /etc/supervisor/conf.d/supervisord.conf; fi
+RUN if ! $USE_NGINX; then sed -i '/nginx/s/^/#/g' /etc/supervisor/conf.d/supervisord.conf; fi
 
 # Dnsmasq
 RUN if $USE_DNSMASQ; then apt-get install -y dnsmasq; fi
