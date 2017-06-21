@@ -3,6 +3,7 @@ FROM ubuntu:14.04
 ARG USE_LDAP
 ARG USE_AVAHI
 ARG USE_DNSMASQ
+ARG USE_NGINX
 
 ADD ./DockerInstall /DockerInstall
 
