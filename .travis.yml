@@ -19,6 +19,9 @@ install:
   - docker login -u="$DOCKER_USERNAME" -p="$DOCKER_PASSWORD"
   - docker tag openwifiimage openwifi/openwificore
   - docker push openwifi/openwificore
+  - ./build_image_with_nginx.sh
+  - docker tag openwifiimagenginx openwifi/openwificore_nginx
+  - docker push openwifi/openwificore_nginx
   - cd ..
 
 script:
