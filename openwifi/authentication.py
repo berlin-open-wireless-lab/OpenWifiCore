@@ -52,10 +52,44 @@ class OpenWifiAuthPolicy(CallbackAuthenticationPolicy):
     def forget(self, request):
         return self.cookie.forget(request)
 
+    # callback to verify login
+    def callback(self, userid, request):
+        from openwifi.models import DBSession, User, ApiKey
+
+        if userid.startswith('apikey:'):
+            apikey_key = userid[7:]
+            apikey = DBSession.query(ApiKey).filter(ApiKey.key == apikey_key).first()
+            if apikey:
+                return ['group:apikey']
+            else:
+                return None
+
+        if userid.startswith('user:'):
+            user_login=userid[5:]
+            user = DBSession.query(User).filter(User.login == user_login).first()
+            if user:
+                return ['group:users']
+            else:
+                return None
+
+        if userid == 'group:client_side':
+            return ['group:client_side']
+
     def unauthenticated_userid(self, request):
+        # check for api key
+        if 'key' in request.GET:
+            return 'apikey:' + request.GET['key']
+
+        # check for client side certificate
+        if all(key in request.headers for key in ["X-Forwarded-Proto", "Verified"]):
+            if request.headers["X-Forwarded-Proto"] == "https" and \
+                    request.headers["Verified"] == "SUCCESS":
+                return 'group:client_side'
+
+        # check for cookie for login
         result = self.cookie.identify(request)
         if result:
-            return result['userid']
+            return 'user:' + result['userid']
 
 from cornice.resource import resource, view
 

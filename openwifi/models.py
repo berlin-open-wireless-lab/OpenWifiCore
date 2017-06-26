@@ -181,7 +181,7 @@ class User(Base):
 
 class ApiKey(Base):
     __tablename__ = "apiKeys"
-    key = Column(Text)
+    key = Column(Text, unique=True)
     access = relationship("NodeAccess", secondary=apikey2access, backref='apikey')
     user_id  = Column(Text, ForeignKey('users.id'))
     id = Column(Text, primary_key=True)
