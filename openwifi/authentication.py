@@ -11,6 +11,9 @@ def create_user(login, password):
 
 def check_password(login, password):
     user = DBSession.query(User).filter(User.login == login).first()
+    if not user:
+        return False
+
     valid_password, new_hash = user_pwd_context.verify_and_update(password, user.hash)
 
     if not valid_password:
@@ -55,25 +58,34 @@ class OpenWifiAuthPolicy(CallbackAuthenticationPolicy):
     # callback to verify login
     def callback(self, userid, request):
         from openwifi.models import DBSession, User, ApiKey
+        groups = []
 
         if userid.startswith('apikey:'):
             apikey_key = userid[7:]
             apikey = DBSession.query(ApiKey).filter(ApiKey.key == apikey_key).first()
-            if apikey:
-                return ['group:apikey']
-            else:
+            groups.append('group:apikey')
+            if not apikey:
                 return None
+
+            request.apikey = apikey
 
         if userid.startswith('user:'):
             user_login=userid[5:]
             user = DBSession.query(User).filter(User.login == user_login).first()
-            if user:
-                return ['group:users']
-            else:
+            groups.append('group:users')
+
+            if not user:
                 return None
 
+            request.user = user
+
+            if user.is_admin:
+                groups.append('group:admin')
+
         if userid == 'group:client_side':
-            return ['group:client_side']
+            groups.append('group:client_side')
+
+        return groups
 
     def unauthenticated_userid(self, request):
         # check for api key
@@ -102,29 +114,29 @@ class Users(object):
     @view(permission = 'viewUsers')
     def collection_get(self):
         users = DBSession.query(User)
-        result = []
+        result = {}
         for user in users:
-            result.append({user.login : user.id})
+            result[user.login] = user.id
 
         return result
 
     @view(permission = 'addUsers')
     def collection_post(self):
-        data = json.loads(self.request.body.decode())
+        data = self.request.json_body
 
         if 'login' not in data or 'password' not in data:
             return False
 
         login = data['login']
         password = data['password']
-        create_user(login, password)
-        return True
+        user = create_user(login, password)
+        return user.id
 
     @view(permission = 'modUsers')
     def post(self):
-        data = json.loads(self.request.body.decode())
+        data = self.request.json_body
 
-        if 'login' not in data and 'password' not in data:
+        if not any(key in data for key in ['login', 'password', 'admin']):
             return False
 
         user_id = self.request.matchdict['USER_ID']
@@ -136,4 +148,20 @@ class Users(object):
         if 'password' in data:
             change_password(user, data['password'])
 
+        if 'admin' in data:
+            user.is_admin = data['admin']
 
+    @view(permission = 'viewUsers')
+    def get(self):
+        user_id = self.request.matchdict['USER_ID']
+        user = DBSession.query(User).get(user_id)
+        return {'login': user.login, 'admin': user.is_admin}
+
+    @view(permission = 'addUsers')
+    def delete(self):
+        user_id = self.request.matchdict['USER_ID']
+        if user_id == self.request.user.id:
+            return "user cannot delete itself"
+
+        user = DBSession.query(User).get(user_id)
+        DBSession.delete(user)

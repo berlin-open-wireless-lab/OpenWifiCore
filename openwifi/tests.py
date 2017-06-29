@@ -152,3 +152,68 @@ class deviceDetectAndRegisterTest(unittest.TestCase):
         if self.openwifi:
             self.openwifi.kill()
             self.openwifi.remove()
+
+class userModTest(unittest.TestCase):
+    def setUp(self):
+        from openwifi import main
+        from webtest import TestApp
+        self.config = testing.setUp()
+        from sqlalchemy import create_engine
+        import os
+
+        from .models import (
+                Base,
+                DBSession,
+                )
+
+        ROOT_PATH = os.path.dirname(__file__)
+        settings = appconfig('config:' + os.path.join(ROOT_PATH, 'test.ini'))
+        settings['openwifi.useAuth'] = 'true'
+        print(settings)
+        self.app = main({}, **settings)
+        self.app = TestApp(self.app)
+
+    def tearDown(self):
+        testing.tearDown()
+
+    def testAddUser(self):
+        from six.moves import http_cookiejar
+        from webtest.app import CookiePolicy
+
+        self.app.post_json('/login', {'login':'admin', 'password':'admin'})
+        resp = self.app.get('/users')
+        usersBefore = json.loads(resp.text)
+        adminId = usersBefore['admin']
+        admin_cookiejar = self.app.cookiejar
+
+
+        resp = self.app.post_json('/users', {"login":"testuser", "password":"testpassword"})
+
+        import transaction
+        transaction.commit()
+
+        newUserId = json.loads(resp.text)
+        resp = self.app.get('/users')
+        usersAfter = json.loads(resp.text)
+        
+        self.assertEqual(usersAfter, {'admin':adminId, 'testuser': newUserId})
+
+        user_cookiejar =  http_cookiejar.CookieJar(policy=CookiePolicy())
+        self.app.cookiejar = user_cookiejar
+
+        self.app.post_json('/login', {'login':'testuser', 'password': 'testpassword'})
+
+        # check that normal user cannot manage users
+        self.app.get('/users', expect_errors=True)
+        self.app.get('/users/'+adminId, expect_errors=True)
+        self.app.delete('/users/'+adminId, expect_errors=True)
+        self.app.post('/users/'+adminId, params='{"login":"bla", "password":"blubb"}', content_type='text/json', expect_errors=True)
+
+        self.app.cookiejar = admin_cookiejar
+
+        resp = self.app.delete('/users/'+newUserId)
+
+        resp = self.app.get('/users')
+        usersAfter = json.loads(resp.text)
+
+        self.assertEqual(usersAfter, usersBefore)

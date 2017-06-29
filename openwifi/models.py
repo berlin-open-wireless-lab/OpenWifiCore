@@ -166,6 +166,11 @@ apikey2access = Table('apikey2access', Base.metadata,
     Column('access_id', Integer, ForeignKey('nodeAccess.id'))
 )
 
+nodeAccess2Node = Table('nodeAccess2Node', Base.metadata,
+    Column('access_id', Integer, ForeignKey('nodeAccess.id')),
+    Column('node_id', Integer, ForeignKey('openwrt.uuid'))
+)
+
 class User(Base):
     __tablename__ = "users"
     login = Column(Text, unique=True)
@@ -173,11 +178,13 @@ class User(Base):
     access = relationship("NodeAccess", secondary=user2access, backref='user')
     apikeys = relationship("ApiKey")
     id = Column(Text, primary_key=True)
+    is_admin = Column(Boolean)
 
     def __init__(self, login, hash):
         self.login = login
         self.hash = hash
         self.id = id_generator()
+        self.is_admin = False
 
 class ApiKey(Base):
     __tablename__ = "apiKeys"
@@ -195,6 +202,19 @@ class NodeAccess(Base):
     __tablename__ = "nodeAccess"
     data = Column(Text)
     id = Column(Text, primary_key=True)
+    access_all_nodes = Column(Boolean)
+    nodes = relationship('OpenWrt', secondary=nodeAccess2Node, backref='node_access')
+
+    def __init__(self, data, user=None, apikey=None):
+        self.data = data
+        self.id = id_generator()
+        self.access_all_nodes = False
+
+        if user:
+            self.user = [user]
+
+        if apikey:
+            self.apikey = [apikey]
 
 class ConfigArchive(Base):
     __tablename__ = "configarchive"

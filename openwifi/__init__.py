@@ -24,9 +24,9 @@ from pkg_resources import iter_entry_points
 
 class RootFactory(object):
     __acl__ = [(Allow, Authenticated, 'view')]
-    __acl__.append((Allow, 'user:admin', 'addUsers'))
-    __acl__.append((Allow, 'user:admin', 'viewUsers'))
-    __acl__.append((Allow, 'user:admin', 'modUsers'))
+    __acl__.append((Allow, 'group:admin', 'addUsers'))
+    __acl__.append((Allow, 'group:admin', 'viewUsers'))
+    __acl__.append((Allow, 'group:admin', 'modUsers'))
     def __init__(self, request):
         pass
 
@@ -59,6 +59,9 @@ def main(global_config, **settings):
     config.include('pyramid_rpc.jsonrpc')
     config.add_jsonrpc_endpoint('api', '/api')
     config.add_route('execStatus', '/exec/{UUID}')
+    config.add_route('login', '/login')
+    config.add_route('logout', '/logout')
+    config.add_route('home', '/')
 
     config.include('cornice')
 
@@ -147,10 +150,11 @@ def registerDatabaseListeners():
 def init_auth(config, settings):
     user_pwd_context.load_path(os.path.dirname(__file__) + os.sep + ".." + os.sep + "crypt.ini")
 
-    # if no user in database create admin:admin
+    # if no user in database create admin:admin with admin priv
     if not DBSession.query(User).first():
         print('create admin:admin user')
-        create_user('admin', 'admin')
+        user = create_user('admin', 'admin')
+        user.is_admin = True
         import transaction
         transaction.commit()
 
