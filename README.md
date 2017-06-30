@@ -1,7 +1,7 @@
 openwifi
 ========
 
-A management tool for OpenWrt devices.
+A management tool for OpenWrt devices. More information on [Github Pages](https://berlin-open-wireless-lab.github.io/OpenWifiCore/).
 
 [![Build Status](https://travis-ci.org/berlin-open-wireless-lab/OpenWifiCore.svg?branch=master)](https://travis-ci.org/berlin-open-wireless-lab/OpenWifiCore)
 
