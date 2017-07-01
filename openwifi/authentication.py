@@ -1,7 +1,55 @@
-from openwifi.models import User, DBSession
+from openwifi.models import User, DBSession, NodeAccess, ApiKey, OpenWrt
 from passlib.context import CryptContext
+
 import json
 user_pwd_context = CryptContext()
+
+def get_nodes(request):
+    if request.user:
+        return get_nodes_of_user_or_api_key(request.user)
+
+    if request.apikey:
+        return get_nodes_of_user_or_api_key(request.apikey)
+
+def get_nodes_of_user_or_api_key(user_apikey):
+    nodes = []
+    for access in user_apikey.access:
+        nodes.extend(access.nodes)
+
+        if access.access_all_nodes:
+            return DBSession.query(OpenWrt)
+
+    return nodes
+
+def get_user_by_id(id):
+    try:
+        return DBSession.query(User).get(id)
+    except:
+        return None
+
+def get_user_by_login(login):
+    try:
+        return DBSession.query(User).filter(User.login == login).first()
+    except:
+        return None
+
+def get_apikey_by_id(id):
+    try:
+        return DBSession.query(ApiKey).get(id)
+    except:
+        return None
+
+def get_apikey_by_key(key):
+    try:
+        return DBSession.query(ApiKey).filter(ApiKey.key == key).first()
+    except:
+        return None
+
+def get_access_by_id(aid):
+    try:
+        return DBSession.query(NodeAccess).get(aid)
+    except:
+        return None
 
 def create_user(login, password):
     hash = user_pwd_context.hash(password)
@@ -60,6 +108,9 @@ class OpenWifiAuthPolicy(CallbackAuthenticationPolicy):
         from openwifi.models import DBSession, User, ApiKey
         groups = []
 
+        request.user = None
+        request.apikey = None
+
         if userid.startswith('apikey:'):
             apikey_key = userid[7:]
             apikey = DBSession.query(ApiKey).filter(ApiKey.key == apikey_key).first()
@@ -84,6 +135,12 @@ class OpenWifiAuthPolicy(CallbackAuthenticationPolicy):
 
         if userid == 'group:client_side':
             groups.append('group:client_side')
+
+        from openwifi import node_context
+        if type(request.context) == node_context:
+            nodes = get_nodes(request)
+            for node in nodes:
+                groups.append('node:'+str(node.uuid))
 
         return groups
 
@@ -165,3 +222,129 @@ class Users(object):
 
         user = DBSession.query(User).get(user_id)
         DBSession.delete(user)
+
+@resource(collection_path='/access', path='/access/{ACCESS_ID}', permission='control_access')
+class Control_Access:
+
+    def __init__(self, request):
+        self.request = request
+
+    def get(self):
+        aid = self.request.matchdict['ACCESS_ID']
+        ac = DBSession.query(NodeAccess).get(aid)
+        return self.access_to_dict(ac)
+
+    def delete(self):
+        aid = self.request.matchdict['ACCESS_ID']
+        ac = DBSession.query(NodeAccess).get(aid)
+
+        DBSession.delete(ac)
+        return True
+
+    def post(self):
+        aid = self.request.matchdict['ACCESS_ID']
+        access = get_access_by_id(aid)
+        post_data = self.request.json_body
+        
+        if 'data' in post_data:
+            access.data = post_data['data']
+        if 'userid' in post_data:
+            access.user = get_user_by_id(post_data['userid'])
+        if 'apikeyid' in post_data:
+            access.apikey = get_apikey_by_id(post_data['apikeyid'])
+        if 'access_all_nodes' in post_data:
+            access.access_all_nodes = post_data['access_all_nodes']
+
+        return True
+
+    def collection_get(self):
+        access = DBSession.query(NodeAccess)
+        result = {}
+        for ac in access:
+            ac_dict = self.access_to_dict(ac)
+            result[ac.id] = ac_dict
+        return result
+
+    def access_to_dict(self, ac):
+        ac_dict = {}
+        ac_dict['data'] = ac.data
+        ac_dict['all_nodes'] = ac.access_all_nodes
+        ac_dict['nodes'] = list(map(lambda n: str(n.uuid), ac.nodes))
+        ac_dict['users'] = list(map(lambda u: {str(u.id): u.login}, ac.user))
+        ac_dict['apikeys'] = list(map(lambda a: {str(a.id): a.key}, ac.apikey))
+        
+        return ac_dict
+
+    def collection_post(self):
+        post_data = self.request.json_body
+        data = ""
+        user = None
+        apikey = None
+        
+        if 'data' in post_data:
+            data = post_data['data']
+        if 'userid' in post_data:
+            user = get_user_by_id(post_data['userid'])
+        if 'apikeyid' in post_data:
+            apikey = get_apikey_by_id(post_data['apikeyid'])
+
+        new_node_access = NodeAccess(data, user=user, apikey=apikey)
+
+        if 'access_all_nodes' in post_data:
+            new_node_access.access_all_nodes = post_data['access_all_nodes']
+
+        DBSession.add(new_node_access)
+        return True
+
+from cornice import Service
+
+access_add_user_by_id = Service(name='access_add_user_by_id',
+                                path='/access/{ACCESS_ID}/user/{UID}',
+                                description="add a user to a node access by id")
+@access_add_user_by_id.post()
+def access_add_user_by_id_post(request):
+    aid = request.matchdict['ACCESS_ID']
+    uid = request.matchdict['UID']
+    
+    access = get_access_by_id(aid)
+    user = get_user_by_id(uid)
+
+    if not access or not user:
+        return False
+
+    access.user.append(user)
+    return True
+
+access_add_apikey_by_id = Service(name='access_add_apikey_by_id',
+                                  path='/access/{ACCESS_ID}/apikey/{APIKEY_ID}',
+                                  description="add an apikey to a node access by id")
+@access_add_apikey_by_id.post()
+def access_add_apikey_by_id_post(request):
+    aid = request.matchdict['ACCESS_ID']
+    api_id = request.matchdict['APIKEY_ID']
+    
+    access = get_access_by_id(aid)
+    apikey = get_access_by_id(api_id)
+
+    if not access or not apikey:
+        return False
+
+    access.apikey.append(apikey)
+    return True
+
+access_add_node_by_uuid = Service(name='access_add_node_by_uuid',
+                                path='/access/{ACCESS_ID}/node/{NODE_UUID}',
+                                description="add a node to a node access by id")
+@access_add_node_by_uuid.post()
+def access_add_node_by_uuid_post(request):
+    aid = request.matchdict['ACCESS_ID']
+    node_uuid = request.matchdict['NODE_UUID']
+    
+    access = get_access_by_id(aid)
+    node = DBSession.query(OpenWrt).get(node_uuid)
+
+    if not access or not node:
+        return False
+
+    access.nodes.append(node)
+    return True

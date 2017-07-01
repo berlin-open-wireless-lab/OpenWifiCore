@@ -157,18 +157,18 @@ class OpenWrt(Base):
         return session
 
 user2access = Table('user2access', Base.metadata,
-    Column('user_id', Integer, ForeignKey('users.id')),
-    Column('access_id', Integer, ForeignKey('nodeAccess.id'))
+    Column('user_id', Text, ForeignKey('users.id')),
+    Column('access_id', Text, ForeignKey('nodeAccess.id'))
 )
 
 apikey2access = Table('apikey2access', Base.metadata,
-    Column('apikey_id', Integer, ForeignKey('apiKeys.id')),
-    Column('access_id', Integer, ForeignKey('nodeAccess.id'))
+    Column('apikey_id', Text, ForeignKey('apiKeys.id')),
+    Column('access_id', Text, ForeignKey('nodeAccess.id'))
 )
 
 nodeAccess2Node = Table('nodeAccess2Node', Base.metadata,
-    Column('access_id', Integer, ForeignKey('nodeAccess.id')),
-    Column('node_id', Integer, ForeignKey('openwrt.uuid'))
+    Column('access_id', Text, ForeignKey('nodeAccess.id')),
+    Column('node_id', GUID, ForeignKey('openwrt.uuid'))
 )
 
 class User(Base):
@@ -210,10 +210,14 @@ class NodeAccess(Base):
         self.id = id_generator()
         self.access_all_nodes = False
 
-        if user:
+        if type(user) == list:
+            self.user = user
+        elif type(user) == User:
             self.user = [user]
 
-        if apikey:
+        if type(apikey) == list:
+            self.apikey = apikey
+        elif type(apikey) == ApiKey:
             self.apikey = [apikey]
 
 class ConfigArchive(Base):
