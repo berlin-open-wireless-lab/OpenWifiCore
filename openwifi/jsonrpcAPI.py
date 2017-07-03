@@ -58,6 +58,7 @@ def get_default_image_url(request, uuid):
     else:
         return False
 
+# TODO transform into rest api
 @jsonrpc_method(method='get_node_status', endpoint='api')
 def get_node_status(request, uuid):
     r = redis.StrictRedis(host=redishost, port=redisport, db=redisdb)
@@ -72,8 +73,9 @@ def get_node_status(request, uuid):
         resp['interfaces'] = json.loads(r.hget(str(uuid), 'networkstatus').decode())
     return resp
 
-@jsonrpc_method(method='device_register', endpoint='api')
-def device_register(request, uuid, name, address, distribution, version, proto, login, password,capabilities=[], communication_protocol=""):
+# TODO separate into update and add
+@jsonrpc_method(method='device_register', endpoint='api', permission='node_add')
+def device_register(request, uuid, name, address, distribution, version, proto, login, password, capabilities=[], communication_protocol=""):
     device = DBSession.query(OpenWrt).get(uuid)
     # if uuid exists, update information
     if device:
@@ -97,7 +99,7 @@ def device_register(request, uuid, name, address, distribution, version, proto, 
     for devRegFunc in request.registry.settings['OpenWifi.onDeviceRegister']:
         devRegFunc(uuid)
 
-@jsonrpc_method(method='device_check_registered', endpoint='api')
+@jsonrpc_method(method='device_check_registered', endpoint='api', permission='node_add')
 def device_check_registered(request, uuid, name):
     """
     check if a device is already present in database. This call is used by a device to check if it must register again.

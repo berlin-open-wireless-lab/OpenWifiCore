@@ -9,21 +9,25 @@ from .models import (
 from openwifi.jobserver.tasks import exec_on_device
 
 from cornice import Service
-from cornice.resource import resource
+from cornice.resource import resource, view
 
-@resource(collection_path='/nodes', path='/nodes/{UUID}')
+from openwifi.authentication import get_node_by_request
+
+@resource(collection_path='/nodes', path='/nodes/{UUID}', factory='openwifi.node_context', permission='view')
 class Nodes(object):
 
     def __init__(self, request):
         self.request = request
 
     def collection_get(self):
+        import openwifi.authentication.get_nodes as get_nodes
         uuids = []
-        for openwrt in DBSession.query(OpenWrt):
+        for openwrt in get_nodes(self.request):
             uuids.append(str(openwrt.uuid))
         return uuids
 
     # add new openwifi node
+    @view(permission = 'node_add')
     def collection_post(self):
         newNodeData = json.loads(self.request.body.decode())
         if 'uuid' in newNodeData.keys() and newNodeData['uuid']:
@@ -34,16 +38,15 @@ class Nodes(object):
         DBSession.add(ap)
         return str(ap.uuid)
 
+    @view(permission = 'node_access')
     def get(self):
-        uuid = self.request.matchdict['UUID']
-        openwrt = DBSession.query(OpenWrt).get(uuid)
-
+        openwrt = get_node_by_request(self.request)
         return openwrt.jsonParsable()
 
     # modify node TODO: add validator
+    @view(permission = 'node_access')
     def post(self):
-        uuid = self.request.matchdict['UUID']
-        openwrt = DBSession.query(OpenWrt).get(uuid)
+        openwrt = get_node_by_request(self.request)
 
         if not openwrt:
             return False
@@ -55,9 +58,9 @@ class Nodes(object):
 
         return True
 
+    @view(permission = 'node_access')
     def delete(self):
-        uuid = self.request.matchdict['UUID']
-        openwrt = DBSession.query(OpenWrt).get(uuid)
+        openwrt = get_node_by_request(self.request)
         if openwrt:
             DBSession.delete(openwrt)
             return True
@@ -67,7 +70,9 @@ class Nodes(object):
 
 execService = Service(name='execOnNode',
                       path='/nodes/{UUID}/exec',
-                      description='execute command on node')
+                      description='execute command on node',
+                      factory='openwifi.node_context',
+                      permission='node_access')
 
 @execService.get()
 def get_execService(request):
@@ -87,12 +92,13 @@ def post_execService(request):
 
 diffNodeService = Service(name='diffFromNode',
                           path='/nodes/{UUID}/diff',
-                          description='get diff list by nodes')
+                          description='get diff list by nodes',
+                          factory='openwifi.node_context',
+                          permission='node_access')
 
 @diffNodeService.get()
 def get_diffNode(request):
-    uuid = request.matchdict['UUID']
-    device = DBSession.query(OpenWrt).get(uuid)
+    device = get_node_by_request(request)
 
     if device:
         return device.get_diff_list()

@@ -4,12 +4,20 @@ from passlib.context import CryptContext
 import json
 user_pwd_context = CryptContext()
 
+def auth_not_used(request):
+    settings = request.registry.settings
+    return settings['openwifi.useLDAP'] == 'false' and \
+           settings['openwifi.useAuth'] == 'false'
+
 def get_nodes(request):
     if request.user:
         return get_nodes_of_user_or_api_key(request.user)
 
     if request.apikey:
         return get_nodes_of_user_or_api_key(request.apikey)
+
+    if auth_not_used(request):
+       return DBSession.query(OpenWrt)
 
 def get_nodes_of_user_or_api_key(user_apikey):
     nodes = []
@@ -20,6 +28,17 @@ def get_nodes_of_user_or_api_key(user_apikey):
             return DBSession.query(OpenWrt)
 
     return nodes
+
+def get_node_by_request(request):
+
+    if 'UUID' in request.matchdict:
+        uuid = request.matchdict['UUID']
+
+    if 'uuid' in request.matchdict:
+        uuid = request.matchdict['uuid']
+
+    if uuid:
+        return DBSession.query(OpenWrt).get(uuid)
 
 def get_user_by_id(id):
     try:
@@ -300,7 +319,8 @@ from cornice import Service
 
 access_add_user_by_id = Service(name='access_add_user_by_id',
                                 path='/access/{ACCESS_ID}/user/{UID}',
-                                description="add a user to a node access by id")
+                                description="add a user to a node access by id",
+                                permission='control_access')
 @access_add_user_by_id.post()
 def access_add_user_by_id_post(request):
     aid = request.matchdict['ACCESS_ID']
@@ -317,7 +337,8 @@ def access_add_user_by_id_post(request):
 
 access_add_apikey_by_id = Service(name='access_add_apikey_by_id',
                                   path='/access/{ACCESS_ID}/apikey/{APIKEY_ID}',
-                                  description="add an apikey to a node access by id")
+                                  description="add an apikey to a node access by id",
+                                  permission='control_access')
 @access_add_apikey_by_id.post()
 def access_add_apikey_by_id_post(request):
     aid = request.matchdict['ACCESS_ID']
@@ -333,15 +354,15 @@ def access_add_apikey_by_id_post(request):
     return True
 
 access_add_node_by_uuid = Service(name='access_add_node_by_uuid',
-                                path='/access/{ACCESS_ID}/node/{NODE_UUID}',
-                                description="add a node to a node access by id")
+                                path='/access/{ACCESS_ID}/node/{UUID}',
+                                description="add a node to a node access by id",
+                                permission='control_access')
 @access_add_node_by_uuid.post()
 def access_add_node_by_uuid_post(request):
     aid = request.matchdict['ACCESS_ID']
-    node_uuid = request.matchdict['NODE_UUID']
     
     access = get_access_by_id(aid)
-    node = DBSession.query(OpenWrt).get(node_uuid)
+    node = get_node_by_request(request)
 
     if not access or not node:
         return False

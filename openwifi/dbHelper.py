@@ -15,6 +15,7 @@ from openwifi.models import (
 import json
 
 from openwifi.utils import diffChanged
+from openwifi.authentication import get_node_by_request
 
 def getMaxId(dbObject): # object needs to have an integer field named id
     query = DBSession.query(sql_func.max(dbObject.id)) 
@@ -186,6 +187,7 @@ def getMConfigGraph(mconfig):
         
     return graph
 
+# TODO remove or transform into rest
 @jsonrpc_method(method='get_config_graph', endpoint='api')
 def device_get_config_graph(request, uuid):
     device = DBSession.query(OpenWrt).get(uuid)
@@ -196,12 +198,13 @@ from cornice import Service
 
 parseDB = Service(name='parseDB',
                   path='/parse/{UUID}',
-                  description='parseNodeWithUUID')
+                  description='parseNodeWithUUID',
+                  factory='openwifi.node_context',
+                  permission='node_access')
 
 @parseDB.get()
 def get_parseDB(request):
-    uuid = request.matchdict['UUID']
-    device = DBSession.query(OpenWrt).get(uuid)
+    device = get_node_by_request(request)
 
     if not device:
         return False
@@ -211,12 +214,13 @@ def get_parseDB(request):
 
 deleteMasterConfig = Service(name='deleteMasterConfig',
                              path='/node/{UUID}/deleteMasterConfig',
-                             description='delete MasterConfig of a given node')
+                             description='delete MasterConfig of a given node',
+                             factory='openwifi.node_context',
+                             permission='node_access')
 
 @deleteMasterConfig.get()
 def get_delMasterConfig(request):
-    uuid = request.matchdict['UUID']
-    device = DBSession.query(OpenWrt).get(uuid)
+    device = get_node_by_request(request)
 
     if not device:
         return False
@@ -225,7 +229,7 @@ def get_delMasterConfig(request):
 
     return True
 
-listMasterConfigs= Service(name='ListMasterConfigs',
+listMasterConfigs = Service(name='ListMasterConfigs',
                            path='/masterConfig',
                            description='list master config ids and assoc nodes')
 
