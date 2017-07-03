@@ -23,19 +23,19 @@ import os, os.path
 from pkg_resources import iter_entry_points
 
 class RootFactory(object):
-    __acl__ = [(Allow, Authenticated, 'view')]
-    __acl__.append((Allow, 'group:admin', 'addUsers'))
-    __acl__.append((Allow, 'group:admin', 'viewUsers'))
-    __acl__.append((Allow, 'group:admin', 'modUsers'))
-    __acl__.append((Allow, 'group:admin', 'control_access'))
     def __init__(self, request):
-        pass
+        self.__acl__ = [(Allow, Authenticated, 'view')]
+        self.__acl__.append((Allow, 'group:admin', 'addUsers'))
+        self.__acl__.append((Allow, 'group:admin', 'viewUsers'))
+        self.__acl__.append((Allow, 'group:admin', 'modUsers'))
+        self.__acl__.append((Allow, 'group:admin', 'control_access'))
 
 class node_context(RootFactory):
     def __init__(self, request):
-        print("BLA")
+        super().__init__(request)
+
         uuid = request.matchdict['UUID']
-        self.__acl__.append([Allow, 'node:'+uuid, 'node_access'])
+        self.__acl__.append((Allow, 'node:'+uuid, 'node_access'))
 
 class AllowEverybody(object):
     __acl__ = [(Allow, Everyone, 'view')]
