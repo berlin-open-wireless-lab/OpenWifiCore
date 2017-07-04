@@ -37,6 +37,8 @@ class node_context(RootFactory):
     def __init__(self, request):
         super().__init__(request)
 
+        uuid = None
+
         if 'UUID' in request.matchdict:
             uuid = request.matchdict['UUID']
         elif 'uuid' in request.matchdict:
@@ -47,7 +49,9 @@ class node_context(RootFactory):
 
         from openwifi.authentication import auth_not_used as auth_not_used
         if auth_not_used(request):
+            print('bla')
             self.__acl__.append((Allow, Everyone, 'node_access'))
+            self.__acl__.append((Allow, Everyone, ''))
 
 class AllowEverybody(object):
     __acl__ = [(Allow, Everyone, ('view', 'node_access', 'node_add'))]

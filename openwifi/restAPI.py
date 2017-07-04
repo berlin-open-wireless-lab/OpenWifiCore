@@ -13,21 +13,22 @@ from cornice.resource import resource, view
 
 from openwifi.authentication import get_node_by_request
 
-@resource(collection_path='/nodes', path='/nodes/{UUID}', factory='openwifi.node_context', permission='view')
+@resource(collection_path='/nodes', path='/nodes/{UUID}', permission='view')
 class Nodes(object):
 
     def __init__(self, request):
         self.request = request
 
+    @view(factory = 'openwifi.node_context',)
     def collection_get(self):
-        import openwifi.authentication.get_nodes as get_nodes
+        from openwifi.authentication import get_nodes
         uuids = []
         for openwrt in get_nodes(self.request):
             uuids.append(str(openwrt.uuid))
         return uuids
 
     # add new openwifi node
-    @view(permission = 'node_add')
+    @view(factory = 'openwifi.node_context', permission = 'node_add')
     def collection_post(self):
         newNodeData = json.loads(self.request.body.decode())
         if 'uuid' in newNodeData.keys() and newNodeData['uuid']:
@@ -38,13 +39,13 @@ class Nodes(object):
         DBSession.add(ap)
         return str(ap.uuid)
 
-    @view(permission = 'node_access')
+    @view(factory = 'openwifi.node_context', permission = 'node_access')
     def get(self):
         openwrt = get_node_by_request(self.request)
         return openwrt.jsonParsable()
 
     # modify node TODO: add validator
-    @view(permission = 'node_access')
+    @view(factory = 'openwifi.node_context', permission = 'node_access')
     def post(self):
         openwrt = get_node_by_request(self.request)
 
@@ -58,7 +59,7 @@ class Nodes(object):
 
         return True
 
-    @view(permission = 'node_access')
+    @view(factory = 'openwifi.node_context', permission = 'node_access')
     def delete(self):
         openwrt = get_node_by_request(self.request)
         if openwrt:
