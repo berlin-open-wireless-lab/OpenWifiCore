@@ -49,7 +49,6 @@ class node_context(RootFactory):
 
         from openwifi.authentication import auth_not_used as auth_not_used
         if auth_not_used(request):
-            print('bla')
             self.__acl__.append((Allow, Everyone, 'node_access'))
             self.__acl__.append((Allow, Everyone, ''))
 

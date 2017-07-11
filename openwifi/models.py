@@ -156,6 +156,13 @@ class OpenWrt(Base):
         session = Session.object_session(self)
         return session
 
+    def add_capability(self, cap):
+        capabilities = json.loads(self.capabilities)
+
+        if cap not in capabilities:
+            capabilities.append(cap)
+            self.capabilities = json.dumps(capabilities)
+
 user2access = Table('user2access', Base.metadata,
     Column('user_id', Text, ForeignKey('users.id')),
     Column('access_id', Text, ForeignKey('nodeAccess.id'))
@@ -376,3 +383,24 @@ class Revision(Base):
 
     def __init__(self, id):
         self.id = id
+
+class Service(Base):
+    __tablename__ = "services"
+    id = Column(Text, primary_key=True)
+    name = Column(Text, unique=True)
+    queries = Column(Text)
+    capability_script = Column(Text)
+    capability_match = Column(Text)
+
+    def __init__(self, name, queries, capability_script, capability_match):
+        self.id = id_generator()
+        self.name = name
+        self.set_queries(queries)
+        self.capability_script = capability_script
+        self.capability_match = capability_match
+
+    def get_queries(self):
+        return json.loads(self.queries)
+
+    def set_queries(self, queries):
+        self.queries = json.dumps(queries)

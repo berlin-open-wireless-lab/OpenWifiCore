@@ -356,6 +356,43 @@ def exec_on_device(uuid, cmd, prms):
 
     return ans
 
+@app.task
+def update_capabilties():
+    DBSession = get_sql_session()
+    from openwifi.models import Service
+
+    services = DBSession.query(Service)
+    devices = DBSession.query(OpenWrt)
+
+    for service in services:
+        for device in devices:
+            uuid = device.uuid
+            cmd = 'sh'
+            args = ['-c', service.capability_script]
+
+            ans = exec_on_device(uuid, cmd, args)
+            stdout = ans['result'][1]['stdout']
+
+            if stdout == service.capability_match:
+                device.add_capability(service.name)
+
+@app.task
+def update_services_config_on_node():
+    DBSession = get_sql_session()
+    devices = DBSession.query(OpenWrt)
+    from openwifi.models import Service
+
+    for device in devices:
+        capabilities = json.loads(device.capabilities)
+        for capability in device.capabilities:
+            assoc_service = DBSession.query(Service).filter(Service.name == capability).first()
+            if assoc_service:
+                update_service_config_on_node(assoc_service, device)
+
+# TODO implement query update
+def update_service_config_on_node(service, node):
+    pass
+
 def get_wifi_devices_via_jsonubus(js):
     wifi_devices = js.call('iwinfo', 'devices')
     return wifi_devices
