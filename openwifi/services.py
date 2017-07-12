@@ -6,7 +6,7 @@ class service_api:
 
     def __init__(self, request):
         self.request = request
-        self.arguments = ['queries', 'name', 'capability_script']
+        self.arguments = ['queries', 'name', 'capability_script', 'capability_match']
 
     def collection_get(self):
         services = DBSession.query(Service)
@@ -17,6 +17,7 @@ class service_api:
             service_data['queries'] = service.get_queries()
             service_data['name'] = service.name
             service_data['capability_script'] = service.capability_script
+            service_data['capability_match'] = service.capability_match
 
             response[service.id] = service_data
 
@@ -29,8 +30,9 @@ class service_api:
         name = post_data['name']
         queries = post_data['queries']
         capability_script = post_data['capability_script']
+        capability_match = post_data['capability_match']
 
-        new_service = Service(name, queries, capability_script)
+        new_service = Service(name, queries, capability_script, capability_match)
         DBSession.add(new_service)
 
     @view(validators=('validate_request','validate_any_arguments'))
@@ -43,6 +45,8 @@ class service_api:
             self.service.set_queries(post_data['queries'])
         if 'capability_script' in post_data:
             self.service.capability_script = post_data['capability_script']
+        if 'capability_match' in post_data:
+            self.service.capability_match = post_data['capability_match']
 
     def validate_all_arguments(self, request, **kw):
         if not all(i in request.json_body for i in self.arguments):
