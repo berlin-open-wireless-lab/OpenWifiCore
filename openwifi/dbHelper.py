@@ -298,68 +298,18 @@ def get_queryMasterConfig(request):
 # TODO: add validator
 @queryMasterConfig.post()
 def post_queryMasterConfig(request):
-    query = json.loads(request.body.decode())
+    query = request.json_body
 
     mconfID = request.matchdict['ID']
     masterConfig = DBSession.query(MasterConfiguration).get(mconfID)
 
-    option = query['option']
+    return query_master_config(query, masterConfig)
 
-    configs = masterConfig.configurations
+def query_master_config(query, master_config):
+    configs = master_config.configurations
+    configs = filter_configs(configs, query)
 
-    filterConfigsByPackage = []
-    if 'package' in query.keys():
-        package = query['package']
-        for config in configs:
-            if config.package == package:
-                filterConfigsByPackage.append(config)
-        configs = filterConfigsByPackage
-
-    filterConfigsByName = []
-    if 'name' in query.keys():
-        name = query['name']
-        for config in configs:
-            if config.name == name:
-                filterConfigsByName.append(config)
-        configs = filterConfigsByName
-
-    filterConfigsByType = []
-    if 'type' in query.keys():
-        type = query['type']
-        for config in configs:
-            configData = json.loads(config.data)
-            if configData['.type'] == type:
-                filterConfigsByType.append(config)
-        configs = filterConfigsByType
-
-    filterConfigsByMatchOptions = []
-    if 'matchOptions' in query.keys():
-        matchOptions = query['matchOptions']
-
-        for config in configs:
-            doesMatch = False
-
-            for key, value in  matchOptions.items():
-                try:
-                    curConf, option = getCurConfigAndOption(config, key)
-                    configData = json.loads(curConf.data)
-                    if (option in configData.keys() and 
-                        (value == configData[option] or value == None)):
-                        doesMatch = True
-                    else:
-                        doesMatch = False
-                        break
-                # an exception might occur if we try to 
-                # find a subconfig that doesn't exist
-                except:
-                    doesMatch = False
-                    break
-
-            if doesMatch:
-                filterConfigsByMatchOptions.append(config)
-        configs = filterConfigsByMatchOptions
-
-    if 'option' in query.keys():
+    if 'option' in query:
         options = query['option']
     else:
         options = False
@@ -370,7 +320,7 @@ def post_queryMasterConfig(request):
 
     for config in configs:
         if options:
-            curConf, option = getCurConfigAndOption(config, options)
+            curConf, option = follow_options_path(config, options)
             curConfData = json.loads(curConf.data)
             value = curConfData[option]
 
@@ -384,12 +334,12 @@ def post_queryMasterConfig(request):
             curConf = config
             curConfData = json.loads(curConf.data)
 
-        if 'add_options' in query.keys():
+        if 'add_options' in query:
             for k, v in query['add_options'].items():
                 curConfData[k] = v
                 result['added'].append({k:v})
 
-        if 'del_options' in query.keys():
+        if 'del_options' in query:
             for opt in query['del_options']:
                 try:
                     result['deleted'].append({opt:curConfData.pop(opt)})
@@ -402,11 +352,77 @@ def post_queryMasterConfig(request):
             curConf.data = json.dumps(curConfData)
 
     #TODO: maybe just do this if it is necessary
-    updateDeviceConfig(masterConfig)
+    updateDeviceConfig(master_config)
 
     return result
 
-def getCurConfigAndOption(config, options):
+def filter_configs(configs, query):
+    if 'package' in query:
+        package = query['package']
+        configs = filter_configs_by_package(configs, package)
+
+    if 'name' in query:
+        name = query['name']
+        configs = filter_configs_by_name(configs, name)
+
+    if 'type' in query:
+        type = query['type']
+        configs = filter_configs_by_type(configs, type)
+
+    if 'matchOptions' in query:
+        match_options = query['matchOptions']
+        configs = filter_configs_by_match_options(configs, match_options)
+
+    return configs
+
+def filter_configs_by_package(configs, package):
+    result = []
+    for config in configs:
+        if config.package == package:
+            result.append(config)
+    return result
+
+def filter_configs_by_name(configs, name):
+    result = []
+    for config in configs:
+        if config.name == name:
+            result.append(config)
+    return result
+
+def filter_configs_by_type(configs, type):
+    result = []
+    for config in configs:
+        configData = json.loads(config.data)
+        if configData['.type'] == type:
+            result.append(config)
+    return result
+
+def filter_configs_by_match_options(configs, match_options):
+    result = []
+
+    for config in configs:
+        doesMatch = False
+        for key, value in  matchOptions.items():
+            try:
+                curConf, option = follow_options_path(config, key)
+                configData = json.loads(curConf.data)
+                if (option in configData.keys() and 
+                    (value == configData[option] or value == None)):
+                    doesMatch = True
+                else:
+                    doesMatch = False
+                    break
+            # an exception might occur if we try to 
+            # find a subconfig that doesn't exist
+            except:
+                doesMatch = False
+                break
+        if doesMatch:
+            result.append(config)
+
+    return result
+
+def follow_options_path(config, options):
     curConf = config
     optionList = options.split('.')
     option = optionList[-1]
@@ -414,3 +430,30 @@ def getCurConfigAndOption(config, options):
     for i in range(len(optionList)-1):
         curConf = curConf.getLinkByName(optionList[i]).to_config[0]
     return curConf, option
+
+def config_to_path(config):
+    # TODO: handle multiple links?
+    path = "." + config.name + ' (' + config.get_type() + ')'
+    while config.from_links:
+        path += "." + config.from_links[0].data
+        config = config.from_links[0].from_config[0]
+        path += "." + config.name + ' (' + config.get_type() + ')'
+
+    return path[1:]
+
+masterConfNodeInfo = Service(name='MasterConfNodeInfo',
+                             path='/masterConfigNodeInfo/{NODE}',
+                             description='get node data')
+
+@masterConfNodeInfo.get()
+def get_master_conf_node_info(request):
+    node = request.matchdict['NODE']
+    print(node)
+
+    if node[0] == 'l':
+        link = DBSession.query(ConfigurationLink).get(node[1:])
+        return {"link": link.data}
+
+    if node[0] == 'c':
+        conf = DBSession.query(Configuration).get(node[1:])
+        return {"conf": json.loads(conf.data)}

@@ -359,10 +359,14 @@ class Configuration(Base):
     def __init__(self, id):
         self.id = id
 
+    # TODO: handle multiple links?
     def getLinkByName(self, name):
         for link in self.to_links:
             if link.data == name:
                 return link
+
+    def get_type(self):
+        return json.loads(self.data)['.type']
 
 class ConfigurationLink(Base):
     __tablename__ = "Links"
