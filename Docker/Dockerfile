@@ -42,7 +42,7 @@ RUN if ! $USE_DNSMASQ; then sed -i '/dnsmasq/s/^/#/g' /etc/supervisor/conf.d/sup
 RUN if ! $USE_NGINX; then sed -i '/nginx/s/^/#/g' /etc/supervisor/conf.d/supervisord.conf; fi
 
 # Change port to 80 if using NGINX
-RUN if ! $USE_NGINX; then sed -i '/s/6543/80/g' /etc/avahi/services/openwifi.service; fi
+RUN if $USE_NGINX; then sed -i 's/6543/80/g' /etc/avahi/services/openwifi.service; fi
 
 # Dnsmasq
 RUN if $USE_DNSMASQ; then apt-get install -y dnsmasq; fi
