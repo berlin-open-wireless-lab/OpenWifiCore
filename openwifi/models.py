@@ -163,6 +163,9 @@ class OpenWrt(Base):
             capabilities.append(cap)
             self.capabilities = json.dumps(capabilities)
 
+    def get_capabilities(self):
+        return json.loads(self.capabilities)
+
 user2access = Table('user2access', Base.metadata,
     Column('user_id', Text, ForeignKey('users.id')),
     Column('access_id', Text, ForeignKey('nodeAccess.id'))

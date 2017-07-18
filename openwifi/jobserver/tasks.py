@@ -36,7 +36,11 @@ app.conf.CELERYBEAT_SCHEDULE = {
         'schedule': datetime.timedelta(seconds=30),
         'args': ()
     },
-
+    'update-capabilities-and-config-every-30-seconds': {
+        'task': 'openwifi.jobserver.tasks.update_capabilities_and_config',
+        'schedule': datetime.timedelta(seconds=30),
+        'args': ()
+    },
 }
 
 app.conf.CELERY_TIMEZONE = 'UTC'
@@ -357,7 +361,12 @@ def exec_on_device(uuid, cmd, prms):
     return ans
 
 @app.task
-def update_capabilties():
+def update_capabilities_and_config():
+    update_capabilities()
+    update_services_config_on_node()
+
+@app.task
+def update_capabilities():
     DBSession = get_sql_session()
     from openwifi.models import Service
 
@@ -371,10 +380,11 @@ def update_capabilties():
             args = ['-c', service.capability_script]
 
             ans = exec_on_device(uuid, cmd, args)
-            stdout = ans['result'][1]['stdout']
+            stdout = ans[1]['stdout']
 
             if stdout == service.capability_match:
                 device.add_capability(service.name)
+                DBSession.commit()
 
 @app.task
 def update_services_config_on_node():
@@ -384,14 +394,18 @@ def update_services_config_on_node():
 
     for device in devices:
         capabilities = json.loads(device.capabilities)
-        for capability in device.capabilities:
+        for capability in device.get_capabilities():
             assoc_service = DBSession.query(Service).filter(Service.name == capability).first()
             if assoc_service:
                 update_service_config_on_node(assoc_service, device)
+                DBSession.commit()
 
-# TODO implement query update
 def update_service_config_on_node(service, node):
-    pass
+    master_config = node.masterconf
+
+    from openwifi.dbHelper import query_master_config
+    for query in service.get_queries():
+        query_master_config(query, master_config)
 
 def get_wifi_devices_via_jsonubus(js):
     wifi_devices = js.call('iwinfo', 'devices')
