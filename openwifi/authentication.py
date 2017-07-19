@@ -6,8 +6,6 @@ user_pwd_context = CryptContext()
 
 def auth_not_used(request):
     settings = request.registry.settings
-    print(settings['openwifi.useLDAP'])
-    print(settings['openwifi.useAuth'])
     return settings['openwifi.useLDAP'] == 'false' and \
            settings['openwifi.useAuth'] == 'false'
 
@@ -23,6 +21,9 @@ def get_nodes(request):
 
     if auth_not_used(request):
        return DBSession.query(OpenWrt)
+
+    # if nothing else was found -> expect no nodes
+    return []
 
 def get_nodes_of_user_or_api_key(user_apikey):
     nodes = []

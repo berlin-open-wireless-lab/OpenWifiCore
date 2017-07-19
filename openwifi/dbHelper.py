@@ -196,6 +196,26 @@ def device_get_config_graph(request, uuid):
 
 from cornice import Service
 
+# just checks if the master config is assigned to node that is accessible by the user/apikey
+# TODO: add more security and check if sane parameters are used
+def validate_masterconfig(request, **kwargs):
+    mconfID = request.matchdict['ID']
+    masterConfig = DBSession.query(MasterConfiguration).get(mconfID)
+
+    request.masterConfig = masterConfig
+
+    if user_is_not_allowed_to_user_master_config(request, masterConfig):
+        request.errors.add('', 'access dienied', 'user is not allowed to change this master config')
+
+def user_is_not_allowed_to_user_master_config(request, maserconf):
+    from openwifi.authentication import get_nodes
+    nodes = get_nodes(request)
+
+    if all(ow in nodes for ow in masterConfig.openwrt):
+        return False
+    else:
+        return True
+
 parseDB = Service(name='parseDB',
                   path='/parse/{UUID}',
                   description='parseNodeWithUUID',
@@ -237,6 +257,9 @@ listMasterConfigs = Service(name='ListMasterConfigs',
 def get_listMasterConfigs(request):
     result = []
     for mconfig in DBSession.query(MasterConfiguration):
+        if user_is_not_allowed_to_user_master_config(request, mconfig):
+            continue
+
         temp = {}
         temp["id"] = mconfig.id
         temp["assoc"] = []
@@ -247,7 +270,8 @@ def get_listMasterConfigs(request):
 
 manageMasterConfig = Service(name='ManageMasterConfig',
                              path='/masterConfig/{ID}',
-                             description='manage given MasterConig')
+                             description='manage given MasterConig',
+                             validators=(validate_masterconfig,))
 
 @manageMasterConfig.get()
 def get_manageMasterConfig(request):
@@ -269,7 +293,8 @@ def delete_manageMasterConfig(request):
 
 masterConfigJSON = Service(name='MasterConfigJSON',
                            path='/masterConfig/{ID}/json',
-                           description='print given MasterConig as json')
+                           description='print given MasterConig as json',
+                           validators=(validate_masterconfig,))
 
 @masterConfigJSON.get()
 def getMasterConfigJSON(request):
@@ -281,7 +306,8 @@ def getMasterConfigJSON(request):
 
 queryMasterConfig = Service(name='QueryMasterConfig',
                             path='/masterConfig/{ID}/query',
-                            description='get an option key of a masterConfig')
+                            description='get an option key of a masterConfig',
+                            validators=(validate_masterconfig,))
 
 @queryMasterConfig.get()
 def get_queryMasterConfig(request):
@@ -295,15 +321,11 @@ def get_queryMasterConfig(request):
              'del_options' : 'optional list of options to remove'}
     return usage
 
-# TODO: add validator
 @queryMasterConfig.post()
 def post_queryMasterConfig(request):
     query = request.json_body
 
-    mconfID = request.matchdict['ID']
-    masterConfig = DBSession.query(MasterConfiguration).get(mconfID)
-
-    return query_master_config(query, masterConfig)
+    return query_master_config(query, request.masterConfig)
 
 def query_master_config(query, master_config):
     configs = master_config.configurations
@@ -441,19 +463,36 @@ def config_to_path(config):
 
     return path[1:]
 
-masterConfNodeInfo = Service(name='MasterConfNodeInfo',
-                             path='/masterConfigNodeInfo/{NODE}',
-                             description='get node data')
-
-@masterConfNodeInfo.get()
-def get_master_conf_node_info(request):
+def validate_config_node_access(request, **kwargs):
     node = request.matchdict['NODE']
-    print(node)
 
     if node[0] == 'l':
         link = DBSession.query(ConfigurationLink).get(node[1:])
-        return {"link": link.data}
+        if user_is_not_allowed_to_user_master_config(request, link.masterconf):
+            request.error.add('', 'access denied', 'access to this master config was denied')
+            return
+
+        result = {"link": link.data}
 
     if node[0] == 'c':
         conf = DBSession.query(Configuration).get(node[1:])
-        return {"conf": json.loads(conf.data)}
+        if user_is_not_allowed_to_user_master_config(request, conf.masterconf):
+            request.error.add('', 'access denied', 'access to this master config was denied')
+            return
+
+        result = {"conf": json.loads(conf.data)}
+
+    if not result:
+        request.error.add('querystring', 'not found', "couldn't find a matching node")
+
+    request.nodeData = result
+
+
+masterConfNodeInfo = Service(name='MasterConfNodeInfo',
+                             path='/masterConfigNodeInfo/{NODE}',
+                             description='get node data',
+                             validators=(validate_config_node_access,))
+
+@masterConfNodeInfo.get()
+def get_master_conf_node_info(request):
+    return request.nodeData
