@@ -2,11 +2,12 @@
 
 if [ -n "$OPENWIFI_UID" ]; then
     usermod -u $OPENWIFI_UID openwifi
+    chown openwifi:openwifi /home/openwifi
 fi
 
 if [ ! -e /OpenWifi/setup.py ] && [ ! -e /home/openwifi/OpenWifi ]; then
     /DockerInstall/install_openwifi.sh
-    return false
+    return 1
 fi
 
 if [ -e /home/openwifi/OpenWifi ]; then
@@ -21,5 +22,5 @@ if [ -e /home/openwifi/OpenWifi ]; then
 else
         su openwifi -c"ln -s /OpenWifi /home/openwifi/OpenWifi"
         su openwifi -c". /home/openwifi/venv/bin/activate; cd /home/openwifi/OpenWifi; python setup.py develop; initialize_openwifi_db development.ini"
-        return false
+        return 2
 fi
