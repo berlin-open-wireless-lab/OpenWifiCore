@@ -35,6 +35,14 @@ def get_nodes_of_user_or_api_key(user_apikey):
 
     return nodes
 
+def get_access_list(request):
+    if request.user:
+        return request.user.access
+    if request.apikey:
+        return request.apikey.access
+
+    return []
+
 def get_node_by_request(request):
 
     if 'UUID' in request.matchdict:

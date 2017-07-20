@@ -291,6 +291,201 @@ def delete_manageMasterConfig(request):
 
     return True
 
+# assumes that the user has access for all nodes assinged to the master config
+# (this is checked by vildate_masterconfig
+def validate_masterconfig_query(request, **kwargs):
+    from openwifi.authentication import get_access_list
+
+    accesses = get_access_list(request)
+    if not access:
+        request.error.add('', 'access denied', 'no access lists have been found for user/apikey')
+        return
+
+    nodes_using_master_conf = request.masterConfig.openwrt
+    accesses_for_this_mconf = filter(lambda a: any(n in nodes_using_master_conf for n in a.nodes), accesses)
+
+    composed_access = find_most_strict_access_rule(accesses_for_this_mconf)
+
+    query = request.json_body
+    queries = get_querys_of_access(composed_access)
+
+    if query in queries:
+        return
+
+    pathes = get_access_pathes_with_rights(composed_access)
+
+    configs = master_config.configurations
+    configs = filter_configs(configs, query)
+
+    configs_were_removed = False
+    still_accessible_configs = configs.copy()
+    
+    for config in configs:
+        config_path = config_to_path(config)
+        found_match = False
+        for path, rights in pathes.items():
+            if pathes_are_equal_or_superset(path, config_path, regex=True):
+                found_match = True
+                break
+        if (not found_match) or \
+           (found_match and \
+               (rights == 'none' or \
+               (rights == 'ro' and 'set' in query))):
+            configs_were_removed = True
+            still_accessible_configs.remove(config)
+
+    if configs and (not still_accessible_configs):
+        request.error.add('', 'access denied', 'no access to any of the matching configs')
+
+    request.still_accessible_configs = still_accessible_configs
+    request.configs_were_removed = configs_were_removed
+
+# find the most strict access rule of a given set of rules
+# deny access if there are non overlapping access rules
+def find_most_strict_access_rule(accesses):
+    cur_data = []
+    overlapping_pathes = []
+    querys = []
+
+    for access in accesses:
+        data = json.loads(access.data)
+        for d in data:
+            if contains_only_querys(d):
+                querys.extend(d)
+                overlapping_pathes = None
+                continue
+            if overlapping_pathes == None:
+                querys.extend(get_querys_of_access(d))
+                continue
+
+            if overlapping_pathes == []:
+                pathes = get_access_pathes_with_rights(d)
+                overlapping_pathes.extend(pathes)
+            else:
+                # find max overlapping pathes
+                pathes = get_access_pathes_with_rights(d)
+                forward_matches = get_matching_pathes(overlapping_pathes, pathes)
+                backward_matches = get_matching_pathes(pathes, overlapping_pathes)
+
+                # if no common pathes -> pathes will be empty
+                if not (forward_matches and backward_matches):
+                    overlapping_pathes = None
+                    continue
+
+                # if just some match -> add deeper path with lowest rights (rw > ro > none)
+                # except for none add just the  path with none
+
+                overlapping_pathes = []
+                add_pathes_from_matches(forward_matches, overlapping_pathes)
+                add_pathes_from_matches(backward_matches, overlapping_pathes)
+
+    result = querys
+    result.extend(pathdict_to_access(overlapping_pathes))
+
+    return result
+
+def add_pathes_from_matches(matches, overlapping_pathes):
+    for path, match in matches.items():
+        superpath = match['superset'][0]
+        superrights = match['superset'][1]
+        rights = match['rights']
+
+        # we want to get the deepest path in both directions (forward, backward)
+        if superpath in overlapping_pathes:
+            overlapping_pathes.pop(superpath)
+
+        if rights == 'none' and rights == superrights:
+            overlapping_pathes[path] = 'none'
+            overlapping_pathes[superpath] = 'none'
+        elif rights == 'none':
+            overlapping_pathes[path] = 'none'
+        elif superrights == 'none':
+            overlapping_pathes[superpath] = 'none'
+        else:
+            overlapping_pathes[path] = get_lowest_rights(superrights, rights)
+
+def contains_only_querys(access_data):
+    for ad in access_data:
+        if ad['type'] != "query":
+            return False
+    return True
+
+def get_querys_of_access(access_data):
+    queries = {}
+    for ad in access_data:
+        if ad['type'] == 'query':
+            queries.append(ad['query'])
+    return queries
+
+def get_access_pathes_with_rights(access_data):
+    """ returns pathes of access data as a dict
+        with the path as key and the rights as 
+        value """
+    pathes = {}
+    for ad in access_data:
+        if ad['type'] == 'pathstring':
+            pathes[ad['string']] = ad['access']
+    return pathes
+
+def get_lowest_rights(rights1, rights2):
+    right_order = {'rw': 3, 'ro': 2, 'none': 1}
+    if right_order[rights1] > right_order[rights2]:
+        return rights2
+    else:
+        return rights1
+
+def get_matching_pathes(pathlist1, pathlist2):
+    match = {}
+
+    for path1 in pathlist1:
+        for path2 in pathlist2:
+            if pathes_are_equal_or_superset(path1, path2):
+                match[path2] = {"rights": pathlist2[path2], 
+                                "superset": (path1, pathlist1[path1])}
+    return match
+
+def pathes_are_equal_or_superset(ref_path, comp_path, regex=False):
+    """
+    assumes that first path is the reference path and 
+    """
+    ref_path_split = split_path(ref_path)
+    comp_path_split = split_path(comp_path)
+
+    if len(path1_split) > len(path2_split):
+        return False
+
+    i = 0
+    # TODO: use greenery (https://github.com/qntm/greenery) for comparing
+    for part in ref_path_split:
+        if regEx:
+            import re
+            if not re.match(part, comp_path_split[i]):
+                return False
+        else:
+            if part != comp_path_split[i]:
+                return False
+        i += 1
+
+    return True
+
+def split_path(path):
+    split =  path.split(').')
+    for i in range(len(split)-1):
+        split[i] += ')'
+    return split
+
+def pathdict_to_access(pathdict):
+    result = []
+
+    for path, rights in pathdict.items():
+        new_access = {}
+        new_access['type'] = 'pathstring'
+        new_access['string'] = path
+        new_access['access'] = rights
+        result.append(new_access)
+
+    return result
+
 masterConfigJSON = Service(name='MasterConfigJSON',
                            path='/masterConfig/{ID}/json',
                            description='print given MasterConig as json',
@@ -325,11 +520,18 @@ def get_queryMasterConfig(request):
 def post_queryMasterConfig(request):
     query = request.json_body
 
-    return query_master_config(query, request.masterConfig)
+    if request.configs_were_removed:
+        result = query_master_config(query, request.masterConfig, 
+                                     configs = request.still_accessible_configs)
+        result['info'] = 'configs were removed'
+        return result
+    else:
+        return query_master_config(query, request.masterConfig)
 
-def query_master_config(query, master_config):
-    configs = master_config.configurations
-    configs = filter_configs(configs, query)
+def query_master_config(query, master_config, configs=None):
+    if configs ==  None:
+        configs = master_config.configurations
+        configs = filter_configs(configs, query)
 
     if 'option' in query:
         options = query['option']
@@ -457,7 +659,7 @@ def config_to_path(config):
     # TODO: handle multiple links?
     path = "." + config.name + ' (' + config.get_type() + ')'
     while config.from_links:
-        path += "." + config.from_links[0].data
+        path += "." + config.from_links[0].data + ' (OPENWIFI_LINK)'
         config = config.from_links[0].from_config[0]
         path += "." + config.name + ' (' + config.get_type() + ')'
 
