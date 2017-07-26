@@ -35,6 +35,8 @@ class service_api:
         new_service = Service(name, queries, capability_script, capability_match)
         DBSession.add(new_service)
 
+        return new_service.id
+
     @view(validators=('validate_request','validate_any_arguments'))
     def post(self):
         post_data = self.request.json_body
@@ -47,6 +49,11 @@ class service_api:
             self.service.capability_script = post_data['capability_script']
         if 'capability_match' in post_data:
             self.service.capability_match = post_data['capability_match']
+
+    @view(validators=('validate_request',)
+    def delete(self):
+        DBSession.delete(self.service)
+        return True
 
     def validate_all_arguments(self, request, **kw):
         if not all(i in request.json_body for i in self.arguments):
