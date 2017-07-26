@@ -50,7 +50,7 @@ class service_api:
         if 'capability_match' in post_data:
             self.service.capability_match = post_data['capability_match']
 
-    @view(validators=('validate_request',)
+    @view(validators=('validate_request',))
     def delete(self):
         DBSession.delete(self.service)
         return True
