@@ -169,10 +169,13 @@ class OpenWifiAuthPolicy(CallbackAuthenticationPolicy):
         if userid == 'group:client_side':
             groups.append('group:client_side')
 
+        print(get_nodes(request))
         from openwifi import node_context
         if type(request.context) == node_context:
+            print('BLA')
             nodes = get_nodes(request)
             for node in nodes:
+                print(str(node.uuid))
                 groups.append('node:'+str(node.uuid))
 
         return groups

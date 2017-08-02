@@ -36,6 +36,7 @@ class RootFactory(object):
 class node_context(RootFactory):
     def __init__(self, request):
         super().__init__(request)
+        print('node context called')
 
         uuid = None
 
@@ -89,7 +90,7 @@ def main(global_config, **settings):
 
     config.scan()
 
-    registerDatabaseListeners()
+    registerDatabaseListeners(settings)
 
     # Add plugin Views
     for entry_point in iter_entry_points(group='OpenWifi.plugin', name="addPluginRoutes"):
@@ -158,7 +159,7 @@ def setupLDAP(config, settings):
         scope=ldap3.SEARCH_SCOPE_WHOLE_SUBTREE,
         cache_period=600)
 
-def registerDatabaseListeners():
+def registerDatabaseListeners(settings):
     from sqlalchemy import event
     from openwifi.models import OpenWrt
     
@@ -166,8 +167,10 @@ def registerDatabaseListeners():
     def listenConf(target, value, oldvalue, initiator):
         from openwifi.dbHelper import updateMasterConfig
         updateMasterConfig(target, value)
-        from openwifi.jobserver.tasks import update_config
-        update_config.delay(target.uuid)
+
+        if settings['openwifi.offline'] != 'true':
+            from openwifi.jobserver.tasks import update_config
+            update_config.delay(target.uuid)
 
 def init_auth(config, settings):
     user_pwd_context.load_path(os.path.dirname(__file__) + os.sep + ".." + os.sep + "crypt.ini")

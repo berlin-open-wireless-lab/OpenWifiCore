@@ -217,3 +217,49 @@ class userModTest(unittest.TestCase):
         usersAfter = json.loads(resp.text)
 
         self.assertEqual(usersAfter, usersBefore)
+
+class fine_grained_access_test(unittest.TestCase):
+    def setUp(self):
+        from openwifi import main
+        from webtest import TestApp
+        self.config = testing.setUp()
+        from sqlalchemy import create_engine
+        import os
+
+        from .models import (
+                Base,
+                DBSession,
+                )
+
+        ROOT_PATH = os.path.dirname(__file__)
+        settings = appconfig('config:' + os.path.join(ROOT_PATH, 'test.ini'))
+        settings['openwifi.useAuth'] = 'true'
+        settings['openwifi.offline'] = 'true'
+        print(settings)
+        self.app = main({}, **settings)
+        self.app = TestApp(self.app)
+
+        self.app.post_json('/login', {'login':'admin', 'password':'admin'})
+        resp = self.app.get('/users')
+        self.admin_id = json.loads(resp.text)['admin']
+        self.app.post_json('/access', {'access_all_nodes': True, 'userid': self.admin_id})
+
+        example_config_path = os.path.join(ROOT_PATH, 'tests', 'exampleConfig.json')
+        example_config = open(example_config_path).read()
+        new_node_dict = {'name':'testnode',
+                         'address':'localhost',
+                         'distribution':'none',
+                         'version':'none',
+                         'login':'none',
+                         'password':'none'}
+
+        resp = self.app.post_json('/nodes', new_node_dict)
+        print(resp)
+        node_id = json.loads(resp.text)
+        self.app.post_json('/nodes/'+node_id, {'configuration':example_config})
+    
+    def test(self):
+        pass
+
+    def tearDown(self):
+        testing.tearDown()
