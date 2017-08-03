@@ -166,20 +166,18 @@ def registerDatabaseListeners(settings):
     from sqlalchemy import event
     from openwifi.models import OpenWrt
     
-    if 'openwifi.offline' not in settings or \
-       settings['openwifi.offline'] != 'true':
-        @event.listens_for(OpenWrt.configuration, 'set')
-        def listenConf(target, value, oldvalue, initiator):
-            from openwifi.dbHelper import updateMasterConfig
-            updateMasterConfig(target, value)
+    @event.listens_for(OpenWrt.configuration, 'set')
+    def listenConf(target, value, oldvalue, initiator):
+        from openwifi.dbHelper import updateMasterConfig
+        updateMasterConfig(target, value)
 
+        print("SETTINGS")
+        print(settings)
+        print("ENDSETTINGS")
+        if 'openwifi.offline' not in settings or \
+           settings['openwifi.offline'] != 'true':
             from openwifi.jobserver.tasks import update_config
             update_config.delay(target.uuid)
-    else:
-        @event.listens_for(OpenWrt.configuration, 'set')
-        def listenConf(target, value, oldvalue, initiator):
-            from openwifi.dbHelper import updateMasterConfig
-            updateMasterConfig(target, value)
 
 def init_auth(config, settings):
     user_pwd_context.load_path(os.path.dirname(__file__) + os.sep + ".." + os.sep + "crypt.ini")

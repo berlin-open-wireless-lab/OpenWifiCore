@@ -14,15 +14,19 @@ install:
   - pip install coverage
   - pip install requests
   - "python setup.py develop"
-  - cd Docker
-  - ./build_image.sh
-  - docker login -u="$DOCKER_USERNAME" -p="$DOCKER_PASSWORD"
-  - docker tag openwifiimage openwifi/openwificore
-  - docker push openwifi/openwificore
-  - ./build_image_with_nginx.sh
-  - docker tag openwifiimagenginx openwifi/openwificore_nginx
-  - docker push openwifi/openwificore_nginx
-  - cd ..
+  - 'if [ ${TRAVIS_BRANCH} == "master" ]; then
+        cd Docker
+        ./build_image.sh
+        docker login -u="$DOCKER_USERNAME" -p="$DOCKER_PASSWORD"
+        docker tag openwifiimage openwifi/openwificore
+        docker push openwifi/openwificore
+        ./build_image_with_nginx.sh
+        docker tag openwifiimagenginx openwifi/openwificore_nginx
+        docker push openwifi/openwificore_nginx
+        cd ..
+    else
+        docker pull openwifi/openwificore
+    fi'
 
 script:
   - "python setup.py nosetests"
