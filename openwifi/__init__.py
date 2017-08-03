@@ -24,14 +24,18 @@ from pkg_resources import iter_entry_points
 
 class RootFactory(object):
     def __init__(self, request):
-        self.__acl__ = [(Allow, Authenticated, 'view')]
-        self.__acl__.append((Allow, 'group:admin', 'addUsers'))
-        self.__acl__.append((Allow, 'group:admin', 'viewUsers'))
-        self.__acl__.append((Allow, 'group:admin', 'modUsers'))
-        self.__acl__.append((Allow, 'group:admin', 'modUsers'))
-        self.__acl__.append((Allow, 'group:admin', 'control_access'))
-        self.__acl__.append((Allow, 'group:client_side', 'node_add'))
-        self.__acl__.append((Allow, 'group:admin', 'node_add'))
+        from openwifi.authentication import auth_not_used
+        if auth_not_used(request):
+            __acl__ = [(Allow, Everyone, ('view', 'node_access', 'node_add'))]
+        else:
+            self.__acl__ = [(Allow, Authenticated, 'view')]
+            self.__acl__.append((Allow, 'group:admin', 'addUsers'))
+            self.__acl__.append((Allow, 'group:admin', 'viewUsers'))
+            self.__acl__.append((Allow, 'group:admin', 'modUsers'))
+            self.__acl__.append((Allow, 'group:admin', 'modUsers'))
+            self.__acl__.append((Allow, 'group:admin', 'control_access'))
+            self.__acl__.append((Allow, 'group:client_side', 'node_add'))
+            self.__acl__.append((Allow, 'group:admin', 'node_add'))
 
 class node_context(RootFactory):
     def __init__(self, request):
