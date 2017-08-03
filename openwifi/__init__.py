@@ -168,7 +168,8 @@ def registerDatabaseListeners(settings):
         from openwifi.dbHelper import updateMasterConfig
         updateMasterConfig(target, value)
 
-        if settings['openwifi.offline'] != 'true':
+        if 'openwifi.offline' not in settings or \
+           settings['openwifi.offline'] != 'true':
             from openwifi.jobserver.tasks import update_config
             update_config.delay(target.uuid)
 
