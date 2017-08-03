@@ -162,19 +162,35 @@ def setupLDAP(config, settings):
         scope=ldap3.SEARCH_SCOPE_WHOLE_SUBTREE,
         cache_period=600)
 
+def listen_conf(target, value, oldvalue, initiator):
+    from openwifi.dbHelper import updateMasterConfig
+    updateMasterConfig(target, value)
+
+def listen_conf_and_update(target, value, oldvalue, initiator):
+    listen_conf(target, value, oldvalue, initiator)
+
+    from openwifi.jobserver.tasks import update_config
+    update_config.delay(target.uuid)
+
 def registerDatabaseListeners(settings):
     from sqlalchemy import event
     from openwifi.models import OpenWrt
-    
-    @event.listens_for(OpenWrt.configuration, 'set')
-    def listenConf(target, value, oldvalue, initiator):
-        from openwifi.dbHelper import updateMasterConfig
-        updateMasterConfig(target, value)
 
-        if 'openwifi.offline' not in settings or \
-           settings['openwifi.offline'] != 'true':
-            from openwifi.jobserver.tasks import update_config
-            update_config.delay(target.uuid)
+
+    try:
+        event.remove(OpenWrt.configuration, 'set', listen_conf)
+    except:
+        pass
+    try:
+        event.remove(OpenWrt.configuration, 'set', listen_conf_and_update)
+    except:
+        pass
+    
+    if 'openwifi.offline' not in settings or \
+       settings['openwifi.offline'] != 'true':
+        event.listen(OpenWrt.configuration, 'set', listen_conf_and_update)
+    else:
+        event.listen(OpenWrt.configuration, 'set', listen_conf)
 
 def init_auth(config, settings):
     user_pwd_context.load_path(os.path.dirname(__file__) + os.sep + ".." + os.sep + "crypt.ini")

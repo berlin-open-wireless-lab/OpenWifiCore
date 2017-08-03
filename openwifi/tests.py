@@ -224,6 +224,9 @@ class fine_grained_access_test(unittest.TestCase):
         from webtest import TestApp
         self.config = testing.setUp()
         from sqlalchemy import create_engine
+        from openwifi.models import DBSession
+        DBSession.close_all()
+
         import os
 
         from .models import (

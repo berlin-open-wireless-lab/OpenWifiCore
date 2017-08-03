@@ -21,6 +21,7 @@ from openwifi.utils import diffChanged
 
 @celeryd_after_setup.connect
 def setup_register_database_listeners(sender, instance, **kwargs):
+    print("RUNNING DATABASE LISTENER from CELERY")
     registerDatabaseListeners({})
 
 app = Celery('tasks', backend="redis://"+redishost, broker=brokerurl)
