@@ -26,7 +26,7 @@ class RootFactory(object):
     def __init__(self, request):
         from openwifi.authentication import auth_not_used
         if auth_not_used(request):
-            __acl__ = [(Allow, Everyone, ('view', 'node_access', 'node_add'))]
+            self.__acl__ = [(Allow, Everyone, ('view', 'node_access', 'node_add'))]
         else:
             self.__acl__ = [(Allow, Authenticated, 'view')]
             self.__acl__.append((Allow, 'group:admin', 'addUsers'))
@@ -40,7 +40,6 @@ class RootFactory(object):
 class node_context(RootFactory):
     def __init__(self, request):
         super().__init__(request)
-        print('node context called')
 
         uuid = None
 
