@@ -107,6 +107,8 @@ class deviceDetectAndRegisterTest(unittest.TestCase):
     def setUp(self):
         import docker
         import os.path
+        import os
+        running_user_id = os.getuid()
         
         self.dockerClient = docker.from_env(version='auto')
         self.dockerClient.images.pull("openwifi/openwificore")
@@ -115,7 +117,8 @@ class deviceDetectAndRegisterTest(unittest.TestCase):
 
         self.openwifi = self.dockerClient.containers.run("openwifi/openwificore", 
                 volumes={path: {'bind': '/OpenWifi', 'mode': 'rw'}}, 
-                ports={'6543/tcp': 6543}, detach=True)
+                ports={'6543/tcp': 6543}, environment={'OPENWIFI_UID':running_user_id},\
+                      detach=True)
 
     def testRegister(self):
         import requests
@@ -146,6 +149,7 @@ class deviceDetectAndRegisterTest(unittest.TestCase):
         self.assertEqual(r.text, '["'+uuid+'"]')
 
     def tearDown(self):
+        pass
         if self.lede:
             self.lede.kill()
             self.lede.remove()
