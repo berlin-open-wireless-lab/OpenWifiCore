@@ -13,7 +13,10 @@ def get_nodes(request):
     try:
         if request.user:
             return get_nodes_of_user_or_api_key(request.user)
+    except AttributeError:
+        pass
 
+    try:
         if request.apikey:
             return get_nodes_of_user_or_api_key(request.apikey)
     except AttributeError:
@@ -169,13 +172,10 @@ class OpenWifiAuthPolicy(CallbackAuthenticationPolicy):
         if userid == 'group:client_side':
             groups.append('group:client_side')
 
-        print(get_nodes(request))
         from openwifi import node_context
         if type(request.context) == node_context:
-            print('BLA')
             nodes = get_nodes(request)
             for node in nodes:
-                print(str(node.uuid))
                 groups.append('node:'+str(node.uuid))
 
         return groups

@@ -141,7 +141,7 @@ class deviceDetectAndRegisterTest(unittest.TestCase):
             time.sleep(2)
         
         self.lede.exec_run('/etc/init.d/openwifi-boot-notifier restart')
-        time.sleep(10)
+        time.sleep(30)
 
         r = requests.get('http://localhost:6543/nodes')
 
@@ -223,7 +223,8 @@ class userModTest(unittest.TestCase):
         self.assertEqual(usersAfter, usersBefore)
 
 class fine_grained_access_test(unittest.TestCase):
-    def setUp(self):
+    @classmethod
+    def setUpClass(self):
         from openwifi import main
         from webtest import TestApp
         self.config = testing.setUp()
@@ -253,20 +254,28 @@ class fine_grained_access_test(unittest.TestCase):
 
         example_config_path = os.path.join(ROOT_PATH, 'tests', 'exampleConfig.json')
         example_config = open(example_config_path).read()
-        new_node_dict = {'name':'testnode',
-                         'address':'localhost',
-                         'distribution':'none',
-                         'version':'none',
-                         'login':'none',
-                         'password':'none'}
+        new_node_dict = {"name":"testnode",
+                         "address":"localhost",
+                         "distribution":"none",
+                         "version":"none",
+                         "login":"none",
+                         "password":"none"}
 
         resp = self.app.post_json('/nodes', new_node_dict)
-        print(resp)
         node_id = json.loads(resp.text)
+        self.node_id = node_id
         self.app.post_json('/nodes/'+node_id, {'configuration':example_config})
+        resp = self.app.get('/masterConfig')
+        master_confs = json.loads(resp.text)
+        for m in master_confs:
+            if m['assoc'] == [self.node_id]:
+                self.mconf_id = str(m['id'])
     
-    def test(self):
+    def test_query_access(self):
         pass
 
-    def tearDown(self):
+    @classmethod
+    def tearDownClass(self):
+        self.app.delete('/nodes/' + self.node_id)
+        self.app.delete('/masterConfig/' + self.mconf_id)
         testing.tearDown()

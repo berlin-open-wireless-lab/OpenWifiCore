@@ -207,11 +207,11 @@ def validate_masterconfig(request, **kwargs):
     if user_is_not_allowed_to_user_master_config(request, masterConfig):
         request.errors.add('', 'access dienied', 'user is not allowed to change this master config')
 
-def user_is_not_allowed_to_user_master_config(request, maserconf):
+def user_is_not_allowed_to_user_master_config(request, masterconf):
     from openwifi.authentication import get_nodes
     nodes = get_nodes(request)
 
-    if all(ow in nodes for ow in masterConfig.openwrt):
+    if all(ow in nodes for ow in masterconf.openwrt):
         return False
     else:
         return True
@@ -251,7 +251,8 @@ def get_delMasterConfig(request):
 
 listMasterConfigs = Service(name='ListMasterConfigs',
                            path='/masterConfig',
-                           description='list master config ids and assoc nodes')
+                           description='list master config ids and assoc nodes',
+                           permission='view')
 
 @listMasterConfigs.get()
 def get_listMasterConfigs(request):
