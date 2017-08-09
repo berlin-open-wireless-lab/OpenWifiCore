@@ -671,25 +671,26 @@ def config_to_path(config):
 
 def validate_config_node_access(request, **kwargs):
     node = request.matchdict['NODE']
+    result = None
 
     if node[0] == 'l':
         link = DBSession.query(ConfigurationLink).get(node[1:])
         if user_is_not_allowed_to_user_master_config(request, link.masterconf):
-            request.error.add('', 'access denied', 'access to this master config was denied')
+            request.errors.add('', 'access denied', 'access to this master config was denied')
             return
 
-        result = {"link": link.data}
+        result = {"link": link.data, "id": node}
 
     if node[0] == 'c':
         conf = DBSession.query(Configuration).get(node[1:])
         if user_is_not_allowed_to_user_master_config(request, conf.masterconf):
-            request.error.add('', 'access denied', 'access to this master config was denied')
+            request.errors.add('', 'access denied', 'access to this master config was denied')
             return
 
-        result = {"conf": json.loads(conf.data)}
+        result = {"conf": json.loads(conf.data), "id": node}
 
     if not result:
-        request.error.add('querystring', 'not found', "couldn't find a matching node")
+        request.errors.add('querystring', 'not found', "couldn't find a matching node")
 
     request.nodeData = result
 
