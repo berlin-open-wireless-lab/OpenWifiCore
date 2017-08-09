@@ -210,7 +210,7 @@ class ApiKey(Base):
 
 class NodeAccess(Base):
     __tablename__ = "nodeAccess"
-    data = Column(Text) # [{"type":"pathstring", "accesss":"rw/ro/none", "string":"..."},{"type":"query","query":{...}}]
+    data = Column(Text) # [{"type":"pathstring", "access":"rw/ro/none", "string":"..."},{"type":"query","query":{...}}]
     id = Column(Text, primary_key=True)
     access_all_nodes = Column(Boolean)
     nodes = relationship('OpenWrt', secondary=nodeAccess2Node, backref='node_access')
