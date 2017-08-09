@@ -54,7 +54,6 @@ class Nodes(object):
         if not openwrt:
             return False
 
-        print(self.request.body)
         modData = json.loads(self.request.body.decode())
 
         for key, value in modData.items():

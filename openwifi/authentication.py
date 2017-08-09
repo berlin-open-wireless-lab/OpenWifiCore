@@ -39,12 +39,26 @@ def get_nodes_of_user_or_api_key(user_apikey):
     return nodes
 
 def get_access_list(request):
-    if request.user:
-        return request.user.access
-    if request.apikey:
-        return request.apikey.access
+    try:
+        if request.user:
+            return request.user.access
+    except AttributeError:
+        pass
 
-    return []
+    try:
+        if request.apikey:
+            return request.apikey.access
+    except AttributeError:
+        pass
+    
+    if auth_not_used(request):
+        data = '[{"type":"pathstring", "access":"rw", "string":".*"}]'
+        access_to_everything =  NodeAccess(data)
+        for ow in DBSession.query(OpenWrt):
+            access_to_everything.nodes.append(ow)
+        return [access_to_everything]
+    else:
+        return []
 
 def get_node_by_request(request):
 

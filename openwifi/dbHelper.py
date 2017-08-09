@@ -298,7 +298,7 @@ def validate_masterconfig_query(request, **kwargs):
     from openwifi.authentication import get_access_list
 
     accesses = get_access_list(request)
-    if not access:
+    if not accesses:
         request.error.add('', 'access denied', 'no access lists have been found for user/apikey')
         return
 
@@ -310,12 +310,12 @@ def validate_masterconfig_query(request, **kwargs):
     query = request.json_body
     queries = get_querys_of_access(composed_access)
 
-    if query in queries:
+    if set(query.items()) in [set(q.items) for q in queries]:
         return
 
     pathes = get_access_pathes_with_rights(composed_access)
 
-    configs = master_config.configurations
+    configs = request.masterConfig.configurations
     configs = filter_configs(configs, query)
 
     configs_were_removed = False
@@ -336,7 +336,7 @@ def validate_masterconfig_query(request, **kwargs):
             still_accessible_configs.remove(config)
 
     if configs and (not still_accessible_configs):
-        request.error.add('', 'access denied', 'no access to any of the matching configs')
+        request.errors.add('', 'access denied', 'no access to any of the matching configs')
 
     request.still_accessible_configs = still_accessible_configs
     request.configs_were_removed = configs_were_removed
@@ -344,41 +344,41 @@ def validate_masterconfig_query(request, **kwargs):
 # find the most strict access rule of a given set of rules
 # deny access if there are non overlapping access rules
 def find_most_strict_access_rule(accesses):
-    cur_data = []
-    overlapping_pathes = []
+    overlapping_pathes = {}
     querys = []
 
     for access in accesses:
         data = json.loads(access.data)
-        for d in data:
-            if contains_only_querys(d):
-                querys.extend(d)
+
+        if access_contains_query(data):
+            querys.append(data)
+            overlapping_pathes = None
+            continue
+
+        if overlapping_pathes == None:
+            querys.extend(get_querys_of_access(data))
+            continue
+
+        if overlapping_pathes == {}:
+            pathes = get_access_pathes_with_rights(data)
+            overlapping_pathes.update(pathes)
+        else:
+            # find max overlapping pathes
+            pathes = get_access_pathes_with_rights(data)
+            forward_matches = get_matching_pathes(overlapping_pathes, pathes)
+            backward_matches = get_matching_pathes(pathes, overlapping_pathes)
+
+            # if no common pathes -> pathes will be empty
+            if not (forward_matches and backward_matches):
                 overlapping_pathes = None
                 continue
-            if overlapping_pathes == None:
-                querys.extend(get_querys_of_access(d))
-                continue
 
-            if overlapping_pathes == []:
-                pathes = get_access_pathes_with_rights(d)
-                overlapping_pathes.extend(pathes)
-            else:
-                # find max overlapping pathes
-                pathes = get_access_pathes_with_rights(d)
-                forward_matches = get_matching_pathes(overlapping_pathes, pathes)
-                backward_matches = get_matching_pathes(pathes, overlapping_pathes)
+            # if just some match -> add deeper path with lowest rights (rw > ro > none)
+            # except for none add just the  path with none
 
-                # if no common pathes -> pathes will be empty
-                if not (forward_matches and backward_matches):
-                    overlapping_pathes = None
-                    continue
-
-                # if just some match -> add deeper path with lowest rights (rw > ro > none)
-                # except for none add just the  path with none
-
-                overlapping_pathes = []
-                add_pathes_from_matches(forward_matches, overlapping_pathes)
-                add_pathes_from_matches(backward_matches, overlapping_pathes)
+            overlapping_pathes = {}
+            add_pathes_from_matches(forward_matches, overlapping_pathes)
+            add_pathes_from_matches(backward_matches, overlapping_pathes)
 
     result = querys
     result.extend(pathdict_to_access(overlapping_pathes))
@@ -405,14 +405,14 @@ def add_pathes_from_matches(matches, overlapping_pathes):
         else:
             overlapping_pathes[path] = get_lowest_rights(superrights, rights)
 
-def contains_only_querys(access_data):
+def access_contains_query(access_data):
     for ad in access_data:
         if ad['type'] != "query":
             return False
     return True
 
 def get_querys_of_access(access_data):
-    queries = {}
+    queries = []
     for ad in access_data:
         if ad['type'] == 'query':
             queries.append(ad['query'])
@@ -452,13 +452,13 @@ def pathes_are_equal_or_superset(ref_path, comp_path, regex=False):
     ref_path_split = split_path(ref_path)
     comp_path_split = split_path(comp_path)
 
-    if len(path1_split) > len(path2_split):
+    if len(ref_path_split) > len(comp_path_split):
         return False
 
     i = 0
     # TODO: use greenery (https://github.com/qntm/greenery) for comparing
     for part in ref_path_split:
-        if regEx:
+        if regex:
             import re
             if not re.match(part, comp_path_split[i]):
                 return False
@@ -477,6 +477,8 @@ def split_path(path):
 
 def pathdict_to_access(pathdict):
     result = []
+    if not pathdict:
+        return result
 
     for path, rights in pathdict.items():
         new_access = {}
@@ -503,7 +505,8 @@ def getMasterConfigJSON(request):
 queryMasterConfig = Service(name='QueryMasterConfig',
                             path='/masterConfig/{ID}/query',
                             description='get an option key of a masterConfig',
-                            validators=(validate_masterconfig,))
+                            validators=(validate_masterconfig,validate_masterconfig_query),
+                            permission='view')
 
 @queryMasterConfig.get()
 def get_queryMasterConfig(request):
