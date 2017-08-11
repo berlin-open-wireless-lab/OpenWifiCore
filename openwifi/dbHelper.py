@@ -324,6 +324,8 @@ def validate_masterconfig_query(request, **kwargs):
     still_accessible_configs = configs.copy()
     
     for config in configs:
+        # TODO: find the config that shall actually be accessed
+        # TODO: add possibility to nail it down to conf parameter
         config_path = config_to_path(config)
         found_match = False
         for path, rights in pathes.items():
@@ -698,7 +700,7 @@ def validate_config_node_access(request, **kwargs):
             request.errors.status = 403
             return
 
-        result = {"conf": json.loads(conf.data), "id": node}
+        result = {"conf": json.loads(conf.data), "id": node, "path": config_to_path(conf)}
 
     if not result:
         request.errors.add('querystring', 'not found', "couldn't find a matching node")
