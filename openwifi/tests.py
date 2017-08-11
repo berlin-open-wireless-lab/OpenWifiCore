@@ -272,7 +272,32 @@ class fine_grained_access_test(unittest.TestCase):
                 self.mconf_id = str(m['id'])
     
     def test_query_access(self):
-        pass
+        admin_cookiejar = self.app.cookiejar
+        self.app.post_json('/users', {'login':'testuser', 'password': 'testpassword'})
+
+        resp = self.app.get('/users')
+        test_user_id = json.loads(resp.text)['testuser']
+
+        allowed_query = {'name': 'lan', 'type': 'dhcp', 'option': 'interface.ifname'}
+        allowed_query_wrong = {'type': 'dhcp', 'option': 'interface.ifname'}
+        access_data = [{'type': 'query', 'query': allowed_query}]
+        self.app.post_json('/access', {'access_all_nodes': True, 'userid': test_user_id, 'data': json.dumps(access_data)})
+
+        from six.moves import http_cookiejar
+        from webtest.app import CookiePolicy
+
+        user_cookiejar =  http_cookiejar.CookieJar(policy=CookiePolicy())
+        self.app.cookiejar = user_cookiejar
+        self.app.post_json('/login', {'login':'testuser', 'password': 'testpassword'})
+        resp = self.app.post_json('/masterConfig/'+self.mconf_id+'/query', allowed_query)
+        answer = {"added": [], "values": ["eth0"], "deleted": []}
+        self.assertEqual(answer, json.loads(resp.text))
+
+        resp = self.app.post_json('/masterConfig/'+self.mconf_id+'/query', allowed_query_wrong, expect_errors=True)
+        self.assertEqual(403, resp.status_int)
+
+        self.app.cookiejar = admin_cookiejar
+        self.app.delete('/users/'+test_user_id)
 
     @classmethod
     def tearDownClass(self):

@@ -297,20 +297,23 @@ def delete_manageMasterConfig(request):
 def validate_masterconfig_query(request, **kwargs):
     from openwifi.authentication import get_access_list
 
+    request.configs_were_removed = False
+
     accesses = get_access_list(request)
     if not accesses:
         request.error.add('', 'access denied', 'no access lists have been found for user/apikey')
+        request.errors.status = 403
         return
 
     nodes_using_master_conf = request.masterConfig.openwrt
-    accesses_for_this_mconf = filter(lambda a: any(n in nodes_using_master_conf for n in a.nodes), accesses)
+    accesses_for_this_mconf = filter(lambda a: any(n in nodes_using_master_conf for n in a.nodes) or a.access_all_nodes, accesses)
 
     composed_access = find_most_strict_access_rule(accesses_for_this_mconf)
 
     query = request.json_body
     queries = get_querys_of_access(composed_access)
 
-    if set(query.items()) in [set(q.items) for q in queries]:
+    if set(query.items()) in [set(q.items()) for q in queries]:
         return
 
     pathes = get_access_pathes_with_rights(composed_access)
@@ -318,7 +321,6 @@ def validate_masterconfig_query(request, **kwargs):
     configs = request.masterConfig.configurations
     configs = filter_configs(configs, query)
 
-    configs_were_removed = False
     still_accessible_configs = configs.copy()
     
     for config in configs:
@@ -332,14 +334,14 @@ def validate_masterconfig_query(request, **kwargs):
            (found_match and \
                (rights == 'none' or \
                (rights == 'ro' and 'set' in query))):
-            configs_were_removed = True
+            request.configs_were_removed = True
             still_accessible_configs.remove(config)
 
     if configs and (not still_accessible_configs):
         request.errors.add('', 'access denied', 'no access to any of the matching configs')
+        request.errors.status = 403
 
     request.still_accessible_configs = still_accessible_configs
-    request.configs_were_removed = configs_were_removed
 
 # find the most strict access rule of a given set of rules
 # deny access if there are non overlapping access rules
@@ -351,12 +353,12 @@ def find_most_strict_access_rule(accesses):
         data = json.loads(access.data)
 
         if access_contains_query(data):
-            querys.append(data)
+            querys = get_access_type_query(data)
             overlapping_pathes = None
             continue
 
         if overlapping_pathes == None:
-            querys.extend(get_querys_of_access(data))
+            querys.extend(get_access_type_query(data))
             continue
 
         if overlapping_pathes == {}:
@@ -416,6 +418,13 @@ def get_querys_of_access(access_data):
     for ad in access_data:
         if ad['type'] == 'query':
             queries.append(ad['query'])
+    return queries
+
+def get_access_type_query(access_data):
+    queries = []
+    for ad in access_data:
+        if ad['type'] == 'query':
+            queries.append(ad)
     return queries
 
 def get_access_pathes_with_rights(access_data):
@@ -677,6 +686,7 @@ def validate_config_node_access(request, **kwargs):
         link = DBSession.query(ConfigurationLink).get(node[1:])
         if user_is_not_allowed_to_user_master_config(request, link.masterconf):
             request.errors.add('', 'access denied', 'access to this master config was denied')
+            request.errors.status = 403
             return
 
         result = {"link": link.data, "id": node}
@@ -685,6 +695,7 @@ def validate_config_node_access(request, **kwargs):
         conf = DBSession.query(Configuration).get(node[1:])
         if user_is_not_allowed_to_user_master_config(request, conf.masterconf):
             request.errors.add('', 'access denied', 'access to this master config was denied')
+            request.errors.status = 403
             return
 
         result = {"conf": json.loads(conf.data), "id": node}
