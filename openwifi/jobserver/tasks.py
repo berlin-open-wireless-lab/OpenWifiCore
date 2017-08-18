@@ -52,6 +52,13 @@ for entry_point in iter_entry_points(group='OpenWifi.plugin', name="addJobserver
     entry_function = entry_point.load()
     entry_function(app)
 
+def get_communication_classes():
+    result = []
+    for entry_point in iter_entry_points(group='OpenWifi.plugin', name='communication'):
+        result.append(entry_point.load())
+
+    return result
+
 def get_sql_session():
     engine = create_engine(sqlurl)
     session_factory = sessionmaker(bind=engine)
@@ -87,37 +94,14 @@ def return_jsonconfig_from_device(openwrt):
 
 @app.task
 def get_config(uuid):
-    try:
-        DBSession = get_sql_session()
-        device = DBSession.query(OpenWrt).get(uuid)
+    DBSession = get_sql_session()
+    device = DBSession.query(OpenWrt).get(uuid)
 
-        if device.configured:
-            newConf = return_jsonconfig_from_device(device)
+    comm_classes = get_communication_classes()
 
-            newUci = Uci()
-            newUci.load_tree(newConf)
-
-            oldUci = Uci()
-            oldUci.load_tree(device.configuration)
-
-            diff = oldUci.diff(newUci)
-
-            if diffChanged(diff):
-                device.append_diff(diff, DBSession, "download: ")
-                device.configuration = newConf
-        else:
-            device.configuration = return_jsonconfig_from_device(device)
-            device.configured = True
-
-        DBSession.commit()
-        DBSession.close()
-        return True
-    except Exception as thrownexpt:
-        print(thrownexpt)
-        device.configured = False
-        DBSession.commit()
-        DBSession.close()
-        return False
+    for cclass in comm_classes:
+        if device.communication_protocol in cclass.string_identifier_list:
+            cclass.get_config(device, DBSession)
 
 @app.task
 def archive_config(uuid):
@@ -182,28 +166,14 @@ def diff_update_config(diff, uuid):
 
 @app.task(bind=True)
 def update_config(self, uuid):
-    try:
-        DBSession = get_sql_session()
-        device = DBSession.query(OpenWrt).get(uuid)
-        new_configuration = Uci()
-        new_configuration.load_tree(device.configuration)
+    DBSession = get_sql_session()
+    device = DBSession.query(OpenWrt).get(uuid)
 
-        cur_configuration = Uci()
-        cur_configuration.load_tree(return_jsonconfig_from_device(device))
-        conf_diff = cur_configuration.diff(new_configuration)
-        changed = diffChanged(conf_diff)
+    comm_classes = get_communication_classes()
 
-        if changed:
-            diff_update_config(conf_diff, uuid)
-    except Exception as exc:
-        DBSession.commit()
-        DBSession.close()
-        raise self.retry(exc=exc, countdown=60)
-    
-    if changed:
-        device.append_diff(conf_diff, DBSession, "upload: ")
-    DBSession.commit()
-    DBSession.close()
+    for cclass in comm_classes:
+        if device.communication_protocol in cclass.string_identifier_list:
+            cclass.get_config(device, DBSession)
 
 @app.task
 def update_unconfigured_nodes():
@@ -219,17 +189,12 @@ def update_status():
     DBSession = get_sql_session()
     devices = DBSession.query(OpenWrt)
     redisDB = redis.StrictRedis(host=redishost, port=redisport, db=redisdb)
+    communication_classes = get_communication_classes()
+
     for device in devices:
-        js = get_jsonubus_from_openwrt(device)
-        try:
-            networkstatus = js.callp('network.interface','dump')
-        except OSError as error:
-            redisDB.hset(str(device.uuid), 'status', "{message} ({errorno})".format(message=error.strerror, errorno=error.errno))
-        except:
-            redisDB.hset(str(device.uuid), 'status', "error receiving status...")
-        else:
-            redisDB.hset(str(device.uuid), 'status', "online")
-            redisDB.hset(str(device.uuid), 'networkstatus', json.dumps(networkstatus['interface']))
+        for cclass in communication_classes:
+            if device.communication_protocol in cclass.string_identifier_list:
+                cclass.update_status(device, redisDB)
 
 class MetaconfWrongFormat(Exception):
     def __init__(self, value):
@@ -237,33 +202,34 @@ class MetaconfWrongFormat(Exception):
     def __str__(self):
         return repr(self.value)
 
-
 @app.task
 def update_openwrt_sshkeys(uuid):
     DBSession = get_sql_session()
     openwrt = DBSession.query(OpenWrt).get(uuid)
-    keys = ""
-    for sshkey in openwrt.ssh_keys:
-        keys = keys+'#'+sshkey.comment+'\n'
-        keys = keys+sshkey.key+'\n'
-    js = get_jsonubus_from_openwrt(openwrt)
-    keyfile='/etc/dropbear/authorized_keys'
-    js.call('file', 'write', path=keyfile, data=keys)
-    js.call('file', 'exec',command='chmod', params=['600',keyfile])
+    communication_classes = get_communication_classes()
+
+    for cclass in communication_classes:
+        if device.communication_protocol in cclass.string_identifier_list:
+            cclass.update_sshkeys(device, DBSession)
+
     DBSession.close()
 
 @app.task
 def exec_on_device(uuid, cmd, prms):
     DBSession = get_sql_session()
     openwrt = DBSession.query(OpenWrt).get(uuid)
+    ans = None
 
     if not openwrt:
         return False
 
-    js = get_jsonubus_from_openwrt(openwrt)
-    ans = js.call('file', 'exec', command=cmd, params=prms)
-    DBSession.close()
+    communication_classes = get_communication_classes()
 
+    for cclass in communication_classes:
+        if device.communication_protocol in cclass.string_identifier_list:
+            ans = cclass.exec_on_device(device, DBSession, cmd, prms)
+
+    DBSession.close()
     return ans
 
 @app.task

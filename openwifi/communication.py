@@ -3,35 +3,32 @@ from abc import ABCMeta, abstractmethod
 class OpenWifiCommunication(metaclass=ABCMeta):
 
     @property
-    @abstractmethod
+    @abstractclassmethod
     def string_identifier_list(self): pass
 
-    @abstractmethod
-    def get_config(self, device): pass
+    @abstractclassmethod
+    def get_config(self, device, DBSession): pass
 
-    @abstractmethod
-    def update_config(self, device): pass
+    @abstractclassmethod
+    def update_config(self, device, DBSession): pass
 
-    @abstractmethod
-    def update_status(self, device): pass
+    @abstractclassmethod
+    def update_status(self, device, redisDB): pass
 
-    @abstractmethod
-    def update_sshkeys(self, device): pass
+    @abstractclassmethod
+    def update_sshkeys(self, device, DBSession): pass
 
-    @abstractmethod
-    def exec_on_device(self, device, cmd, prms): pass
+    @abstractclassmethod
+    def exec_on_device(self, device, DBSession, cmd, prms): pass
 
 from pyuci import Uci, Package, Config
 
 class OpenWifiUbusCommunication(OpenWifiCommunication):
     def string_identifier_list(self):
-        return ['JSONUBUS_HTTP', 'JSONUBUS_HTTPS']
+        return ['JSONUBUS_HTTP', 'JSONUBUS_HTTPS', '']
 
-    def get_config(self, device):
+    def get_config(self, device, DBSession):
         try:
-            DBSession = get_sql_session()
-            device = DBSession.query(OpenWrt).get(uuid)
-
             if device.configured:
                 newConf = return_jsonconfig_from_device(device)
 
@@ -59,13 +56,9 @@ class OpenWifiUbusCommunication(OpenWifiCommunication):
             DBSession.commit()
             DBSession.close()
             return False
-                device.configuration = return_jsonconfig_from_device(device)
-                device.configured = True
 
-    def update_config(self, device):
+    def update_config(self, device, DBSession):
         try:
-            DBSession = get_sql_session()
-            device = DBSession.query(OpenWrt).get(uuid)
             new_configuration = Uci()
             new_configuration.load_tree(device.configuration)
 
@@ -87,25 +80,19 @@ class OpenWifiUbusCommunication(OpenWifiCommunication):
         DBSession.commit()
         DBSession.close()
 
-    def update_status(self, device): pass
-        DBSession = get_sql_session()
-        devices = DBSession.query(OpenWrt)
-        redisDB = redis.StrictRedis(host=redishost, port=redisport, db=redisdb)
-        for device in devices:
-            js = get_jsonubus_from_openwrt(device)
-            try:
-                networkstatus = js.callp('network.interface','dump')
-            except OSError as error:
-                redisDB.hset(str(device.uuid), 'status', "{message} ({errorno})".format(message=error.strerror, errorno=error.errno))
-            except:
-                redisDB.hset(str(device.uuid), 'status', "error receiving status...")
-            else:
-                redisDB.hset(str(device.uuid), 'status', "online")
-                redisDB.hset(str(device.uuid), 'networkstatus', json.dumps(networkstatus['interface']))
+    def update_status(self, device, redisDB):
+        js = get_jsonubus_from_openwrt(device)
+        try:
+            networkstatus = js.callp('network.interface','dump')
+        except OSError as error:
+            redisDB.hset(str(device.uuid), 'status', "{message} ({errorno})".format(message=error.strerror, errorno=error.errno))
+        except:
+            redisDB.hset(str(device.uuid), 'status', "error receiving status...")
+        else:
+            redisDB.hset(str(device.uuid), 'status', "online")
+            redisDB.hset(str(device.uuid), 'networkstatus', json.dumps(networkstatus['interface']))
 
-    def update_sshkeys(self, device): pass
-        DBSession = get_sql_session()
-        openwrt = DBSession.query(OpenWrt).get(uuid)
+    def update_sshkeys(self, device, DBSession):
         keys = ""
         for sshkey in openwrt.ssh_keys:
             keys = keys+'#'+sshkey.comment+'\n'
@@ -114,19 +101,10 @@ class OpenWifiUbusCommunication(OpenWifiCommunication):
         keyfile='/etc/dropbear/authorized_keys'
         js.call('file', 'write', path=keyfile, data=keys)
         js.call('file', 'exec',command='chmod', params=['600',keyfile])
-        DBSession.close()
 
-    def exec_on_device(self, device, cmd, prms): pass
-        DBSession = get_sql_session()
-        openwrt = DBSession.query(OpenWrt).get(uuid)
-
-        if not openwrt:
-            return False
-
+    def exec_on_device(self, device, DBSession, cmd, prms):
         js = get_jsonubus_from_openwrt(openwrt)
         ans = js.call('file', 'exec', command=cmd, params=prms)
-        DBSession.close()
-
         return ans
 
 def return_jsonconfig_from_device(openwrt):

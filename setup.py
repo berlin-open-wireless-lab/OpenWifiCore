@@ -44,5 +44,7 @@ setup(name='openwifi',
       main = openwifi:main
       [console_scripts]
       initialize_openwifi_db = openwifi.scripts.initializedb:main
+      [OpenWifi.plugin]
+      communication = openwifi.communication.OpenWifiUbusCommunication
       """,
       )
