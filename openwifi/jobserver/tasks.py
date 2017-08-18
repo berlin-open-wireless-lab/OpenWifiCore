@@ -288,7 +288,7 @@ def update_capabilities():
             ans = exec_on_device(uuid, cmd, args)
             stdout = ans[1]['stdout']
 
-            if stdout == service.capability_match:
+            if stdout.rstrip() == service.capability_match.rstrip():
                 device.add_capability(service.name)
                 DBSession.commit()
 
