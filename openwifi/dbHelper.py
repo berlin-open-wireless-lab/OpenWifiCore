@@ -561,7 +561,10 @@ def query_master_config(query, master_config, configs=None):
         if options:
             curConf, option = follow_options_path(config, options)
             curConfData = json.loads(curConf.data)
-            value = curConfData[option]
+            try:
+                value = curConfData[option]
+            except KeyError:
+                value = None
 
             if 'set' in query.keys():
                 curConfData[option] = query['set']
