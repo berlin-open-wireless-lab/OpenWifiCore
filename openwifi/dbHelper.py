@@ -527,6 +527,7 @@ def get_queryMasterConfig(request):
              'matchOptions' : 'optional dict of option-value pairs to match, dot is possible like in option, use null if you just want to check of the option exists',
              'option'  : 'optional option name, it is possible to go though a link with dots like: linkname.option',
              'set'     : 'optional set option to this value',
+             'add_config' : 'add new config, type and package are mandatory',
              'add_options' : 'optional dict of key-value pairs that should be added to found configs',
              'del_options' : 'optional list of options to remove'}
     return usage
@@ -552,6 +553,20 @@ def query_master_config(query, master_config, configs=None):
         options = query['option']
     else:
         options = False
+
+    if 'add_config' in query:
+        new_config = Configuration(getMaxId(Configuration))
+        new_config.package = query['package']
+        if 'name' in query:
+            new_config.name = query['name']
+        else:
+            new_config.name = ''
+        new_data = {'.type' : query['type'],
+                    '.anonymous' : 'name' not in query,
+                    '.name' : new_config.name,
+                    '.index' : master_config.get_max_index_of_package(query['package'])+1}
+        new_config.data = json.dumps(new_data)
+        master_config.configurations.append(new_config)
 
     result = {'values' : [],
               'added' : [],
