@@ -718,8 +718,31 @@ def config_to_path(config):
 
 def validate_config_node_access(request, **kwargs):
     node = request.matchdict['NODE']
-    result = None
+    result = get_config_node(node, request)
 
+    if not result:
+        request.errors.add('querystring', 'not found', "couldn't find a matching node")
+
+    request.nodeData = result
+
+def validate_config_node_link_access(request, **kwargs):
+    from_node = request.matchdict['FROM_NODE']
+    to_node = request.matchdict['TO_NODE']
+    from_node = get_config_node(from_node, request)
+    to_node = get_config_node(to_node, request)
+
+    if not from_node or not to_node:
+        request.errors.add('querystring', 'not found', "couldn't find a matching node")
+        return
+
+    if not 'conf' in to_node or not 'conf' in from_node:
+        request.errors.add('querystring', 'node must be config', "bothe nodes muste be config nodes")
+        return
+
+    request.from_node = from_node
+    request.to_node = to_node
+
+def get_config_node(node, request):
     if node[0] == 'l':
         link = DBSession.query(ConfigurationLink).get(node[1:])
         if user_is_not_allowed_to_user_master_config(request, link.masterconf):
@@ -738,17 +761,56 @@ def validate_config_node_access(request, **kwargs):
 
         result = {"conf": json.loads(conf.data), "id": node, "path": config_to_path(conf)}
 
-    if not result:
-        request.errors.add('querystring', 'not found', "couldn't find a matching node")
-
-    request.nodeData = result
-
+    return result
 
 masterConfNodeInfo = Service(name='MasterConfNodeInfo',
-                             path='/masterConfigNodeInfo/{NODE}',
+                             path='/masterConfig/Node/{NODE}',
                              description='get node data',
                              validators=(validate_config_node_access,))
 
 @masterConfNodeInfo.get()
 def get_master_conf_node_info(request):
     return request.nodeData
+
+masterConfNodeLink = Service(name='MasterConfNodeLink',
+                             path='/masterConfig/Node/{FROM_NODE}/link/{TO_NODE}',
+                             description='create a link between configs',
+                             validators=(validate_config_node_link_access,))
+
+@masterConfNodeLink.get()
+def get_master_conf_node_link(request):
+    return "add link data as post data"
+
+@masterConfNodeLink.post()
+def post_master_conf_node_link(request):
+    data = request.body.decode()
+    from_id = int(request.from_node['id'][1:])
+    to_id = int(request.to_node['id'][1:])
+
+    from_config = DBSession.query(Configuration).get(from_id)
+    to_config = DBSession.query(Configuration).get(to_id)
+
+    new_link = ConfigurationLink(getMaxId(ConfigurationLink))
+    new_link.data = data
+    new_link.to_config.append(to_config)
+    new_link.from_config.append(from_config)
+    new_link.masterconf = from_config.masterconf
+    
+    DBSession.add(new_link)
+
+@masterConfNodeLink.delete()
+def delete_master_conf_node_link(request):
+    from_id = int(request.from_node['id'][1:])
+    to_id = int(request.to_node['id'][1:])
+
+    from_config = DBSession.query(Configuration).get(from_id)
+    to_config = DBSession.query(Configuration).get(to_id)
+
+    to_be_deleted = []
+
+    for link in from_config.to_links:
+        if to_config in link.to_config:
+            to_be_deleted.append(link)
+
+    for link in to_be_deleted:
+        DBSession.delete(link)
