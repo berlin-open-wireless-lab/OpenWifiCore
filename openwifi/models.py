@@ -342,6 +342,10 @@ class MasterConfiguration(Base):
         uci = self.exportUCI()
         return uci.export_json()
 
+    def get_max_index_of_package(self, package):
+        configs = filter(lambda c: c.package == package, self.configurations)
+        return max([json.loads(conf.data)['.index'] for conf in configs])
+
 from_conf_to_link = Table('from_conf_to_link_table', Base.metadata,
         Column('conf_id', Integer, ForeignKey('Configurations.id')),
         Column('link_id', Integer, ForeignKey('Links.id')))
