@@ -290,7 +290,8 @@ class fine_grained_access_test(unittest.TestCase):
         self.app.cookiejar = user_cookiejar
         self.app.post_json('/login', {'login':'testuser', 'password': 'testpassword'})
         resp = self.app.post_json('/masterConfig/'+self.mconf_id+'/query', allowed_query)
-        answer = {"added": [], "values": ["eth0"], "matched_configs": ["c19"], "deleted": []}
+        matched_config = json.loads(resp.text)['matched_configs'][0]
+        answer = {"added": [], "values": ["eth0"], "matched_configs": [matched_config], "deleted": []}
         self.assertEqual(answer, json.loads(resp.text))
 
         resp = self.app.post_json('/masterConfig/'+self.mconf_id+'/query', allowed_query_wrong, expect_errors=True)
@@ -318,7 +319,8 @@ class fine_grained_access_test(unittest.TestCase):
         self.app.cookiejar = user_cookiejar
         self.app.post_json('/login', {'login':'testuser', 'password': 'testpassword'})
         resp = self.app.post_json('/masterConfig/'+self.mconf_id+'/query', allowed_query)
-        answer = {"added": [], "values": ["eth0"], "matched_configs": ["c19"], "deleted": []}
+        matched_config = json.loads(resp.text)['matched_configs'][0]
+        answer = {"added": [], "values": ["eth0"], "matched_configs": [matched_config], "deleted": []}
         self.assertEqual(answer, json.loads(resp.text))
 
         resp = self.app.post_json('/masterConfig/'+self.mconf_id+'/query', allowed_query_wrong, expect_errors=True)
