@@ -527,7 +527,7 @@ def get_queryMasterConfig(request):
              'matchOptions' : 'optional dict of option-value pairs to match, dot is possible like in option, use null if you just want to check of the option exists',
              'option'  : 'optional option name, it is possible to go though a link with dots like: linkname.option',
              'set'     : 'optional set option to this value',
-             'add_config' : 'add new config, type and package are mandatory',
+             'add_config' : 'add config, type and package are mandatory for new configs, use either "new" for a new config, "new-nonexistent" to just create if no other exists, or a node-id to add a config',
              'add_options' : 'optional dict of key-value pairs that should be added to found configs',
              'del_options' : 'optional list of options to remove'}
     return usage
@@ -554,7 +554,13 @@ def query_master_config(query, master_config, configs=None):
     else:
         options = False
 
-    if 'add_config' in query:
+    result = {'values' : [],
+              'added' : [],
+              'deleted' : [],
+              'matched_configs' : ['c'+str(config.id) for config in configs]}
+
+    if 'add_config' in query and (query['add_config'] == 'new' or \
+            (query['add_config'] == 'new-nonexistent' and not configs)):
         new_config = Configuration(getMaxId(Configuration))
         new_config.package = query['package']
         if 'name' in query:
@@ -567,10 +573,22 @@ def query_master_config(query, master_config, configs=None):
                     '.index' : master_config.get_max_index_of_package(query['package'])+1}
         new_config.data = json.dumps(new_data)
         master_config.configurations.append(new_config)
-
-    result = {'values' : [],
-              'added' : [],
-              'deleted' : []}
+        DBSession.commit()
+        result['new_config'] = 'c'+str(new_config.id)
+        if configs:
+            configs.append(new_config)
+        else:
+            configs = [new_config]
+    elif 'add_config' in query and (query['add_config'] not in ['new', 'new-nonexistent']):
+        if query['add_config'][0] == 'c':
+            id = int(query['add_config'][1:])
+            config = DBSession.query(Configuration).get(id)
+            master_config.configurations.append(config)
+            result['new_config'] = 'c'+str(new_config.id)
+            if configs:
+                configs.append(new_config)
+            else:
+                configs = [new_config]
 
     for config in configs:
         if options:
