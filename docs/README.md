@@ -1,7 +1,7 @@
 # openwifi
 
 ## table of contents
-[docker](#Getting-started-using-docker)
+[docker](#getting-started-using-docker)
 
 A management tool for OpenWrt devices.
 
