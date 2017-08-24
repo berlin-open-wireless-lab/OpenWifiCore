@@ -2,7 +2,9 @@
 
 ## table of contents
 [getting started using docker](#getting-started-using-docker)
+
 [getting started manually](#getting-started-manually)
+
 [API](#API)
 * [nodes](#Nodes)
 * [user management](#User-management)
@@ -16,14 +18,17 @@ A management tool for OpenWrt/LEDE devices.
 ### Getting started using docker
 
 There are docker images that will help you to getting started with OpenWifi. First of all clone the repo
+
     git clone https://github.com/berlin-open-wireless-lab/wrtmgmt.git
 
 If you want to use the webviews clone them into the Plugin folder
+
     cd Plugins
     git clone https://github.com/berlin-open-wireless-lab/OpenWifiWeb.git
     cd ..
 
 Then there are scripts that help downloading and starting the docker image:
+
     cd Docker
     ./pull_image_and_run.sh
 
