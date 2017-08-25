@@ -169,11 +169,16 @@ def update_config(self, uuid):
     DBSession = get_sql_session()
     device = DBSession.query(OpenWrt).get(uuid)
 
-    comm_classes = get_communication_classes()
+    try:
+        comm_classes = get_communication_classes()
+    except Exception as exc:
+        DBSession.commit()
+        DBSession.close()
+        raise self.retry(exc=exc, countdown=60)
 
     for cclass in comm_classes:
         if device.communication_protocol in cclass.string_identifier_list:
-            cclass.get_config(device, DBSession)
+            cclass.update_config(device, DBSession)
 
 @app.task
 def update_unconfigured_nodes():

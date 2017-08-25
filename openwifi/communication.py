@@ -1,6 +1,7 @@
 from abc import ABCMeta, abstractmethod, abstractclassmethod, abstractproperty
 from openwifi.netcli import jsonubus
 import json
+from openwifi.utils import diffChanged
 
 class ClassProperty(abstractproperty):
     def __get__(self, cls, owner):
@@ -66,22 +67,17 @@ class OpenWifiUbusCommunication(OpenWifiCommunication):
             return False
 
     def update_config(device, DBSession):
-        try:
-            new_configuration = Uci()
-            new_configuration.load_tree(device.configuration)
+        new_configuration = Uci()
+        new_configuration.load_tree(device.configuration)
 
-            cur_configuration = Uci()
-            cur_configuration.load_tree(return_jsonconfig_from_device(device))
-            conf_diff = cur_configuration.diff(new_configuration)
-            changed = diffChanged(conf_diff)
+        cur_configuration = Uci()
+        cur_configuration.load_tree(return_jsonconfig_from_device(device))
+        conf_diff = cur_configuration.diff(new_configuration)
+        changed = diffChanged(conf_diff)
 
-            from openwifi.jobserver import diff_update_config
-            if changed:
-                diff_update_config(conf_diff, uuid)
-        except Exception as exc:
-            DBSession.commit()
-            DBSession.close()
-            raise self.retry(exc=exc, countdown=60)
+        from openwifi.jobserver.tasks import diff_update_config
+        if changed:
+            diff_update_config(conf_diff, device.uuid)
         
         if changed:
             device.append_diff(conf_diff, DBSession, "upload: ")
