@@ -1,9 +1,15 @@
-from abc import ABCMeta, abstractmethod, abstractclassmethod
+from abc import ABCMeta, abstractmethod, abstractclassmethod, abstractproperty
+from openwifi.netcli import jsonubus
+import json
+
+class ClassProperty(abstractproperty):
+    def __get__(self, cls, owner):
+        return self.fget.__get__(None, owner)()
 
 class OpenWifiCommunication(metaclass=ABCMeta):
 
-    @property
-    @abstractclassmethod
+    @ClassProperty
+    @classmethod
     def string_identifier_list(self): pass
 
     @abstractclassmethod
@@ -24,10 +30,12 @@ class OpenWifiCommunication(metaclass=ABCMeta):
 from pyuci import Uci, Package, Config
 
 class OpenWifiUbusCommunication(OpenWifiCommunication):
+    @ClassProperty
+    @classmethod
     def string_identifier_list(self):
         return ['JSONUBUS_HTTP', 'JSONUBUS_HTTPS', '']
 
-    def get_config(self, device, DBSession):
+    def get_config(device, DBSession):
         try:
             if device.configured:
                 newConf = return_jsonconfig_from_device(device)
@@ -57,7 +65,7 @@ class OpenWifiUbusCommunication(OpenWifiCommunication):
             DBSession.close()
             return False
 
-    def update_config(self, device, DBSession):
+    def update_config(device, DBSession):
         try:
             new_configuration = Uci()
             new_configuration.load_tree(device.configuration)
@@ -80,7 +88,7 @@ class OpenWifiUbusCommunication(OpenWifiCommunication):
         DBSession.commit()
         DBSession.close()
 
-    def update_status(self, device, redisDB):
+    def update_status(device, redisDB):
         js = get_jsonubus_from_openwrt(device)
         try:
             networkstatus = js.callp('network.interface','dump')
@@ -92,7 +100,7 @@ class OpenWifiUbusCommunication(OpenWifiCommunication):
             redisDB.hset(str(device.uuid), 'status', "online")
             redisDB.hset(str(device.uuid), 'networkstatus', json.dumps(networkstatus['interface']))
 
-    def update_sshkeys(self, device, DBSession):
+    def update_sshkeys(device, DBSession):
         keys = ""
         for sshkey in openwrt.ssh_keys:
             keys = keys+'#'+sshkey.comment+'\n'
@@ -102,7 +110,7 @@ class OpenWifiUbusCommunication(OpenWifiCommunication):
         js.call('file', 'write', path=keyfile, data=keys)
         js.call('file', 'exec',command='chmod', params=['600',keyfile])
 
-    def exec_on_device(self, device, DBSession, cmd, prms):
+    def exec_on_device(device, DBSession, cmd, prms):
         js = get_jsonubus_from_openwrt(openwrt)
         ans = js.call('file', 'exec', command=cmd, params=prms)
         return ans
