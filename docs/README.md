@@ -5,11 +5,11 @@
 
 [getting started manually](#getting-started-manually)
 
-[API](#API)
-* [nodes](#Nodes)
-* [user management](#User-management)
+[API](#api)
+* [nodes](#nodes)
+* [user management](#user-management-and-access-control)
 * [services](#services)
-* [database queries](#DB-Queries)
+* [database queries](#db-queries)
 
 A management tool for OpenWrt/LEDE devices.
 
@@ -33,6 +33,8 @@ Then there are scripts that help downloading and starting the docker image:
     ./pull_image_and_run.sh
 
 When the scripts are finished you can use OpenWifi on localhost with port 6543.
+
+The images mount the git repo - so you can easily make changes and try them out. The `ini-file` for the image is `development_listen_global.ini` in the repository root directory.
 
 ### Getting started manually
 
@@ -66,7 +68,7 @@ To list the UUIDs of all nodes just do a get to /nodes
     curl localhost:6543/nodes
     ["0a7b5cad-7435-95fb-1ba0-0242ac110003", "0a7b5cad-7435-95fb-1ba0-0242ac110004"]
 
-To get all infos about a node do a get on /nodes/UUID
+To get all infos about a node do a get on `/nodes/UUID`
 
     curl localhost:6543/nodes/0a7b5cad-7435-95fb-1ba0-0242ac110003 | python -m json.tool 
     {
@@ -86,10 +88,35 @@ You can add a new node by doing a POST to /nodes. To post a UUID is optional. Na
     curl -H 'content-type: application/json' -X POST -d '{"name":"test","address":"127.0.0.1", "distribution":"LEDE", "version":"some version name", "login":"root", "password":"some password"}' localhost:6543/nodes
     "79926581-2cd0-52f6-bb8d-4e8ed33271b9"
 
-In the same way you can change node parameters with doing a POST to /nodes/UUID.
+In the same way you can change node parameters with doing a POST to `/nodes/UUID`. Furthermore you can delete a node by sending "DELETE" to `/nodes/UUID`.
 
-### User management
+You can display the changelog (how the configuration has been changed during syncing) with `/nodes/UUID/diff`
+
+### User management and access control
+
+To use the user management and access control it has to be enabled in the `ini file`. The key is called `"openwifi.useAuth"` and must be set to `"true"`. By default if no other user exists an admin user with the credentials admin:admin is created.
+
+In order to change user data you have to login as an admin user:
+
+    curl -c curl_cookies localhost:6543/login -d '{"login":"admin","password":"admin"}' -X POST  -H 'content-type: application/json'
+
+Now you can list all users:
+
+    curl -b curl_cookies localhost:6543/users
+    {"admin": "465EWO"}
+
+It lists the logins as keys with the user id as a value. You get more information about a user on `/users/USER_ID`:
+
+    curl -b curl_cookies localhost:6543/users/465EWO
+    {"admin": true, "login": "admin"}
 
 ### Services
 
 ### DB-Queries
+
+
+## Plugins
+
+### Available Plugins
+
+### Architecture
