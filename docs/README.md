@@ -131,6 +131,19 @@ The data field is a list of JSON-objects with the following fields:
 
 ### Services
 
+Another program can subscribe to OpenWifi to automatically change configuration options if the node matches certain criteria. To do so it has to provide a shell script that is run on the node and the output (stdout) is compared to a match string. If both match the node gets the name of the service as a capability. If the node has the name of the service as a capability the list of queries is run on the node.
+
+You can add a service by doing a post to `/service` with the following options:
+
+| Key name             | description                                                         |
+|----------------------|---------------------------------------------------------------------|
+| `name`               | the name of the service and the capability                          |
+| `queries`            | a list of queries (see below)                                       |
+| `capability_script`  | the shell script that is run on the node (commands)                 |
+| `capabaility_match`  | the string the shell script has to match                            |
+
+As usual you get a list of registered services by doing a get to `/service` and can modify and delete services with a post or a delete to `/service/SERVICE_ID`.
+
 ### DB-Queries
 
 ## Plugins
