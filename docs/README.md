@@ -110,10 +110,28 @@ It lists the logins as keys with the user id as a value. You get more informatio
     curl -b curl_cookies localhost:6543/users/465EWO
     {"admin": true, "login": "admin"}
 
+
+Access to nodes is granted by access objects. You can create new ones by doing a post do `/access`. In the post you need to provide a JSON-Object with the following optional fields:
+
+| Key name              | description                                              |
+|-----------------------|----------------------------------------------------------|
+| `userid`              | id of the user to add to the access object               |
+| `apikeyid`            | id of the apikey to add to the access object             |
+| `data`                | actual access data - more on that below                  |
+| `access_all_nodes`    | a boolean indicating that access is allowed to all nodes |
+
+The data field is a list of JSON-objects with the following fields:
+
+| Key name              | description                                                         |
+|-----------------------|---------------------------------------------------------------------|
+| `type`                | either "pathstring" or "query"                                      |
+| `access`              | required if type is "pathstring" values are rw, ro or none          |
+| `string`              | required if type is "pathstring" - the actual path                  |
+| `query`               | required if type is "query" - the query (see below) that is allowed |
+
 ### Services
 
 ### DB-Queries
-
 
 ## Plugins
 
