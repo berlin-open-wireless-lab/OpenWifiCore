@@ -69,6 +69,8 @@ class OpenWrt(Base):
     sync_diffs = relationship("Revision")
 
     def __init__(self, name, address, distribution, version, device_uuid, login, password, configured=False):
+        self.communication_protocol = ""
+        self.capabilities = "[]"
         self.set(name, address, distribution, version, device_uuid, login, password, configured)
 
     def set(self, name, address, distribution, version, device_uuid, login, password, configured=False):
@@ -114,6 +116,10 @@ class OpenWrt(Base):
             self.login = value
         if key == 'password':
             self.password = value
+        if key == 'communication_protocol':
+            self.communication_protocol = value
+        if key == 'capabilities':
+            self.capabilities = value
 
     def append_diff(self, diff, session, source):
         rev = Revision(id_generator())
@@ -344,7 +350,10 @@ class MasterConfiguration(Base):
 
     def get_max_index_of_package(self, package):
         configs = filter(lambda c: c.package == package, self.configurations)
-        return max([json.loads(conf.data)['.index'] for conf in configs])
+        try:
+            return max([json.loads(conf.data)['.index'] for conf in configs])
+        except ValueError: # no configs
+            return 1
 
 from_conf_to_link = Table('from_conf_to_link_table', Base.metadata,
         Column('conf_id', Integer, ForeignKey('Configurations.id')),

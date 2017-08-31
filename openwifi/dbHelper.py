@@ -573,7 +573,6 @@ def query_master_config(query, master_config, configs=None):
                     '.index' : master_config.get_max_index_of_package(query['package'])+1}
         new_config.data = json.dumps(new_data)
         master_config.configurations.append(new_config)
-        DBSession.commit()
         result['new_config'] = 'c'+str(new_config.id)
         if configs:
             configs.append(new_config)
