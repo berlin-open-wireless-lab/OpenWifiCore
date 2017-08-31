@@ -173,6 +173,30 @@ A query works in the way that it first filters all configurations according to a
 
 ## Plugins
 
+Plugins are realized by having special named [entry points](https://setuptools.readthedocs.io/en/latest/setuptools.html#dynamic-discovery-of-services-and-plugins). There is [an example plugin](https://github.com/berlin-open-wireless-lab/OpenWifiExamplePlugin) that demonstrates the possible functionality.
+
+To use plugins with the docker images: just clone the repository into the `Plugins` folder and restart the image.
+
 ### Available Plugins
+
+#### [OpenWifiExamplePlugin](https://github.com/berlin-open-wireless-lab/OpenWifiExamplePlugin)
+
+This Plugin demonstrates  how to implement a plugin.
+
+#### [OpenWifiWeb](https://github.com/berlin-open-wireless-lab/OpenWifiWeb)
+
+This Plugin adds web views to the OpenWifiCore application.
+
+#### [OpenWifiLocation](https://github.com/berlin-open-wireless-lab/OpenWifiLocation)
+
+This Plugin implements a geolocation lookup via GoogleGeo API with the help of a scan of nearby SSIDs.
+
+#### [OpenWifiIcinga](https://github.com/berlin-open-wireless-lab/OpenWifiIcinga)
+
+This Plugin registers a node to [icinga](https://www.icinga.com/) for monitoring.
+
+#### [OpenWifiTemplates](https://github.com/berlin-open-wireless-lab/OpenWifiTemplates)
+
+This adds the old templating system to OpenWifi.
 
 ### Architecture
