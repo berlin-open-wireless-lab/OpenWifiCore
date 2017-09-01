@@ -200,3 +200,59 @@ This Plugin registers a node to [icinga](https://www.icinga.com/) for monitoring
 This adds the old templating system to OpenWifi.
 
 ### Architecture
+
+As stated previously the plugins are realized by special entry points. The entry point group is `OpenWifi.plugin`. See also the [setup.py of the example plugin](https://github.com/berlin-open-wireless-lab/OpenWifiExamplePlugin/blob/master/setup.py). The following subsections explain the entry points and what they do in more details.
+
+#### Routes and global views
+
+If you want to register new routes in your plugin you have to point the entry point `addPluginRoutes` to a method that gets the pyramid `config` object as a parameter.
+
+Example from the example Plugin:
+```python
+def addPluginRoutes(config):
+    config.add_route('testplugin', '/testplugin')
+    config.add_route('testplugin_assign', '/testplugin/add/{uuid}')
+    return "Testplugin"
+```
+
+The return string is used for logging purposes. If you want to register views to the main menu you need the `globalPluginViews` entry point. This points to a list of views you want to register. The views you want to register are made up of a list containing the route name and the displayed name in the menu.
+
+Example from the example Plugin:
+```python
+globalTestpluginViews = [['testplugin', 'Testplugin']]
+```
+
+#### Tasks
+
+#### Database Models
+
+#### Action on device registration
+
+#### Communication
+
+Communication uses a abstract class to define class methods that are invoked when OpenWifi tries to communicate with the node. This is the abstract class:
+
+```python
+class OpenWifiCommunication(metaclass=ABCMeta):
+
+    @ClassProperty
+    @classmethod
+    def string_identifier_list(self): pass
+
+    @abstractclassmethod
+    def get_config(self, device, DBSession): pass
+
+    @abstractclassmethod
+    def update_config(self, device, DBSession): pass
+
+    @abstractclassmethod
+    def update_status(self, device, redisDB): pass
+
+    @abstractclassmethod
+    def update_sshkeys(self, device, DBSession): pass
+
+    @abstractclassmethod
+    def exec_on_device(self, device, DBSession, cmd, prms): pass
+```
+
+The string identifier acts as a way to determine if this class should use for the node for communication and must therefore match the node's `communication_protocol` property.
