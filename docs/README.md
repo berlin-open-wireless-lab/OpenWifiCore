@@ -12,6 +12,15 @@
 * [master configurations](#master-configurations)
 * [database queries](#db-queries)
 
+[Plugins](#plugins)
+* [available plugins](#available-plugins)
+* [Architecture](#architecture)
+    * [Routes and global views](#routes-and-global-views)
+    * [Tasks](#tasks)
+    * [Database Models](#database-models)
+    * [Action on device registration](#action-on-device-registration)
+    * [Communication](#communication)
+
 A management tool for OpenWrt/LEDE devices.
 
 ## Getting Started
@@ -111,6 +120,13 @@ It lists the logins as keys with the user id as a value. You get more informatio
     curl -b curl_cookies localhost:6543/users/465EWO
     {"admin": true, "login": "admin"}
 
+You can also modify a user by doing a `POST` to `/users/USER_ID`. The following keys are valid (and all of them are optional):
+
+| Key name              | description                                              |
+|-----------------------|----------------------------------------------------------|
+| `login`               | change the login to this string value                    |
+| `password`            | change the password to this string value                 |
+| `admin`               | change admin status to this bool value                   |
 
 Access to nodes is granted by access objects. You can create new ones by doing a `post` to `/access`. In the post you need to provide a JSON-Object with the following optional fields:
 
@@ -224,9 +240,31 @@ globalTestpluginViews = [['testplugin', 'Testplugin']]
 
 #### Tasks
 
+A plugin might register new tasks to the job server. To do so use the `addJobserverTasks` entry point. You get the celery app as a parameter. Read more about registering tasks in [the celery documentation](http://docs.celeryproject.org/en/latest/userguide/tasks.html){:target="_blank"}.
+
+Example from the example Plugin:
+```python
+def addJobserverTasks(app):
+    @app.task
+    def testPluginTask():
+        print("testplugin task")
+```
+
 #### Database Models
 
+You can add new models to the database. Use the `models` entry point and point to a string containing the module with the new models. Have a look at the [example plugin models](https://github.com/berlin-open-wireless-lab/OpenWifiExamplePlugin/blob/master/testplugin/models.py).
+
 #### Action on device registration
+
+You can perform actions on registration of a new node. To do that use the `onDeviceRegister` entry point. You get the UUID as a parameter.
+
+Here is the example from the example Plugin:
+```python
+def testOnDeviceRegister(uuid):
+    from openwifi.models import OpenWrt, DBSession
+    device = DBSession.query(OpenWrt).get(uuid)
+    print("testplugin " + str(device))
+```
 
 #### Communication
 
@@ -255,4 +293,6 @@ class OpenWifiCommunication(metaclass=ABCMeta):
     def exec_on_device(self, device, DBSession, cmd, prms): pass
 ```
 
-The string identifier acts as a way to determine if this class should use for the node for communication and must therefore match the node's `communication_protocol` property.
+The string identifier acts as a way to determine if this class should use for the node for communication and must therefore match the node's `communication_protocol` property. The rest of the methods should be quiet self explanatory.
+
+To register a new communication class use the `communication` entry point and point it to the new class.
