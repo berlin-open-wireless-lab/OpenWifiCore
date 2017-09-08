@@ -262,7 +262,8 @@ class Users(object):
         if 'password' in data:
             change_password(user, data['password'])
 
-        if 'admin' in data:
+        # user should not change its own admin status
+        if 'admin' in data and not (user_id == self.request.user.id):
             user.is_admin = data['admin']
 
     @view(permission = 'viewUsers')
