@@ -113,8 +113,10 @@ def configure_global_views(settings):
             settings["OpenWifi.globalViews"].append(view)
             print("append view: ", view)
 
-    #always have logout as the last entry
-    settings["OpenWifi.globalViews"].append(['logout','Logout'])
+    #always have logout as the last entry if using auth
+    from openwifi.authentication import auth_used_in_settings
+    if auth_used_in_settings(settings):
+        settings["OpenWifi.globalViews"].append(['logout','Logout'])
 
 def registerOnDeviceRegisterFunctions(settings):
     settings['OpenWifi.onDeviceRegister'] = []

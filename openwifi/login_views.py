@@ -48,4 +48,4 @@ def login(request):
 @view_config(route_name='logout')
 def logout(request):
     headers = forget(request)
-    return Response('Logged out', headers=headers)
+    return HTTPFound(location=request.route_url('home'), headers=headers)

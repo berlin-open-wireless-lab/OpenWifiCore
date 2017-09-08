@@ -6,8 +6,15 @@ user_pwd_context = CryptContext()
 
 def auth_not_used(request):
     settings = request.registry.settings
+    return auth_not_used_in_settings(settings)
+
+def auth_not_used_in_settings(settings):
     return settings['openwifi.useLDAP'] == 'false' and \
            settings['openwifi.useAuth'] == 'false'
+
+def auth_used_in_settings(settings):
+    return settings['openwifi.useLDAP'] == 'true' or \
+           settings['openwifi.useAuth'] == 'true'
 
 def get_nodes(request):
     try:
