@@ -32,10 +32,10 @@ class RootFactory(object):
             self.__acl__.append((Allow, 'group:admin', 'addUsers'))
             self.__acl__.append((Allow, 'group:admin', 'viewUsers'))
             self.__acl__.append((Allow, 'group:admin', 'modUsers'))
-            self.__acl__.append((Allow, 'group:admin', 'modUsers'))
             self.__acl__.append((Allow, 'group:admin', 'control_access'))
             self.__acl__.append((Allow, 'group:client_side', 'node_add'))
             self.__acl__.append((Allow, 'group:admin', 'node_add'))
+            self.__acl__.append((Allow, 'group:users', 'logged_in_user'))
 
 class node_context(RootFactory):
     def __init__(self, request):

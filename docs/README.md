@@ -146,6 +146,8 @@ The data field is a list of JSON-objects with the following fields:
 | `string`              | required if type is "pathstring" - the actual path                  |
 | `query`               | required if type is "query" - the query (see [below](#db-queries)) that is allowed |
 
+If a user is logged in he or she can change the password with a `POST` to `/password`. It takes a JSON-object with the single `password` key.
+
 ### Services
 
 Another program can subscribe to OpenWifi to automatically change configuration options if the node matches certain criteria. To do so it has to provide a shell script that is run on the node and the output (stdout) is compared to a match string. If both match the node gets the name of the service as a capability. If the node has the name of the service as a capability the list of queries is run on the node.

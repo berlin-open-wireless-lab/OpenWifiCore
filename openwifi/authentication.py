@@ -417,3 +417,12 @@ def access_add_node_by_uuid_post(request):
 
     access.nodes.append(node)
     return True
+
+change_password_service = Service(name='change_user_password',
+                                  path='/password',
+                                  description="change the password of the currently logged in user",
+                                  permission='logged_in_user')
+
+@change_password_service.post()
+def change_password_service_post(request):
+    change_password(request.user, request.json_body['password'])
