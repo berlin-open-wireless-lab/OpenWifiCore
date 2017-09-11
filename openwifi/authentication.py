@@ -305,7 +305,10 @@ class Control_Access:
         post_data = self.request.json_body
         
         if 'data' in post_data:
-            access.data = post_data['data']
+            if type(post_data['data']) == str():
+                access.data = post_data['data']
+            else:
+                access.data = json.dumps(post_data['data'])
         if 'userid' in post_data:
             access.user = get_user_by_id(post_data['userid'])
         if 'apikeyid' in post_data:
@@ -325,10 +328,10 @@ class Control_Access:
 
     def access_to_dict(self, ac):
         ac_dict = {}
-        ac_dict['data'] = ac.data
+        ac_dict['data'] = json.loads(ac.data)
         ac_dict['all_nodes'] = ac.access_all_nodes
         ac_dict['nodes'] = list(map(lambda n: str(n.uuid), ac.nodes))
-        ac_dict['users'] = list(map(lambda u: {str(u.id): u.login}, ac.user))
+        ac_dict['users'] = dict(map(lambda u: (str(u.id), u.login), ac.user))
         ac_dict['apikeys'] = list(map(lambda a: {str(a.id): a.key}, ac.apikey))
         
         return ac_dict
@@ -340,7 +343,10 @@ class Control_Access:
         apikey = None
         
         if 'data' in post_data:
-            data = post_data['data']
+            if type(post_data['data']) == str():
+                data = post_data['data']
+            else:
+                data = json.dumps(post_data['data'])
         if 'userid' in post_data:
             user = get_user_by_id(post_data['userid'])
         if 'apikeyid' in post_data:
