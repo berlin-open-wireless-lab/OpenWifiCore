@@ -305,7 +305,7 @@ class Control_Access:
         post_data = self.request.json_body
         
         if 'data' in post_data:
-            if type(post_data['data']) == str():
+            if type(post_data['data']) == str:
                 access.data = post_data['data']
             else:
                 access.data = json.dumps(post_data['data'])
@@ -328,7 +328,10 @@ class Control_Access:
 
     def access_to_dict(self, ac):
         ac_dict = {}
-        ac_dict['data'] = json.loads(ac.data)
+        if ac.data:
+            ac_dict['data'] = json.loads(ac.data)
+        else:
+            ac_dict['data'] = ""
         ac_dict['all_nodes'] = ac.access_all_nodes
         ac_dict['nodes'] = list(map(lambda n: str(n.uuid), ac.nodes))
         ac_dict['users'] = dict(map(lambda u: (str(u.id), u.login), ac.user))
@@ -343,7 +346,7 @@ class Control_Access:
         apikey = None
         
         if 'data' in post_data:
-            if type(post_data['data']) == str():
+            if type(post_data['data']) == str:
                 data = post_data['data']
             else:
                 data = json.dumps(post_data['data'])
