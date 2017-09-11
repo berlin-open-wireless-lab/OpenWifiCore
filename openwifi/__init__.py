@@ -80,7 +80,7 @@ def main(global_config, **settings):
         init_auth(config, settings)
     else:
         config = Configurator(settings=settings, root_factory=AllowEverybody)
-        setupAuth(config)
+        setupAuth(config, settings)
 
     config.include('pyramid_rpc.jsonrpc')
     config.add_jsonrpc_endpoint('api', '/api')
@@ -125,11 +125,11 @@ def registerOnDeviceRegisterFunctions(settings):
         devRegFunction = entry_point.load()
         settings["OpenWifi.onDeviceRegister"].append(devRegFunction)
 
-def setupAuth(config):
-    # REPLACE WITH YOUR OWN SECRET!
+def setupAuth(config, settings):
+    secret = settings['auth.secret']
     config.set_authentication_policy(
         AuthTktAuthenticationPolicy(
-            'seekr1t'))
+            secret))
     config.set_authorization_policy(
     ACLAuthorizationPolicy())
 
@@ -140,10 +140,10 @@ def setupLDAP(config, settings):
         get_ldap_connector,
         groupfinder)
 
-    # REPLACE WITH YOUR OWN SECRET!
+    secret = settings['auth.secret']
     config.set_authentication_policy(
         AuthTktAuthenticationPolicy(
-            'seekr1t', callback=groupfinder))
+            secret, callback=groupfinder))
     config.set_authorization_policy(
     ACLAuthorizationPolicy())
 
