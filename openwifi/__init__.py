@@ -199,9 +199,12 @@ def init_auth(config, settings):
 
     # if no user in database create admin:admin with admin priv
     if not DBSession.query(User).first():
-        print('create admin:admin user')
         user = create_user('admin', 'admin')
         user.is_admin = True
+        from openwifi.models import NodeAccess
+        new_access = NodeAccess('[{"type":"pathstring", "access":"rw", "string":".*"}]', user=user)
+        new_access.access_all_nodes = True
+        DBSession.add(new_access)
         import transaction
         transaction.commit()
 
