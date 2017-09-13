@@ -272,7 +272,8 @@ def get_listMasterConfigs(request):
 manageMasterConfig = Service(name='ManageMasterConfig',
                              path='/masterConfig/{ID}',
                              description='manage given MasterConig',
-                             validators=(validate_masterconfig,))
+                             validators=(validate_masterconfig,),
+                             permission='view')
 
 @manageMasterConfig.get()
 def get_manageMasterConfig(request):
