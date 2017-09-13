@@ -716,6 +716,22 @@ def config_to_path(config):
 
     return path[1:]
 
+def config_to_pathes(config, startpath=''):
+    pathes = []
+    path = "." + config.name + ' (' + config.get_type() + ')' + startpath
+
+    if config.from_links:
+        config_is_root = False
+        for link in config.from_links:
+            curpath = "." + link.data + ' (OPENWIFI_LINK)' + path
+            for conf in link.from_config:
+                pathes.extend(config_to_pathes(conf, curpath))
+    else: # config is a root config
+        pathes.append(path[1:])
+
+    return pathes
+
+
 def validate_config_node_access(request, **kwargs):
     node = request.matchdict['NODE']
     result = get_config_node(node, request)
@@ -759,14 +775,15 @@ def get_config_node(node, request):
             request.errors.status = 403
             return
 
-        result = {"conf": json.loads(conf.data), "id": node, "path": config_to_path(conf)}
+        result = {"conf": json.loads(conf.data), "id": node, "path": config_to_path(conf), "pathes": config_to_pathes(conf)}
 
     return result
 
 masterConfNodeInfo = Service(name='MasterConfNodeInfo',
                              path='/masterConfig/Node/{NODE}',
                              description='get node data',
-                             validators=(validate_config_node_access,))
+                             validators=(validate_config_node_access,),
+                             permission='view')
 
 @masterConfNodeInfo.get()
 def get_master_conf_node_info(request):
