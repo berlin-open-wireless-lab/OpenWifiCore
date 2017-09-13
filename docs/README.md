@@ -5,12 +5,14 @@
 
 [getting started manually](#getting-started-manually)
 
-[API](#api)
-* [nodes](#nodes)
+[API](#api) * [nodes](#nodes)
 * [user management](#user-management-and-access-control)
 * [services](#services)
 * [master configurations](#master-configurations)
-* [database queries](#db-queries)
+* [config database interaction](#config-database-interaction)
+    * [database queries](#db-queries)
+    * [node info](#node-info)
+    * [connect two config nodes](#connect-two-config-nodes)
 
 [Plugins](#plugins)
 * [available plugins](#available-plugins)
@@ -171,7 +173,9 @@ If you do a `get` to `/masterConfig/ID` it will return a JSON-Object with a list
 
 A `get` to `/masterConfig/ID/json` will return a UCI compatible JSON-Object.
 
-### DB-Queries
+### Config Database Interaction
+
+#### DB-Queries
 
 Queries are the way to display or change values from the configuration database. The endpoint is `/masterConfig/ID/query`. It has the following keys:
 
@@ -188,6 +192,14 @@ Queries are the way to display or change values from the configuration database.
 |`del_options`  | optional list of options to remove                                                                                                      |
 
 A query works in the way that it first filters all configurations according to a criteria (like `package`, `name`, `type`, `matchOptions`). If you add `option` the option value is returned or you can change it's value with `set`. You can also add options (`add_options`) or delete (`del_options`) them. You can also add a configuration with the given matching criteria (`add_config`).
+
+#### Node info
+
+You can get information about a node by doing a `GET` to `/masterConfig/Node/NODEID`. This information contains the id, if it is a link or a config node and in case of a config node the config and the path to this config. In case of a link it also contains the link data (which is currently its name).
+
+### Connect two config nodes
+
+You can connect two config nodes by doing a `POST` to `/masterConfig/Node/FROM_NODE/link/TO_NODE`. The data should contain the data that is associated with the link (currently used for its name).
 
 ## Plugins
 
