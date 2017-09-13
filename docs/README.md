@@ -5,7 +5,8 @@
 
 [getting started manually](#getting-started-manually)
 
-[API](#api) * [nodes](#nodes)
+[API](#api) 
+* [nodes](#nodes)
 * [user management](#user-management-and-access-control)
 * [services](#services)
 * [master configurations](#master-configurations)
