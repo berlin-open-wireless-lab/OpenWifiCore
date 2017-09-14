@@ -10,6 +10,7 @@ from sqlalchemy import (
     )
 
 from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.ext.hybrid import hybrid_property
 
 from sqlalchemy.orm import (
     backref,
@@ -171,6 +172,21 @@ class OpenWrt(Base):
 
     def get_capabilities(self):
         return json.loads(self.capabilities)
+
+    @hybrid_property
+    def users(self):
+        result = {}
+
+        for n_ac in self.node_access:
+            for user in n_ac.user:
+                result[user.id] = user.login
+
+        for n_ac in DBSession.query(NodeAccess):
+            if n_ac.access_all_nodes:
+                for user in n_ac.user:
+                    result[user.id] = user.login
+
+        return result
 
 user2access = Table('user2access', Base.metadata,
     Column('user_id', Text, ForeignKey('users.id')),
