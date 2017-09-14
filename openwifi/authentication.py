@@ -315,6 +315,10 @@ class Control_Access:
             access.apikey = get_apikey_by_id(post_data['apikeyid'])
         if 'access_all_nodes' in post_data:
             access.access_all_nodes = post_data['access_all_nodes']
+        if 'nodes' in post_data:
+            for uuid in post_data['nodes']:
+                node = DBSession.query(OpenWrt).get(uuid)
+                access.nodes.append(node)
 
         return True
 
@@ -359,6 +363,11 @@ class Control_Access:
 
         if 'access_all_nodes' in post_data:
             new_node_access.access_all_nodes = post_data['access_all_nodes']
+
+        if 'nodes' in post_data:
+            for uuid in post_data['nodes']:
+                node = DBSession.query(OpenWrt).get(uuid)
+                new_node_access.nodes.append(node)
 
         DBSession.add(new_node_access)
         return True

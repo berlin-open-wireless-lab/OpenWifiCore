@@ -139,6 +139,7 @@ Access to nodes is granted by access objects. You can create new ones by doing a
 | `apikeyid`            | id of the apikey to add to the access object             |
 | `data`                | actual access data - more on that below                  |
 | `access_all_nodes`    | a boolean indicating that access is allowed to all nodes |
+| `nodes`               | list of UUIDs that should be added to this access        |
 
 The data field is a list of JSON-objects with the following fields:
 
@@ -148,6 +149,8 @@ The data field is a list of JSON-objects with the following fields:
 | `access`              | required if type is "pathstring" values are rw, ro or none          |
 | `string`              | required if type is "pathstring" - the actual path                  |
 | `query`               | required if type is "query" - the query (see [below](#db-queries)) that is allowed |
+
+An access can be modified by providing the same keys with a `POST` to `/access/ACCESSID`.
 
 If a user is logged in he or she can change the password with a `POST` to `/password`. It takes a JSON-object with the single `password` key.
 
