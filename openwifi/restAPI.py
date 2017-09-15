@@ -107,3 +107,51 @@ def get_diffNode(request):
         return device.get_diff_list()
 
     return []
+
+from openwifi.models import OpenWifiSettings
+
+@resource(collection_path='/settings', path='/settings/{SETTING}', permission='settings')
+class Settings(object):
+
+    def __init__(self, request):
+        self.request = request
+
+    def collection_get(self):
+        settings = DBSession.query(OpenWifiSettings)
+
+        result = {}
+        for setting in settings:
+            result[setting.key] = setting.value
+
+        return result
+
+    def collection_post(self):
+
+        data = self.request.json_body
+        setting_exists = DBSession.query(OpenWifiSettings).get(data['key'])
+
+        if setting_exists:
+            setting_exists.value = data['value']
+        else:
+            DBSession.add(OpenWifiSettings(**data))
+
+        return True
+
+    def delete(self):
+        setting_key = self.request.matchdict['SETTING']
+        DBSession.delete(DBSession.query(OpenWifiSettings).get(setting_key))
+
+        return True
+
+    def get(self):
+        setting_key = self.request.matchdict['SETTING']
+        setting = DBSession.query(OpenWifiSettings).get(setting_key)
+
+        return setting.value
+
+    def post(self):
+        setting_key = self.request.matchdict['SETTING']
+        setting = DBSession.query(OpenWifiSettings).get(setting_key)
+        setting.value = self.request.json_body['value']
+
+        return True
