@@ -65,6 +65,7 @@ class OpenWrt(Base):
     templates = relationship("Templates",secondary=template_association_table,backref="openwrt")
     ssh_keys = relationship("SshKey",secondary=ssh_key_association_table,backref="openwrt")
     capabilities = Column(Text)
+    data = Column(Text) # Key-Value pairs for per node configuration
     communication_protocol = Column(Text)
     synd_diff_rev_id = Column(Text, ForeignKey('Revisions.id'))
     sync_diffs = relationship("Revision")
@@ -72,6 +73,7 @@ class OpenWrt(Base):
     def __init__(self, name, address, distribution, version, device_uuid, login, password, configured=False):
         self.communication_protocol = ""
         self.capabilities = "[]"
+        self.data = "{}"
         self.set(name, address, distribution, version, device_uuid, login, password, configured)
 
     def set(self, name, address, distribution, version, device_uuid, login, password, configured=False):
@@ -121,6 +123,8 @@ class OpenWrt(Base):
             self.communication_protocol = value
         if key == 'capabilities':
             self.capabilities = value
+        if key == 'data':
+            self.data = value
 
     def append_diff(self, diff, session, source):
         rev = Revision(id_generator())
@@ -172,6 +176,15 @@ class OpenWrt(Base):
 
     def get_capabilities(self):
         return json.loads(self.capabilities)
+
+    def get_data(self):
+        if self.data:
+            return json.loads(self.data)
+        else:
+            return {}
+
+    def set_data(self, data):
+        self.data = json.dumps(data)
 
     @hybrid_property
     def users(self):

@@ -50,6 +50,14 @@ def uuid_generate(request, unique_identifier):
 
 @jsonrpc_method(method='get_default_image_url', endpoint='api')
 def get_default_image_url(request, uuid):
+    node = DBSession.query(OpenWrt).get(uuid)
+    if node:
+        node_data = node.get_data()
+        if 'base_image_url' in node_data and \
+            'base_image_checksum' in node_data:
+            return {'default_image' : node_data['base_image_url'],
+                    'default_checksum' : node_data['base_image_checksum']}
+
     baseImageUrl = DBSession.query(OpenWifiSettings).get('baseImageUrl')
     baseImageChecksumUrl = DBSession.query(OpenWifiSettings).get('baseImageChecksumUrl')
     if baseImageUrl and baseImageChecksumUrl:
