@@ -8,6 +8,10 @@ def auth_not_used(request):
     settings = request.registry.settings
     return auth_not_used_in_settings(settings)
 
+def auth_used(request):
+    settings = request.registry.settings
+    return auth_used_in_settings(settings)
+
 def auth_not_used_in_settings(settings):
     return settings['openwifi.useLDAP'] == 'false' and \
            settings['openwifi.useAuth'] == 'false'
