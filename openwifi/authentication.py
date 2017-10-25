@@ -439,3 +439,16 @@ change_password_service = Service(name='change_user_password',
 @change_password_service.post()
 def change_password_service_post(request):
     change_password(request.user, request.json_body['password'])
+
+get_apikey = Service(name='get_apikey',
+                     path='/get_apikey',
+                     description="get a new apikey owned by current user",
+                     permission='logged_in_user')
+
+@get_apikey.post()
+def get_apikey_post(request):
+    if request.user:
+        key = request.json_body['key']
+        new_apikey = ApiKey(key, request.user)
+        DBSession.add(new_apikey)
+        return new_apikey.id
