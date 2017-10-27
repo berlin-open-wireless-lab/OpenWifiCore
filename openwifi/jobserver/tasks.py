@@ -257,7 +257,10 @@ def update_capabilities():
             args = ['-c', service.capability_script]
 
             ans = exec_on_device(uuid, cmd, args)
-            stdout = ans[1]['stdout']
+            try:
+                stdout = ans[1]['stdout']
+            except TypeError: # no answer
+                continue
 
             if stdout.rstrip() == service.capability_match.rstrip():
                 device.add_capability(service.name)
