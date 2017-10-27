@@ -11,13 +11,13 @@ from openwifi.jobserver.tasks import exec_on_device
 from cornice import Service
 from cornice.resource import resource, view
 
-from openwifi.authentication import get_node_by_request
+from openwifi.authentication import get_node_by_request, RootFactory
 from openwifi import node_context
 
 @resource(collection_path='/nodes', path='/nodes/{UUID}', permission='view', factory='openwifi.node_context')
 class Nodes(object):
 
-    def __init__(self, context, request):
+    def __init__(self, request, context):
         self.request = request
         self.context = context
 
@@ -110,10 +110,10 @@ def get_diffNode(request):
 
 from openwifi.models import OpenWifiSettings
 
-@resource(collection_path='/settings', path='/settings/{SETTING}', permission='settings')
+@resource(collection_path='/settings', path='/settings/{SETTING}', permission='settings', factory=RootFactory)
 class Settings(object):
 
-    def __init__(self, request):
+    def __init__(self, request, context=None):
         self.request = request
 
     def collection_get(self):

@@ -1,8 +1,53 @@
 from openwifi.models import User, DBSession, NodeAccess, ApiKey, OpenWrt
 from passlib.context import CryptContext
 
+from pyramid.security import (
+   Allow,
+   Authenticated,
+   Everyone,
+   remember,
+   forget)
+
 import json
 user_pwd_context = CryptContext()
+
+class RootFactory(object):
+    def __init__(self, request):
+        if auth_not_used(request):
+            self.__acl__ = [(Allow, Everyone, ('view', 'node_access', 'node_add'))]
+        else:
+            self.__acl__ = [(Allow, Authenticated, 'view')]
+            self.__acl__.append((Allow, 'group:admin', 'addUsers'))
+            self.__acl__.append((Allow, 'group:admin', 'viewUsers'))
+            self.__acl__.append((Allow, 'group:admin', 'modUsers'))
+            self.__acl__.append((Allow, 'group:admin', 'control_access'))
+            self.__acl__.append((Allow, 'group:client_side', 'node_add'))
+            self.__acl__.append((Allow, 'group:admin', 'node_add'))
+            self.__acl__.append((Allow, 'group:admin', 'settings'))
+            self.__acl__.append((Allow, 'group:users', 'logged_in_user'))
+
+class node_context(RootFactory):
+    def __init__(self, request):
+        super().__init__(request)
+
+        uuid = None
+
+        if 'UUID' in request.matchdict:
+            uuid = request.matchdict['UUID']
+        elif 'uuid' in request.matchdict:
+            uuid = request.matchdict['uuid']
+
+        if uuid:
+            self.__acl__.append((Allow, 'node:'+uuid, 'node_access'))
+
+        if auth_not_used(request):
+            self.__acl__.append((Allow, Everyone, 'node_access'))
+            self.__acl__.append((Allow, Everyone, ''))
+
+class AllowEverybody(object):
+    __acl__ = [(Allow, Everyone, ('view', 'node_access', 'node_add'))]
+    def __init__(self, request):
+        pass
 
 def auth_not_used(request):
     settings = request.registry.settings
@@ -223,10 +268,10 @@ class OpenWifiAuthPolicy(CallbackAuthenticationPolicy):
 
 from cornice.resource import resource, view
 
-@resource(collection_path='/users', path='/users/{USER_ID}')
+@resource(collection_path='/users', path='/users/{USER_ID}', factory=RootFactory)
 class Users(object):
 
-    def __init__(self, request):
+    def __init__(self, request, context=None):
         self.request = request
 
     @view(permission = 'viewUsers')
@@ -285,10 +330,10 @@ class Users(object):
         user = DBSession.query(User).get(user_id)
         DBSession.delete(user)
 
-@resource(collection_path='/access', path='/access/{ACCESS_ID}', permission='control_access')
+@resource(collection_path='/access', path='/access/{ACCESS_ID}', permission='control_access', factory=RootFactory)
 class Control_Access:
 
-    def __init__(self, request):
+    def __init__(self, request, context=None):
         self.request = request
 
     def get(self):

@@ -1,6 +1,3 @@
-from pyramid.config import Configurator
-from sqlalchemy import engine_from_config
-
 from pyramid.security import (
    Allow,
    Authenticated,
@@ -17,50 +14,17 @@ from .models import (
     User
     )
 
-from openwifi.authentication import user_pwd_context, create_user
+from openwifi.authentication import (
+        user_pwd_context, 
+        create_user,
+        RootFactory,
+        node_context,
+        AllowEverybody
+        )
+
 import os, os.path
 
 from pkg_resources import iter_entry_points
-
-class RootFactory(object):
-    def __init__(self, request):
-        from openwifi.authentication import auth_not_used
-        if auth_not_used(request):
-            self.__acl__ = [(Allow, Everyone, ('view', 'node_access', 'node_add'))]
-        else:
-            self.__acl__ = [(Allow, Authenticated, 'view')]
-            self.__acl__.append((Allow, 'group:admin', 'addUsers'))
-            self.__acl__.append((Allow, 'group:admin', 'viewUsers'))
-            self.__acl__.append((Allow, 'group:admin', 'modUsers'))
-            self.__acl__.append((Allow, 'group:admin', 'control_access'))
-            self.__acl__.append((Allow, 'group:client_side', 'node_add'))
-            self.__acl__.append((Allow, 'group:admin', 'node_add'))
-            self.__acl__.append((Allow, 'group:admin', 'settings'))
-            self.__acl__.append((Allow, 'group:users', 'logged_in_user'))
-
-class node_context(RootFactory):
-    def __init__(self, request):
-        super().__init__(request)
-
-        uuid = None
-
-        if 'UUID' in request.matchdict:
-            uuid = request.matchdict['UUID']
-        elif 'uuid' in request.matchdict:
-            uuid = request.matchdict['uuid']
-
-        if uuid:
-            self.__acl__.append((Allow, 'node:'+uuid, 'node_access'))
-
-        from openwifi.authentication import auth_not_used as auth_not_used
-        if auth_not_used(request):
-            self.__acl__.append((Allow, Everyone, 'node_access'))
-            self.__acl__.append((Allow, Everyone, ''))
-
-class AllowEverybody(object):
-    __acl__ = [(Allow, Everyone, ('view', 'node_access', 'node_add'))]
-    def __init__(self, request):
-        pass
 
 def main(global_config, **settings):
     """ This function returns a Pyramid WSGI application.

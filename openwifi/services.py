@@ -1,10 +1,11 @@
 from cornice.resource import resource, view
 from openwifi.models import DBSession, Service
+from openwifi.authentication import RootFactory
 
-@resource(collection_path='/service', path='/service/{ID}', permission='view')
+@resource(collection_path='/service', path='/service/{ID}', permission='view', factory=RootFactory)
 class service_api:
 
-    def __init__(self, request):
+    def __init__(self, request, context=None):
         self.request = request
         self.arguments = ['queries', 'name', 'capability_script', 'capability_match']
 
