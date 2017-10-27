@@ -222,10 +222,10 @@ def update_openwrt_sshkeys(uuid):
 @app.task
 def exec_on_device(uuid, cmd, prms):
     DBSession = get_sql_session()
-    openwrt = DBSession.query(OpenWrt).get(uuid)
+    device = DBSession.query(OpenWrt).get(uuid)
     ans = None
 
-    if not openwrt:
+    if not device:
         return False
 
     communication_classes = get_communication_classes()
@@ -259,7 +259,7 @@ def update_capabilities():
             ans = exec_on_device(uuid, cmd, args)
             try:
                 stdout = ans[1]['stdout']
-            except TypeError: # no answer
+            except (TypeError, ValueError) as e: # no answer
                 continue
 
             if stdout.rstrip() == service.capability_match.rstrip():
@@ -273,7 +273,6 @@ def update_services_config_on_node():
     from openwifi.models import Service
 
     for device in devices:
-        capabilities = json.loads(device.capabilities)
         for capability in device.get_capabilities():
             assoc_service = DBSession.query(Service).filter(Service.name == capability).first()
             if assoc_service:

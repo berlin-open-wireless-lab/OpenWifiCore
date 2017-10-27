@@ -168,14 +168,20 @@ class OpenWrt(Base):
         return session
 
     def add_capability(self, cap):
-        capabilities = json.loads(self.capabilities)
+        try:
+            capabilities = json.loads(self.capabilities)
+        except ValueError:
+            capabilities = []
 
         if cap not in capabilities:
             capabilities.append(cap)
             self.capabilities = json.dumps(capabilities)
 
     def get_capabilities(self):
-        return json.loads(self.capabilities)
+        try:
+            return json.loads(self.capabilities)
+        except ValueError:
+            return []
 
     def get_data(self):
         if self.data:

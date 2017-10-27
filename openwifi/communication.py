@@ -107,8 +107,12 @@ class OpenWifiUbusCommunication(OpenWifiCommunication):
         js.call('file', 'exec',command='chmod', params=['600',keyfile])
 
     def exec_on_device(device, DBSession, cmd, prms):
-        js = get_jsonubus_from_openwrt(openwrt)
-        ans = js.call('file', 'exec', command=cmd, params=prms)
+        js = get_jsonubus_from_openwrt(device)
+        ans = None
+        try:
+            ans = js.call('file', 'exec', command=cmd, params=prms)
+        except:
+            pass
         return ans
 
 def return_jsonconfig_from_device(openwrt):
