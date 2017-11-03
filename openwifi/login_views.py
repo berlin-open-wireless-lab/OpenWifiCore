@@ -38,12 +38,24 @@ def auth(request, login, password):
 
 
 @view_config(route_name='login', renderer='json', request_method='POST')
-def login(request):
+def login_post(request):
     data = request.json_body
     login = data['login']
     password = data['password']
 
     return auth(request, login, password)
+
+@view_config(route_name='login', renderer='json', request_method='GET', effective_principals='group:users')
+def login_logged_in(request):
+    return True
+
+@view_config(route_name='login', renderer='json', request_method='GET')
+def login_not_logged_in(request):
+    from openwifi.authentication import auth_used
+    if auth_used(request):
+        return False
+    else:
+        return True
 
 @view_config(route_name='logout')
 def logout(request):
