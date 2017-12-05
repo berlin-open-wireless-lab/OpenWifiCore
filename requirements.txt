@@ -1,6 +1,6 @@
 Jinja2==2.10
 Mako==0.9.1
-MarkupSafe==0.19
+MarkupSafe==0.23
 Pygments==1.6
 SQLAlchemy==0.9.4
 WTForms==1.0.5
