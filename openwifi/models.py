@@ -153,13 +153,26 @@ class OpenWrt(Base):
         curRev = self.sync_diffs
         session = self.get_session()
 
+        from ast import literal_eval
+
         while (curRev.next != ""):
-            diffList.append(curRev.data)
+            data = curRev.data
+            data = "{" + data + "}"
+            data = data.replace('upload', '"upload"')
+            data = data.replace('download', '"download"')
+            data = literal_eval(data)
+
+            diffList.append(data)
             curRev = session.query(Revision).get(curRev.next)
         
-        diffList.append(curRev.data)
+        data = curRev.data
+        data = "{" + data + "}"
+        data = data.replace('upload', '"upload"')
+        data = data.replace('download', '"download"')
+        data = literal_eval(data)
+        diffList.append(data)
 
-        return diffList
+        return str(diffList)
 
     def get_session(self):
         from sqlalchemy.orm import sessionmaker
