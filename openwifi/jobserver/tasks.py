@@ -21,7 +21,6 @@ from openwifi.utils import diffChanged
 
 @celeryd_after_setup.connect
 def setup_register_database_listeners(sender, instance, **kwargs):
-    print("RUNNING DATABASE LISTENER from CELERY")
     registerDatabaseListeners({})
 
 app = Celery('tasks', backend="redis://"+redishost, broker=brokerurl)
@@ -165,7 +164,7 @@ def diff_update_config(diff, uuid):
         js.call('uci','commit',config=optkey[0])
 
 @app.task(bind=True)
-def update_config(self, uuid):
+def update_config(self, uuid, new_config=None):
     DBSession = get_sql_session()
     device = DBSession.query(OpenWrt).get(uuid)
 
@@ -178,7 +177,8 @@ def update_config(self, uuid):
 
     for cclass in comm_classes:
         if device.communication_protocol in cclass.string_identifier_list:
-            cclass.update_config(device, DBSession)
+            if cclass.config_differs_device(device, DBSession, new_config):
+                cclass.update_config(device, DBSession)
 
 @app.task
 def update_unconfigured_nodes():

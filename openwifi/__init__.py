@@ -140,7 +140,7 @@ def listen_conf_and_update(target, value, oldvalue, initiator):
     listen_conf(target, value, oldvalue, initiator)
 
     from openwifi.jobserver.tasks import update_config
-    update_config.delay(target.uuid)
+    update_config.delay(target.uuid, value)
 
 def registerDatabaseListeners(settings):
     from sqlalchemy import event

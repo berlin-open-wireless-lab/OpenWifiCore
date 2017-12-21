@@ -37,6 +37,7 @@ class OpenWifiUbusCommunication(OpenWifiCommunication):
         return ['JSONUBUS_HTTP', 'JSONUBUS_HTTPS', '']
 
     def get_config(device, DBSession):
+
         try:
             if device.configured:
                 newConf = return_jsonconfig_from_device(device)
@@ -57,23 +58,29 @@ class OpenWifiUbusCommunication(OpenWifiCommunication):
                 device.configured = True
 
             DBSession.commit()
-            DBSession.close()
             return True
         except Exception as thrownexpt:
             print(thrownexpt)
             device.configured = False
             DBSession.commit()
-            DBSession.close()
             return False
 
-    def update_config(device, DBSession):
+    def config_differs_device(device, DBSession, config):
+        if config == None:
+            return True
+
         new_configuration = Uci()
-        new_configuration.load_tree(device.configuration)
+        new_configuration.load_tree(config)
 
         cur_configuration = Uci()
         cur_configuration.load_tree(return_jsonconfig_from_device(device))
         conf_diff = cur_configuration.diff(new_configuration)
-        changed = diffChanged(conf_diff)
+
+        return diffChanged(conf_diff)
+
+    def update_config(device, DBSession):
+
+        changed = self.config_differs_device(device, DBSession, device.configuration)
 
         from openwifi.jobserver.tasks import diff_update_config
         if changed:
