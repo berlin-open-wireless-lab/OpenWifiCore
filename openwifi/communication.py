@@ -17,7 +17,7 @@ class OpenWifiCommunication(metaclass=ABCMeta):
     def get_config(self, device, DBSession): pass
 
     @abstractclassmethod
-    def update_config(self, device, DBSession): pass
+    def update_config(self, device, DBSession, config): pass
 
     @abstractclassmethod
     def update_status(self, device, redisDB): pass
@@ -81,9 +81,9 @@ class OpenWifiUbusCommunication(OpenWifiCommunication):
 
         return diffChanged(conf_diff), conf_diff
 
-    def update_config(device, DBSession):
+    def update_config(device, DBSession, config=device.configuration):
 
-        changed, conf_diff = OpenWifiUbusCommunication.config_differs_device(device, DBSession, device.configuration)
+        changed, conf_diff = OpenWifiUbusCommunication.config_differs_device(device, DBSession, config)
 
         from openwifi.jobserver.tasks import diff_update_config
         if changed:

@@ -178,7 +178,7 @@ def update_config(self, uuid, new_config=None):
     for cclass in comm_classes:
         if device.communication_protocol in cclass.string_identifier_list:
             if cclass.config_differs_device(device, DBSession, new_config):
-                cclass.update_config(device, DBSession)
+                cclass.update_config(device, DBSession, new_config)
 
 @app.task
 def update_unconfigured_nodes():
