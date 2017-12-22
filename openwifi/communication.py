@@ -26,6 +26,9 @@ class OpenWifiCommunication(metaclass=ABCMeta):
     def update_sshkeys(self, device, DBSession): pass
 
     @abstractclassmethod
+    def config_differs_device(self, device, DBSession, config): pass
+
+    @abstractclassmethod
     def exec_on_device(self, device, DBSession, cmd, prms): pass
 
 from pyuci import Uci, Package, Config
@@ -80,7 +83,7 @@ class OpenWifiUbusCommunication(OpenWifiCommunication):
 
     def update_config(device, DBSession):
 
-        changed = self.config_differs_device(device, DBSession, device.configuration)
+        changed = OpenWifiUbusCommunication.config_differs_device(device, DBSession, device.configuration)
 
         from openwifi.jobserver.tasks import diff_update_config
         if changed:
