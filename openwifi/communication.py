@@ -79,11 +79,11 @@ class OpenWifiUbusCommunication(OpenWifiCommunication):
         cur_configuration.load_tree(return_jsonconfig_from_device(device))
         conf_diff = cur_configuration.diff(new_configuration)
 
-        return diffChanged(conf_diff)
+        return diffChanged(conf_diff), conf_diff
 
     def update_config(device, DBSession):
 
-        changed = OpenWifiUbusCommunication.config_differs_device(device, DBSession, device.configuration)
+        changed, conf_diff = OpenWifiUbusCommunication.config_differs_device(device, DBSession, device.configuration)
 
         from openwifi.jobserver.tasks import diff_update_config
         if changed:
