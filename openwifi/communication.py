@@ -81,7 +81,10 @@ class OpenWifiUbusCommunication(OpenWifiCommunication):
 
         return diffChanged(conf_diff), conf_diff
 
-    def update_config(device, DBSession, config=device.configuration):
+    def update_config(device, DBSession, config=None):
+
+        if config == None:
+            config = device.configuration
 
         changed, conf_diff = OpenWifiUbusCommunication.config_differs_device(device, DBSession, config)
 
