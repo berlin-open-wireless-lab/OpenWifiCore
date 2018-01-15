@@ -1,15 +1,28 @@
-from pyramid.config import Configurator		
+""" Main file for OpenWifiCore """
+
+import os
+import os.path
+from pkg_resources import iter_entry_points
+
 from sqlalchemy import engine_from_config
 
+from pyramid.config import Configurator
 from pyramid.security import (
-   Allow,
-   Authenticated,
-   Everyone,
-   remember,
-   forget)
-
+    Allow,
+    Authenticated,
+    Everyone,
+    remember,
+    forget)
 from pyramid.authentication import AuthTktAuthenticationPolicy
 from pyramid.authorization import ACLAuthorizationPolicy
+
+from openwifi.authentication import (
+    user_pwd_context,
+    create_user,
+    RootFactory,
+    node_context,
+    AllowEverybody
+    )
 
 from .models import (
     DBSession,
@@ -17,24 +30,12 @@ from .models import (
     User
     )
 
-from openwifi.authentication import (
-        user_pwd_context, 
-        create_user,
-        RootFactory,
-        node_context,
-        AllowEverybody
-        )
-
-import os, os.path
-
-from pkg_resources import iter_entry_points
-
-def main(global_config, **settings):
+def main(_global_config, **settings):
     """ This function returns a Pyramid WSGI application.
     """
-    configure_global_views(settings)
+    add_global_views(settings)
 
-    registerOnDeviceRegisterFunctions(settings)
+    add_on_device_register_actions(settings)
 
     engine = engine_from_config(settings, 'sqlalchemy.')
     DBSession.configure(bind=engine)
@@ -42,13 +43,13 @@ def main(global_config, **settings):
 
     if settings['openwifi.useLDAP'] == 'true':
         config = Configurator(settings=settings, root_factory=RootFactory)
-        setupLDAP(config, settings)
+        setup_ldap(config, settings)
     if settings['openwifi.useAuth'] == 'true':
         config = Configurator(settings=settings, root_factory=RootFactory)
         init_auth(config, settings)
     else:
         config = Configurator(settings=settings, root_factory=AllowEverybody)
-        setupAuth(config, settings)
+        setup_auth(config, settings)
 
     config.include('pyramid_rpc.jsonrpc')
     config.add_jsonrpc_endpoint('api', '/api')
@@ -61,7 +62,7 @@ def main(global_config, **settings):
 
     config.scan()
 
-    registerDatabaseListeners(settings)
+    register_database_listeners(settings)
 
     # Add plugin Views
     for entry_point in iter_entry_points(group='OpenWifi.plugin', name="addPluginRoutes"):
@@ -71,49 +72,51 @@ def main(global_config, **settings):
 
     return config.make_wsgi_app()
 
-def configure_global_views(settings):
+def add_global_views(settings):
+    """ add global views (used in the upper menu) """
     # Set global views as [view_callable, display_name]
-    settings["OpenWifi.globalViews"]=[]
+    settings["OpenWifi.globalViews"] = []
     # add Global Plugin Views
     for entry_point in iter_entry_points(group='OpenWifi.plugin', name="globalPluginViews"):
-        globalPluginViews = entry_point.load()
-        for view in globalPluginViews:
+        global_plugin_views = entry_point.load()
+        for view in global_plugin_views:
             settings["OpenWifi.globalViews"].append(view)
             print("append view: ", view)
 
     #always have logout as the last entry if using auth
     from openwifi.authentication import auth_used_in_settings
     if auth_used_in_settings(settings):
-        settings["OpenWifi.globalViews"].append(['logout','Logout'])
+        settings["OpenWifi.globalViews"].append(['logout', 'Logout'])
 
-def registerOnDeviceRegisterFunctions(settings):
+def add_on_device_register_actions(settings):
+    """ add on device register functions by plugins """
     settings['OpenWifi.onDeviceRegister'] = []
 
     for entry_point in iter_entry_points(group='OpenWifi.plugin', name="onDeviceRegister"):
-        devRegFunction = entry_point.load()
-        settings["OpenWifi.onDeviceRegister"].append(devRegFunction)
+        on_device_register_function = entry_point.load()
+        settings["OpenWifi.onDeviceRegister"].append(on_device_register_function)
 
-def setupAuth(config, settings):
+def setup_auth(config, settings):
+    """ configure authentication """
     secret = settings['auth.secret']
     config.set_authentication_policy(
         AuthTktAuthenticationPolicy(
             secret))
     config.set_authorization_policy(
-    ACLAuthorizationPolicy())
+        ACLAuthorizationPolicy())
 
-def setupLDAP(config, settings):
+def setup_ldap(config, settings):
+    """ configure ldap authentication """
     import ldap3
 
-    from pyramid_ldap3 import (
-        get_ldap_connector,
-        groupfinder)
+    from pyramid_ldap3 import groupfinder
 
     secret = settings['auth.secret']
     config.set_authentication_policy(
         AuthTktAuthenticationPolicy(
             secret, callback=groupfinder))
     config.set_authorization_policy(
-    ACLAuthorizationPolicy())
+        ACLAuthorizationPolicy())
 
     config.ldap_setup(
         'ldap://localhost',
@@ -123,7 +126,6 @@ def setupLDAP(config, settings):
     config.ldap_set_login_query(
         base_dn='ou=Users,dc=OpenWifi,dc=local',
         filter_tmpl='(uid=%(login)s)',
-        #filter_tmpl='(sAMAccountName=%(login)s)',
         scope=ldap3.SEARCH_SCOPE_SINGLE_LEVEL)
 
     config.ldap_set_groups_query(
@@ -132,17 +134,20 @@ def setupLDAP(config, settings):
         scope=ldap3.SEARCH_SCOPE_WHOLE_SUBTREE,
         cache_period=600)
 
-def listen_conf(target, value, oldvalue, initiator):
+def listen_conf(target, value, _oldvalue, _initiator):
+    """ update master config on config change """
     from openwifi.dbHelper import updateMasterConfig
     updateMasterConfig(target, value)
 
 def listen_conf_and_update(target, value, oldvalue, initiator):
+    """ update master config and config on node """
     listen_conf(target, value, oldvalue, initiator)
 
     from openwifi.jobserver.tasks import update_config
     update_config.delay(target.uuid, value)
 
-def registerDatabaseListeners(settings):
+def register_database_listeners(settings):
+    """ register listeners for changes to configuration """
     from sqlalchemy import event
     from openwifi.models import OpenWrt
 
@@ -155,7 +160,7 @@ def registerDatabaseListeners(settings):
         event.remove(OpenWrt.configuration, 'set', listen_conf_and_update)
     except:
         pass
-    
+
     if 'openwifi.offline' not in settings or \
        settings['openwifi.offline'] != 'true':
         event.listen(OpenWrt.configuration, 'set', listen_conf_and_update)
@@ -163,6 +168,7 @@ def registerDatabaseListeners(settings):
         event.listen(OpenWrt.configuration, 'set', listen_conf)
 
 def init_auth(config, settings):
+    """ load password hash settings and generate default users if no users available """
     user_pwd_context.load_path(os.path.dirname(__file__) + os.sep + ".." + os.sep + "crypt.ini")
 
     # if no user in database create admin:admin with admin priv

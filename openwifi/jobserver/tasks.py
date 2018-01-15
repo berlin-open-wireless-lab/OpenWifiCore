@@ -13,7 +13,7 @@ import json
 
 from pkg_resources import iter_entry_points
 
-from openwifi import registerDatabaseListeners
+from openwifi import register_database_listeners
 
 from celery.signals import celeryd_after_setup
 
@@ -21,7 +21,7 @@ from openwifi.utils import diffChanged
 
 @celeryd_after_setup.connect
 def setup_register_database_listeners(sender, instance, **kwargs):
-    registerDatabaseListeners({})
+    register_database_listeners({})
 
 app = Celery('tasks', backend="redis://"+redishost, broker=brokerurl)
 
