@@ -137,7 +137,7 @@ class deviceDetectAndRegisterTest(unittest.TestCase):
         self.assertEqual(r.text, "[]")
 
         self.lede = self.dockerClient.containers.run("openwifi/ledecontainer", "/sbin/init", detach=True)
-        while not self.lede.exec_run('ash -c "ps|grep \\"[o]penwifi\\""'):
+        while self.lede.exec_run('ash -c "ps|grep \\"[o]penwifi\\""').exit_code != 0:
             time.sleep(2)
         
         self.lede.exec_run('/etc/init.d/openwifi-boot-notifier restart')
@@ -145,7 +145,7 @@ class deviceDetectAndRegisterTest(unittest.TestCase):
 
         r = requests.get('http://localhost:6543/nodes')
 
-        uuid = self.lede.exec_run('uci get openwifi.@device[0].uuid').decode('utf8').strip('\n')
+        uuid = self.lede.exec_run('uci get openwifi.@device[0].uuid').output.decode('utf8').strip('\n')
         self.assertEqual(r.text, '["'+uuid+'"]')
 
     def tearDown(self):
