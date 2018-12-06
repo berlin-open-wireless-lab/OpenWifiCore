@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 from pprint import pprint
-from jsonubus import JsonUbus
+from .jsonubus import JsonUbus
 import readline
 import logging
 import sys
